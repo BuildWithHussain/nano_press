@@ -1,0 +1,182 @@
+{
+ "actions": [],
+ "autoname": "field:site_name",
+ "creation": "2025-08-15 15:16:06.808974",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "server_name",
+  "site_name",
+  "status",
+  "ssl_enabled",
+  "is_custom",
+  "column_break_dkti",
+  "docker_image",
+  "custom_image",
+  "admin_password",
+  "section_break_hzks",
+  "install_apps",
+  "section_break_tues",
+  "traefik_domain",
+  "traefik_email",
+  "traefik_password",
+  "section_break_fsva",
+  "last_deployed_at",
+  "deployment_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "server_name",
+   "fieldtype": "Link",
+   "label": "Server",
+   "link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Verified\"]]",
+   "options": "Server",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "server_name.server_name",
+   "fieldname": "site_name",
+   "fieldtype": "Data",
+   "label": "Site Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_dkti",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "erpnext",
+   "fieldname": "install_apps",
+   "fieldtype": "Table",
+   "label": "Install Apps",
+   "options": "App Install Item"
+  },
+  {
+   "default": "Not Deployed",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped"
+  },
+  {
+   "fieldname": "last_deployed_at",
+   "fieldtype": "Datetime",
+   "label": "Last Deployed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deployment_log",
+   "fieldtype": "Long Text",
+   "label": "Deployment Log",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_fsva",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "ssl_enabled",
+   "fieldtype": "Check",
+   "label": "Enable SSL"
+  },
+  {
+   "depends_on": "eval: doc.ssl_enabled == 1",
+   "fieldname": "section_break_tues",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "traefik_domain",
+   "fieldtype": "Data",
+   "label": "Traefik Domain",
+   "mandatory_depends_on": "eval:doc.ssl_enabled=='1'"
+  },
+  {
+   "fieldname": "traefik_email",
+   "fieldtype": "Data",
+   "label": "Traefik Email",
+   "mandatory_depends_on": "eval:doc.ssl_enabled=='1'"
+  },
+  {
+   "description": "Leave it blank to generate random password",
+   "fieldname": "traefik_password",
+   "fieldtype": "Data",
+   "label": "Traefik Password"
+  },
+  {
+   "description": "Leave it blank to generate random password",
+   "fieldname": "admin_password",
+   "fieldtype": "Data",
+   "label": "Admin Password",
+   "not_nullable": 1,
+   "placeholder": "s0QlAPg8udcOvij"
+  },
+  {
+   "depends_on": "eval:doc.is_custom=='1'",
+   "fieldname": "section_break_hzks",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.is_custom=='1'",
+   "fieldname": "custom_image",
+   "fieldtype": "Link",
+   "label": "Custom Image",
+   "link_filters": "[[\"Custom Image\",\"build_status\",\"=\",\"Built\"]]",
+   "mandatory_depends_on": "eval:doc.is_custom=='1'",
+   "options": "Custom Image"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_custom",
+   "fieldtype": "Check",
+   "label": "Is Custom"
+  },
+  {
+   "default": "frappe/erpnext:v15.76.0",
+   "depends_on": "eval:doc.is_custom=='0'",
+   "description": "Default docker image is used frappe/erpnext:v15.76.0",
+   "fieldname": "docker_image",
+   "fieldtype": "Data",
+   "label": "Docker Image",
+   "mandatory_depends_on": "eval:doc.is_custom=='0'"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Custom Image",
+   "link_fieldname": "server_name"
+  },
+  {
+   "link_doctype": "Server",
+   "link_fieldname": "server_name"
+  }
+ ],
+ "modified": "2025-08-24 23:37:47.837359",
+ "modified_by": "Administrator",
+ "module": "Nano Press",
+ "name": "Frappe Site",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "site_name"
+}

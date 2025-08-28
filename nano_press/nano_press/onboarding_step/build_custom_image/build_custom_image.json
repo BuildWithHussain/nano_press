@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Build Custom Image (Optional)",
+ "creation": "2025-08-24 21:29:18.743101",
+ "description": "Create a custom Docker image with your selected apps pre-installed. This step is optional but recommended for faster deployments. Building may take up to 30 minutes depending on the number of apps.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2025-08-24 21:29:52.666677",
+ "modified_by": "Administrator",
+ "name": "Build Custom Image",
+ "owner": "Administrator",
+ "reference_document": "Custom Image",
+ "show_form_tour": 0,
+ "show_full_form": 0,
+ "title": "Build Custom Image (Optional)",
+ "validate_action": 1
+}

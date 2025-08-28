@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create a Server",
+ "creation": "2025-08-24 20:42:46.109952",
+ "description": "Add your server details including IP address, SSH credentials, and domain name. This server will be used to deploy your Frappe/ERPNext instance.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2025-08-24 21:24:46.262576",
+ "modified_by": "Administrator",
+ "name": "Create a Server",
+ "owner": "Administrator",
+ "reference_document": "Server",
+ "show_form_tour": 0,
+ "show_full_form": 0,
+ "title": "Create a Server",
+ "validate_action": 1
+}

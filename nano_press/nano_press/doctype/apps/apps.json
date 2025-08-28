@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "autoname": "field:app_name",
+ "creation": "2025-08-15 21:40:24.547885",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "app_name",
+  "repo_url",
+  "is_private",
+  "column_break_jjcw",
+  "branch",
+  "order",
+  "pat_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "app_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "App Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "repo_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Repository URL",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_private",
+   "fieldtype": "Check",
+   "label": "Is Private"
+  },
+  {
+   "fieldname": "column_break_jjcw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "order",
+   "fieldtype": "Int",
+   "label": "Order",
+   "non_negative": 1
+  },
+  {
+   "depends_on": "eval: doc.is_private == 1",
+   "fieldname": "pat_token",
+   "fieldtype": "Data",
+   "label": "PAT Token",
+   "mandatory_depends_on": "eval: doc.is_private == 1"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-24 23:55:31.704394",
+ "modified_by": "Administrator",
+ 		"module": "Nano Press",
+ "name": "Apps",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "app_name"
+}

@@ -1,0 +1,10 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: Ensure frappe_docker repo present
+      ansible.builtin.git:
+        repo: https://github.com/frappe/frappe_docker.git
+        dest: /home/frappe_docker
+        version: main
+        update: yes
+

@@ -1,0 +1,22 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: Get running container IDs
+      ansible.builtin.command: docker ps -q
+      register: running_containers
+      changed_when: false
+
+    - name: Stop all running containers
+      ansible.builtin.shell: >
+        docker stop {{ running_containers.stdout_lines | join(' ') }}
+      when: running_containers.stdout | length > 0
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: No containers were running
+      ansible.builtin.debug:
+        msg: "No running containers to stop"
+      when: running_containers.stdout | length == 0
+
+

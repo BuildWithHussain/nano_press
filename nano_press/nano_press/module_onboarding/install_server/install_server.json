@@ -1,0 +1,38 @@
+{
+ "allow_roles": [
+  {
+   "role": "All"
+  }
+ ],
+ "creation": "2025-08-24 20:43:57.279971",
+ "docstatus": 0,
+ "doctype": "Module Onboarding",
+ "documentation_url": "none",
+ "idx": 0,
+ "is_complete": 0,
+ "modified": "2025-08-24 21:32:13.108339",
+ "modified_by": "Administrator",
+ 		"module": "Nano Press",
+ "name": "Install Server",
+ "owner": "Administrator",
+ "steps": [
+  {
+   "step": "Create a Server"
+  },
+  {
+   "step": "Verify Server Connection"
+  },
+  {
+   "step": "Add Frappe Apps"
+  },
+  {
+   "step": "Build Custom Image"
+  },
+  {
+   "step": "Deploy Server"
+  }
+ ],
+ "subtitle": "Deploy Frappe/ERPNext from zero to production in 4 simple steps",
+ "success_message": "\ud83c\udf89 Congratulations! Your Frappe/ERPNext server has been successfully deployed",
+ "title": "Deploy Frappe/ERPNext Server"
+}
