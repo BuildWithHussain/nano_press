@@ -34,10 +34,11 @@
    "reqd": 1
   },
   {
-   "fetch_from": "server_name.server_name",
    "fieldname": "site_name",
    "fieldtype": "Data",
    "label": "Site Name",
+   "placeholder": "site.example.com",
+   "reqd": 1,
    "unique": 1
   },
   {
@@ -154,7 +155,7 @@
    "link_fieldname": "server_name"
   }
  ],
- "modified": "2025-08-24 23:37:47.837359",
+ "modified": "2025-08-29 00:17:14.326344",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",

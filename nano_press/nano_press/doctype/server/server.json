@@ -7,8 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "server_details_section",
-  "server_ip",
   "server_name",
+  "server_ip",
   "ssh_user",
   "ssh_port",
   "column_break_nzti",
@@ -26,7 +26,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Server IP",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "default": "root",
@@ -96,21 +97,19 @@
    "label": "Log"
   },
   {
-   "description": "Enter the domain name or hostname of the server. This will be used as the identifier for this record.\nExample: example.com or server1.local",
    "fieldname": "server_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Domain Name ",
-   "placeholder": "site1.example.com",
+   "label": "Server Name",
+   "placeholder": "My Development Server",
    "reqd": 1,
    "unique": 1
   }
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2025-08-24 20:49:52.066833",
+ "modified": "2025-08-29 00:14:59.332123",
  "modified_by": "Administrator",
- 		"module": "Nano Press",
+ "module": "Nano Press",
  "name": "Server",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
