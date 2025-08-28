@@ -1,0 +1,130 @@
+- hosts: all
+  become: true
+  vars:
+    build_dir: "{{ ansible_env.HOME }}/custom_image_builds"
+    frappe_docker_dir: "{{ build_dir }}/frappe_docker"
+    apps_json_path: "{{ build_dir }}/apps.json"
+    build_log_path: "{{ build_dir }}/{{ custom_image_name }}_build.log"
+    default_frappe_path: "https://github.com/frappe/frappe"
+    default_python_version: "3.11.9"
+    default_node_version: "20.19.2"
+    default_build_method: "quick"
+
+  tasks:
+    - name: Ensure build directory exists
+      ansible.builtin.file:
+        path: "{{ build_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Check if Docker is installed
+      ansible.builtin.command: docker --version
+      register: docker_check
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if Docker is not installed
+      ansible.builtin.fail:
+        msg: "Docker is not installed on this server. Please install Docker first."
+      when: docker_check.rc != 0
+
+    - name: Clone frappe_docker repository
+      ansible.builtin.git:
+        repo: "https://github.com/frappe/frappe_docker"
+        dest: "{{ frappe_docker_dir }}"
+        update: yes
+        force: yes
+      register: frappe_docker_clone
+
+    - name: Decode and save apps.json from base64
+      ansible.builtin.shell: |
+        echo -n "{{ apps_json_base64 }}" | base64 -d > "{{ apps_json_path }}"
+      args:
+        executable: /bin/bash
+
+    - name: Validate apps.json format
+      ansible.builtin.shell: |
+        jq empty "{{ apps_json_path }}"
+      args:
+        executable: /bin/bash
+      register: json_validation
+      failed_when: json_validation.rc != 0
+
+    - name: Export apps.json as base64 environment variable
+      ansible.builtin.shell: |
+        export APPS_JSON_BASE64=$(base64 -w 0 "{{ apps_json_path }}")
+        echo "APPS_JSON_BASE64=$APPS_JSON_BASE64" > "{{ build_dir }}/build.env"
+      args:
+        executable: /bin/bash
+
+    - name: Build custom image using quick method
+      ansible.builtin.shell: |
+        cd "{{ frappe_docker_dir }}"
+        source "{{ build_dir }}/build.env"
+
+        echo "Starting Docker build at $(date)"
+        echo "Image tag: {{ image_tag }}"
+        echo "Frappe version: {{ frappe_version }}"
+        echo "Apps JSON preview:"
+        cat "{{ apps_json_path }}"
+        echo ""
+
+        docker build \
+          --build-arg=FRAPPE_PATH="{{ frappe_path | default(default_frappe_path) }}" \
+          --build-arg=FRAPPE_BRANCH="{{ frappe_version }}" \
+          --build-arg=APPS_JSON_BASE64="$APPS_JSON_BASE64" \
+          --tag="{{ image_tag }}" \
+          --file=images/layered/Containerfile . 2>&1
+      args:
+        executable: /bin/bash
+      register: docker_build_result
+      when: (build_method | default(default_build_method)) == "quick"
+
+    - name: Build custom image using custom method
+      ansible.builtin.shell: |
+        cd "{{ frappe_docker_dir }}"
+        source "{{ build_dir }}/build.env"
+
+        echo "Starting Docker custom build at $(date)"
+        echo "Image tag: {{ image_tag }}"
+        echo "Frappe version: {{ frappe_version }}"
+        echo "Python version: {{ python_version | default(default_python_version) }}"
+        echo "Node version: {{ node_version | default(default_node_version) }}"
+        echo "Apps JSON preview:"
+        cat "{{ apps_json_path }}"
+        echo ""
+
+        docker build \
+          --build-arg=FRAPPE_PATH="{{ frappe_path | default(default_frappe_path) }}" \
+          --build-arg=FRAPPE_BRANCH="{{ frappe_version }}" \
+          --build-arg=PYTHON_VERSION="{{ python_version | default(default_python_version) }}" \
+          --build-arg=NODE_VERSION="{{ node_version | default(default_node_version) }}" \
+          --build-arg=APPS_JSON_BASE64="$APPS_JSON_BASE64" \
+          --tag="{{ image_tag }}" \
+          --file=images/custom/Containerfile . 2>&1
+      args:
+        executable: /bin/bash
+      register: docker_build_result
+      when: (build_method | default(default_build_method)) == "custom"
+
+    - name: Verify image was built successfully
+      ansible.builtin.command: docker images "{{ image_tag }}" --quiet
+      register: image_verification
+      failed_when: image_verification.stdout == ""
+
+    - name: Clean up temporary files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ apps_json_path }}"
+        - "{{ build_dir }}/build.env"
+
+    - name: Display build summary
+      ansible.builtin.debug:
+        msg: |
+          ===== BUILD SUMMARY =====
+          Custom Image: {{ custom_image_name }}
+          Image Tag: {{ image_tag }}
+          Build Status: SUCCESS
+          ✅ Image built successfully and ready to use!

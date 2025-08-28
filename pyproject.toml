@@ -1,7 +1,7 @@
 [project]
 name = "nano_press"
 authors = [
-    { name = "Venkatesh", email = "venkateshvenki404224@gmail.com"}
+    { name = "Venkatesh M", email = "venkateshvenki404224@gmail.com"}
 ]
 description = "A lightweight, modular, and extensible version of Frappe Press — built for small-scale publishing, blogging, or CMS-like use cases with minimal dependencies and faster performance."
 requires-python = ">=3.10"

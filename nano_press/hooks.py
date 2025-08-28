@@ -1,6 +1,6 @@
 app_name = "nano_press"
 app_title = "Nano Press"
-app_publisher = "Venkatesh"
+app_publisher = "Venkatesh M"
 app_description = "A lightweight, modular, and extensible version of Frappe Press — built for small-scale publishing, blogging, or CMS-like use cases with minimal dependencies and faster performance."
 app_email = "venkateshvenki404224@gmail.com"
 app_license = "mit"
@@ -11,15 +11,15 @@ app_license = "mit"
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "nano_press",
-# 		"logo": "/assets/nano_press/logo.png",
-# 		"title": "Nano Press",
-# 		"route": "/nano_press",
-# 		"has_permission": "nano_press.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "nano_press",
+		"logo": "/assets/nano_press/images/icon.png",
+		"title": "Nano Press",
+		"route": "app/nano-press",
+		"has_permission": "nano_press.has_app_permission",
+	}
+]
 
 # Includes in <head>
 # ------------------

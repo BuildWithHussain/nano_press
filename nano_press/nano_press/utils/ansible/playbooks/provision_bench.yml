@@ -1,0 +1,53 @@
+- hosts: all
+  become: true
+  vars:
+    gitops_dir: "{{ ansible_env.HOME }}/gitops"
+    bench_id: "{{ bench_name | regex_replace('[^a-z0-9_-]', '-') | lower }}"
+    bench_env_path: "{{ gitops_dir }}/{{ bench_id }}.env"
+    bench_yaml_path: "{{ gitops_dir }}/{{ bench_id }}.yaml"
+  tasks:
+    - name: Ensure gitops dir exists
+      ansible.builtin.file:
+        path: "{{ gitops_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Seed bench env from frappe_docker example.env
+      ansible.builtin.copy:
+        src: "/home/frappe_docker/example.env"
+        dest: "{{ bench_env_path }}"
+        remote_src: true
+        mode: "0644"
+
+    - name: Set DB and routing values in bench env
+      ansible.builtin.lineinfile:
+        path: "{{ bench_env_path }}"
+        regexp: "^{{ item.key }}=.*$"
+        line: "{{ item.key }}={{ item.value }}"
+        create: yes
+      loop:
+        - { key: "DB_PASSWORD", value: "{{ mariadb_root_password }}" }
+        - { key: "DB_HOST",     value: "mariadb-database" }
+        - { key: "DB_PORT",     value: "3306" }
+        - { key: "ROUTER",      value: "{{ bench_id }}" }
+        - { key: "SITES",       value: "{{ sites_backtick }}" }
+        - { key: "BENCH_NETWORK", value: "{{ bench_id }}" }
+
+    - name: Generate final compose YAML for bench
+      ansible.builtin.shell: >
+        docker compose
+        --env-file {{ bench_env_path }}
+        -f /home/frappe_docker/compose.yaml
+        -f /home/frappe_docker/overrides/compose.redis.yaml
+        -f /home/frappe_docker/overrides/compose.multi-bench.yaml
+        {{ ssl_enabled | ternary('-f /home/frappe_docker/overrides/compose.multi-bench-ssl.yaml','') }}
+        config > {{ bench_yaml_path }}
+      args:
+        executable: /bin/bash
+
+    - name: Up bench stack
+      ansible.builtin.shell: >
+        docker compose --project-name {{ bench_id }} -f {{ bench_yaml_path }} up -d
+      args:
+        executable: /bin/bash
+

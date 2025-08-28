@@ -1,0 +1,23 @@
+{
+ "action": "Update Settings",
+ "action_label": "Verify Server Connection",
+ "creation": "2025-08-24 21:26:08.451737",
+ "description": "Verify that your server is accessible and meets all requirements. This step will test SSH connectivity, check Docker installation, and validate server specifications.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "field": "verify_status",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2025-08-24 21:27:26.783448",
+ "modified_by": "Administrator",
+ "name": "Verify Server Connection",
+ "owner": "Administrator",
+ "reference_document": "Server",
+ "show_form_tour": 0,
+ "show_full_form": 0,
+ "title": "Verify Server Connection",
+ "validate_action": 1,
+ "value_to_validate": "Verified"
+}
