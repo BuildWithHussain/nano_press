@@ -12,4 +12,3 @@ def has_app_permission():
 		return False
 
 	return True
-

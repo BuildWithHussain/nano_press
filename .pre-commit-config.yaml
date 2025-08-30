@@ -30,40 +30,43 @@ repos:
       - id: ruff-format
         name: "Run ruff formatter"
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
-    hooks:
-      - id: prettier
-        types_or: [javascript, vue, scss]
-        # Ignore any files that might contain jinja / bundles
-        exclude: |
-            (?x)^(
-                nano_press/public/dist/.*|
-                .*node_modules.*|
-                .*boilerplate.*|
-                nano_press/templates/includes/.*|
-                nano_press/public/js/lib/.*
-            )$
+  # Temporarily disabled due to nodeenv issues
+  # - repo: https://github.com/pre-commit/mirrors-prettier
+  #   rev: v3.1.0
+  #   hooks:
+  #     - id: prettier
+  #       language_version: system
+  #       types_or: [javascript, vue, scss]
+  #       # Ignore any files that might contain jinja / bundles
+  #       exclude: |
+  #           (?x)^(
+  #               nano_press/public/dist/.*|
+  #               .*node_modules.*|
+  #               .*boilerplate.*|
+  #               nano_press/templates/includes/.*|
+  #               nano_press/public/js/lib/.*
+  #           )$
 
 
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.44.0
-    hooks:
-      - id: eslint
-        types_or: [javascript]
-        args: ['--quiet']
-        # Ignore any files that might contain jinja / bundles
-        exclude: |
-            (?x)^(
-                nano_press/public/dist/.*|
-                cypress/.*|
-                .*node_modules.*|
-                .*boilerplate.*|
-                nano_press/templates/includes/.*|
-                nano_press/public/js/lib/.*
-            )$
+  # - repo: https://github.com/pre-commit/mirrors-eslint
+  #   rev: v8.56.0
+  #   hooks:
+  #     - id: eslint
+  #       types_or: [javascript]
+  #       args: ['--quiet']
+  #       # Ignore any files that might contain jinja / bundles
+  #       exclude: |
+  #           (?x)^(
+  #               nano_press/public/dist/.*|
+  #               cypress/.*|
+  #               .*node_modules.*|
+  #               .*boilerplate.*|
+  #               nano_press/templates/includes/.*|
+  #               nano_press/public/js/lib/.*
+  #           )$
 
 ci:
     autoupdate_schedule: weekly
     skip: []
     submodules: false
+ 
