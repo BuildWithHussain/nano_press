@@ -1,11 +1,13 @@
 # Copyright (c) 2025, Venkatesh M and contributors
 # For license information, please see license.txt
 
+import os
+
 import frappe
 from frappe.model.document import Document
 from frappe.utils import random_string
+
 from nano_press.nano_press.utils.ansible.src.AnsibleRunner import AnsibleRunner
-import os
 
 
 class FrappeSite(Document):
@@ -60,7 +62,7 @@ class FrappeSite(Document):
 
 	def get_deployment_vars(self) -> dict:
 		"""Prepare all variables needed for deployment"""
-		
+
 		install_apps = [row.app_name for row in self.get("install_apps") if row.app_name]
 		install_apps_csv = ",".join(install_apps) if install_apps else "erpnext"
 
@@ -94,11 +96,11 @@ class FrappeSite(Document):
 
 	def append_log(self, text: str) -> None:
 		frappe.db.sql(
-        """UPDATE `tabFrappe Site`
+			"""UPDATE `tabFrappe Site`
            SET deployment_log = CONCAT(%s, '\n', COALESCE(deployment_log, ''))
            WHERE name = %s""",
-        (text, self.name),
-    )
+			(text, self.name),
+		)
 
 	def stream_deployment_update(self, log_line: str):
 		"""Stream individual log line to UI in real-time.
@@ -136,7 +138,6 @@ class FrappeSite(Document):
 			)
 
 			if important or (self._line_count % 20 == 0):
-
 				frappe.db.sql(
 					"""UPDATE `tabFrappe Site`
 					   SET deployment_log = CONCAT(%s, '\n', COALESCE(deployment_log, ''))
@@ -146,7 +147,6 @@ class FrappeSite(Document):
 
 		except Exception as e:
 			frappe.log_error(f"Failed to stream deployment update: {e!s}", "Deployment Streaming")
-
 
 	def _trim_deployment_log(self, max_chars: int = 200_000):
 		frappe.db.sql(
@@ -158,24 +158,28 @@ class FrappeSite(Document):
 
 	def _playbooks_base(self) -> str:
 		return frappe.get_app_path("nano_press", "nano_press", "utils", "ansible", "playbooks")
-	
 
-	def _run_playbook_and_stream(self, playbook_filename: str, *, extra_vars: dict | None = None,
-                                 verbosity: int = 2, timeout: int = 60*20):
-		
+	def _run_playbook_and_stream(
+		self,
+		playbook_filename: str,
+		*,
+		extra_vars: dict | None = None,
+		verbosity: int = 2,
+		timeout: int = 60 * 20,
+	):
 		server = frappe.get_doc("Server", self.server_name)
 		runner = AnsibleRunner()
 		playbook_path = os.path.join(self._playbooks_base(), playbook_filename)
-		
+
 		out = runner.run_playbook_text(
-            inventory_host=server.server_ip,
-            ssh_user=(server.ssh_user or "root"),
-            ssh_port=int(server.ssh_port or 22),
-            playbook_path=playbook_path,
-            verbosity=verbosity,
-            timeout=timeout,
-            extra_vars=extra_vars,
-        )
+			inventory_host=server.server_ip,
+			ssh_user=(server.ssh_user or "root"),
+			ssh_port=int(server.ssh_port or 22),
+			playbook_path=playbook_path,
+			verbosity=verbosity,
+			timeout=timeout,
+			extra_vars=extra_vars,
+		)
 		for line in out.splitlines():
 			line = line.strip()
 			if line:
@@ -215,13 +219,17 @@ class FrappeSite(Document):
 		try:
 			self.stream_deployment_update("=== Starting Server Deployment ===")
 			self.stream_deployment_update("Executing docker compose up...")
-			self._run_playbook_and_stream("compose_up.yml", timeout=60*20)
+			self._run_playbook_and_stream("compose_up.yml", timeout=60 * 20)
 
 			self.stream_deployment_update("=== Deployment Completed Successfully ===")
 			self.db_set("status", "Deployed", update_modified=False)
 			frappe.publish_realtime(
 				event="frappe_site_update",
-				message={"frappe_site": self.name, "status": "success", "message": "Deployment completed successfully"},
+				message={
+					"frappe_site": self.name,
+					"status": "success",
+					"message": "Deployment completed successfully",
+				},
 				after_commit=False,
 			)
 			return {"status": 200, "message": "Deployment completed successfully"}
@@ -248,7 +256,6 @@ class FrappeSite(Document):
 
 			return {"status": 200, "message": "All containers stopped successfully"}
 
-
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "stop_all_containers failed")
 			err = f"Stop failed: {frappe.utils.cstr(exc)}"
@@ -260,26 +267,35 @@ class FrappeSite(Document):
 	@frappe.whitelist()
 	def queue_prepare_for_deployment(self):
 		job = frappe.enqueue_doc(
-			self.doctype, self.name, "prepare_for_deployment",
-			queue="long", timeout=60*45,
-			job_name=f"Prepare {self.name}"
+			self.doctype,
+			self.name,
+			"prepare_for_deployment",
+			queue="long",
+			timeout=60 * 45,
+			job_name=f"Prepare {self.name}",
 		)
 		return {"status": 202, "job_id": job.get_id()}
 
 	@frappe.whitelist()
 	def queue_deploy_site(self):
 		job = frappe.enqueue_doc(
-			self.doctype, self.name, "deploy_site",
-			queue="long", timeout=60*45,
-			job_name=f"Deploy {self.name}"
+			self.doctype,
+			self.name,
+			"deploy_site",
+			queue="long",
+			timeout=60 * 45,
+			job_name=f"Deploy {self.name}",
 		)
 		return {"status": 202, "job_id": job.get_id()}
 
 	@frappe.whitelist()
 	def queue_stop_all_containers(self):
 		job = frappe.enqueue_doc(
-			self.doctype, self.name, "stop_site",
-			queue="long", timeout=60*20,
-			job_name=f"Stop containers {self.name}"
+			self.doctype,
+			self.name,
+			"stop_site",
+			queue="short",
+			timeout=60 * 20,
+			job_name=f"Stop containers {self.name}",
 		)
 		return {"status": 202, "job_id": job.get_id()}
