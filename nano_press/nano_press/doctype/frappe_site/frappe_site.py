@@ -4,6 +4,8 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import random_string
+from nano_press.nano_press.utils.ansible.src.AnsibleRunner import AnsibleRunner
+import os
 
 
 class FrappeSite(Document):
@@ -11,12 +13,15 @@ class FrappeSite(Document):
 		self._ensure_password()
 
 	def before_save(self):
+		if self.docstatus == 1:
+			return
 		if self.is_custom and self.custom_image and self.has_value_changed("custom_image"):
 			self._sync_apps_from_custom_image()
 
 	def validate(self):
-		self.server = self.validate_server()
-		self._ensure_password()
+		self.validate_server()
+		if self.docstatus == 0:
+			self._ensure_password()
 
 	def validate_server(self):
 		linked_server = (self.server_name or "").strip()
@@ -55,17 +60,12 @@ class FrappeSite(Document):
 
 	def get_deployment_vars(self) -> dict:
 		"""Prepare all variables needed for deployment"""
-		admin_password = self.admin_password
-		traefik_password = self.traefik_password
-
-		# Build apps CSV
+		
 		install_apps = [row.app_name for row in self.get("install_apps") if row.app_name]
 		install_apps_csv = ",".join(install_apps) if install_apps else "erpnext"
 
-		# Resolve Docker image
 		docker_image = self.get_docker_image()
 
-		# Log the deployment configuration
 		log_text = f"""
         === Deployment Configuration ===
         Docker Image: {docker_image}
@@ -73,30 +73,32 @@ class FrappeSite(Document):
         Apps to Install: {install_apps_csv}
         SSL Enabled: {'Yes' if self.ssl_enabled else 'No'}
         Custom Image: {'Yes - ' + docker_image if self.is_custom else 'No'}
-        Admin Password: {'Set- ' + self.admin_password if self.admin_password else 'admin'}
+        Admin Password: {'Set- ' if self.admin_password else 'admin'}
         Traefik Domain: {self.traefik_domain or ''}
         Traefik Email: {self.traefik_email or ''}
         ================================
-        """
+        """.strip()
+
 		self.append_log(log_text)
 
-		deployment_vars = {
+		return {
 			"ssl_enabled": int(self.ssl_enabled or 0),
 			"docker_image": docker_image,
 			"site_name": self.site_name or "",
 			"traefik_domain": self.traefik_domain or "",
 			"traefik_email": self.traefik_email or "",
-			"traefik_plain_password": traefik_password,
+			"traefik_plain_password": self.traefik_password,
 			"install_apps_csv": install_apps_csv,
-			"admin_password": admin_password,
+			"admin_password": self.admin_password,
 		}
-		return deployment_vars
 
 	def append_log(self, text: str) -> None:
-		existing = self.get("deployment_log") or ""
-		self.deployment_log = (text + "\n" + existing).strip()
-		self.save(ignore_version=True)
-		frappe.db.commit()
+		frappe.db.sql(
+        """UPDATE `tabFrappe Site`
+           SET deployment_log = CONCAT(%s, '\n', COALESCE(deployment_log, ''))
+           WHERE name = %s""",
+        (text, self.name),
+    )
 
 	def stream_deployment_update(self, log_line: str):
 		"""Stream individual log line to UI in real-time.
@@ -113,16 +115,14 @@ class FrappeSite(Document):
 					"log_line": log_line,
 					"timestamp": frappe.utils.now_datetime(),
 				},
+				after_commit=False,
 			)
 
 			# Update document in database every 10 lines or on important lines
-			if hasattr(self, "_line_count"):
-				self._line_count += 1
-			else:
-				self._line_count = 1
+			self._line_count = getattr(self, "_line_count", 0) + 1
 
 			# Update document for important lines or every 10 lines
-			should_update_doc = (
+			important = (
 				self._line_count % 10 == 0  # Every 10 lines
 				or "TASK" in log_line  # Ansible tasks
 				or "Step" in log_line  # Docker steps
@@ -135,227 +135,151 @@ class FrappeSite(Document):
 				or "Installing" in log_line  # App installation
 			)
 
-			if should_update_doc:
-				# Update Deploy Server document with accumulated log lines
+			if important or (self._line_count % 20 == 0):
+
 				frappe.db.sql(
-					"""UPDATE `tabDeploy Server`
-					   SET deployment_log = CONCAT(COALESCE(deployment_log, ''), %s)
+					"""UPDATE `tabFrappe Site`
+					   SET deployment_log = CONCAT(%s, '\n', COALESCE(deployment_log, ''))
 					   WHERE name = %s""",
 					(log_line + "\n", self.name),
 				)
-				frappe.db.commit()
 
 		except Exception as e:
-			# Don't break deployment process if streaming fails
 			frappe.log_error(f"Failed to stream deployment update: {e!s}", "Deployment Streaming")
 
-	@frappe.whitelist()
-	def stop_all_containers(self) -> dict:
-		server = frappe.get_doc("Server", self.server_name)
-		from nano_press.nano_press.utils.ansible.src.AnsibleRunner import AnsibleRunner
 
-		runner = AnsibleRunner()
-		playbook_path = str(
-			frappe.get_app_path(
-				"nano_press",
-				"nano_press",
-				"utils",
-				"ansible",
-				"playbooks",
-				"stop_all_containers.yml",
-			)
+	def _trim_deployment_log(self, max_chars: int = 200_000):
+		frappe.db.sql(
+			"""UPDATE `tabFrappe Site`
+			SET deployment_log = RIGHT(deployment_log, %s)
+			WHERE name = %s AND CHAR_LENGTH(deployment_log) > %s""",
+			(max_chars, self.name, max_chars),
 		)
 
-		try:
-			# Execute with safe JSON extra-vars (none needed here), with verbosity and timeout
-			output_text = runner.run_playbook_text(
-				inventory_host=server.server_ip,
-				ssh_user=(server.ssh_user or "root"),
-				ssh_port=int(server.ssh_port or 22),
-				playbook_path=playbook_path,
-				verbosity=2,  # -vv
-				timeout=60 * 15,  # 15 minutes
-			)
+	def _playbooks_base(self) -> str:
+		return frappe.get_app_path("nano_press", "nano_press", "utils", "ansible", "playbooks")
+	
 
-			# Append logs (use your append_log; ideally it does db.set_value under the hood)
-			if hasattr(self, "append_log"):
-				self.append_log(output_text)
-
-			frappe.db.set_value(self.doctype, self.name, "status", "Stopped", update_modified=False)
-
-			return {"status": 200, "message": "All containers stopped successfully"}
-
-		except Exception as exc:
-			frappe.log_error(frappe.get_traceback(), "stop_all_containers failed")
-			if hasattr(self, "append_log"):
-				self.append_log(f"Stop failed: {frappe.utils.cstr(exc)}")
-			frappe.db.set_value(self.doctype, self.name, "status", "Failed", update_modified=False)
-			return {"status": 500, "message": frappe.utils.cstr(exc)}
+	def _run_playbook_and_stream(self, playbook_filename: str, *, extra_vars: dict | None = None,
+                                 verbosity: int = 2, timeout: int = 60*20):
+		
+		server = frappe.get_doc("Server", self.server_name)
+		runner = AnsibleRunner()
+		playbook_path = os.path.join(self._playbooks_base(), playbook_filename)
+		
+		out = runner.run_playbook_text(
+            inventory_host=server.server_ip,
+            ssh_user=(server.ssh_user or "root"),
+            ssh_port=int(server.ssh_port or 22),
+            playbook_path=playbook_path,
+            verbosity=verbosity,
+            timeout=timeout,
+            extra_vars=extra_vars,
+        )
+		for line in out.splitlines():
+			line = line.strip()
+			if line:
+				self.stream_deployment_update(line)
 
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:
-		server = self.validate_server()
-		deployment_vars = self.get_deployment_vars()
+		self.validate_server()
+		vars = self.get_deployment_vars()
+		self.db_set("status", "Deploying", update_modified=False)
+
 		try:
-			self.status = "Deploying"
-			self.save(ignore_version=True)
-			frappe.db.commit()
-
-			from nano_press.nano_press.utils.ansible_runner import run_playbook
-
-			# 1) Install Docker + Compose v2
 			self.stream_deployment_update("=== Installing Docker and Docker Compose ===")
-			output = run_playbook(
-				inventory_host=server.server_ip,
-				ssh_user=(server.ssh_user or "root"),
-				ssh_port=int(server.ssh_port or 22),
-				playbook_path=str(
-					frappe.get_app_path(
-						"nano_press",
-						"nano_press",
-						"utils",
-						"ansible",
-						"playbooks",
-						"install_docker.yml",
-					)
-				),
-			)
-			# Stream output line by line
-			for line in output.split("\n"):
-				if line.strip():
-					self.stream_deployment_update(line.strip())
+			self._run_playbook_and_stream("install_docker.yml")
 
-			# 2) Prepare repo
 			self.stream_deployment_update("=== Preparing Frappe Docker Repository ===")
-			output = run_playbook(
-				inventory_host=server.server_ip,
-				ssh_user=(server.ssh_user or "root"),
-				ssh_port=int(server.ssh_port or 22),
-				playbook_path=str(
-					frappe.get_app_path(
-						"nano_press",
-						"nano_press",
-						"utils",
-						"ansible",
-						"playbooks",
-						"prepare_repo.yml",
-					)
-				),
-			)
-			# Stream output line by line
-			for line in output.split("\n"):
-				if line.strip():
-					self.stream_deployment_update(line.strip())
+			self._run_playbook_and_stream("prepare_repo.yml")
 
-			# 3) Render pwd.yml and .env on remote from Deploy Site data
 			self.stream_deployment_update("=== Configuring Deployment Settings ===")
-			output = run_playbook(
-				inventory_host=server.server_ip,
-				ssh_user=(server.ssh_user or "root"),
-				ssh_port=int(server.ssh_port or 22),
-				playbook_path=str(
-					frappe.get_app_path(
-						"nano_press",
-						"nano_press",
-						"utils",
-						"ansible",
-						"playbooks",
-						"render_pwd.yml",
-					)
-				),
-				extra_vars=deployment_vars,
-			)
-			# Stream output line by line
-			for line in output.split("\n"):
-				if line.strip():
-					self.stream_deployment_update(line.strip())
+			self._run_playbook_and_stream("render_pwd.yml", extra_vars=vars)
 
 			self.stream_deployment_update("=== Deployment Preparation Completed Successfully ===")
-			self.status = "Ready To Deploy"
-			self.last_deployed_at = frappe.utils.now_datetime()
-			self.save(ignore_version=True)
-			frappe.db.commit()
+			self.db_set("status", "Ready To Deploy", update_modified=False)
+			self.db_set("last_deployed_at", frappe.utils.now_datetime(), update_modified=False)
 			return {"status": 200, "message": "Deployment prepared successfully"}
-		except Exception as exc:
-			error_msg = f"Deployment failed: {frappe.utils.cstr(exc)}"
-			self.stream_deployment_update(f"ERROR: {error_msg}")
-			self.append_log(error_msg)
 
-			self.status = "Failed"
-			self.save(ignore_version=True)
-			frappe.db.commit()
+		except Exception as exc:
+			msg = f"Deployment failed: {frappe.utils.cstr(exc)}"
+			self.stream_deployment_update(f"ERROR: {msg}")
+			self.append_log(msg)
+			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
-	def frappe_site(self) -> dict:
-		server = self.validate_server()
-		from nano_press.nano_press.utils.ansible.src.AnsibleRunner import AnsibleRunner
-
-		runner = AnsibleRunner()
-
-		playbook_path = str(
-			frappe.get_app_path(
-				"nano_press",
-				"nano_press",
-				"utils",
-				"ansible",
-				"playbooks",
-				"compose_up.yml",
-			)
-		)
-
+	def deploy_site(self) -> dict:
+		self.validate_server()
 		try:
 			self.stream_deployment_update("=== Starting Server Deployment ===")
 			self.stream_deployment_update("Executing docker compose up...")
-
-			output_text = runner.run_playbook_text(
-				inventory_host=server.server_ip,
-				ssh_user=(server.ssh_user or "root"),
-				ssh_port=int(server.ssh_port or 22),
-				playbook_path=playbook_path,
-				verbosity=2,  # -vv
-				timeout=60 * 20,  # 20 minutes; tune for your infra
-			)
-
-			# Stream output line by line
-			for line in output_text.split("\n"):
-				if line.strip():
-					self.stream_deployment_update(line.strip())
+			self._run_playbook_and_stream("compose_up.yml", timeout=60*20)
 
 			self.stream_deployment_update("=== Deployment Completed Successfully ===")
-
-			# 5) Update status WITHOUT save/validate (prevents “Missing fields” popups)
-			frappe.db.set_value(self.doctype, self.name, "status", "Deployed", update_modified=False)
-
-			# Send completion notification
+			self.db_set("status", "Deployed", update_modified=False)
 			frappe.publish_realtime(
 				event="frappe_site_update",
-				message={
-					"frappe_site": self.name,
-					"status": "success",
-					"message": "Deployment completed successfully",
-				},
+				message={"frappe_site": self.name, "status": "success", "message": "Deployment completed successfully"},
+				after_commit=False,
 			)
-
 			return {"status": 200, "message": "Deployment completed successfully"}
 
 		except Exception as exc:
-			# Log full traceback for operators
-			frappe.log_error(frappe.get_traceback(), "frappe_site failed")
-
-			# Stream error message
-			error_msg = f"Deployment failed: {frappe.utils.cstr(exc)}"
-			self.stream_deployment_update(f"ERROR: {error_msg}")
-
-			# Send failure notification
+			err = f"Deployment failed: {frappe.utils.cstr(exc)}"
+			self.stream_deployment_update(f"ERROR: {err}")
 			frappe.publish_realtime(
 				event="frappe_site_update",
-				message={
-					"frappe_site": self.name,
-					"status": "error",
-					"message": error_msg,
-				},
+				message={"frappe_site": self.name, "status": "error", "message": err},
+				after_commit=False,
 			)
-
-			frappe.db.set_value(self.doctype, self.name, "status", "Failed", update_modified=False)
+			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
+
+	@frappe.whitelist()
+	def stop_site(self) -> dict:
+		try:
+			self.stream_deployment_update("=== Stopping all containers ===")
+			self._run_playbook_and_stream("stop_all_containers.yml", timeout=60 * 15)
+
+			self.append_log("All containers stop playbook executed.")
+			self.db_set("status", "Stopped", update_modified=False)
+
+			return {"status": 200, "message": "All containers stopped successfully"}
+
+
+		except Exception as exc:
+			frappe.log_error(frappe.get_traceback(), "stop_all_containers failed")
+			err = f"Stop failed: {frappe.utils.cstr(exc)}"
+			self.stream_deployment_update(f"ERROR: {err}")
+			self.append_log(err)
+			self.db_set("status", "Failed", update_modified=False)
+			return {"status": 500, "message": frappe.utils.cstr(exc)}
+
+	@frappe.whitelist()
+	def queue_prepare_for_deployment(self):
+		job = frappe.enqueue_doc(
+			self.doctype, self.name, "prepare_for_deployment",
+			queue="long", timeout=60*45,
+			job_name=f"Prepare {self.name}"
+		)
+		return {"status": 202, "job_id": job.get_id()}
+
+	@frappe.whitelist()
+	def queue_deploy_site(self):
+		job = frappe.enqueue_doc(
+			self.doctype, self.name, "deploy_site",
+			queue="long", timeout=60*45,
+			job_name=f"Deploy {self.name}"
+		)
+		return {"status": 202, "job_id": job.get_id()}
+
+	@frappe.whitelist()
+	def queue_stop_all_containers(self):
+		job = frappe.enqueue_doc(
+			self.doctype, self.name, "stop_site",
+			queue="long", timeout=60*20,
+			job_name=f"Stop containers {self.name}"
+		)
+		return {"status": 202, "job_id": job.get_id()}
