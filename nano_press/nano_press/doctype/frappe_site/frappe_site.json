@@ -22,7 +22,8 @@
   "traefik_password",
   "section_break_fsva",
   "last_deployed_at",
-  "deployment_log"
+  "deployment_log",
+  "amended_from"
  ],
  "fields": [
   {
@@ -53,6 +54,7 @@
    "options": "App Install Item"
   },
   {
+   "allow_on_submit": 1,
    "default": "Not Deployed",
    "fieldname": "status",
    "fieldtype": "Select",
@@ -61,12 +63,15 @@
    "options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "last_deployed_at",
    "fieldtype": "Datetime",
    "label": "Last Deployed At",
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
+   "description": "Real-time build output",
    "fieldname": "deployment_log",
    "fieldtype": "Long Text",
    "label": "Deployment Log",
@@ -77,29 +82,34 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "ssl_enabled",
    "fieldtype": "Check",
    "label": "Enable SSL"
   },
   {
+   "allow_on_submit": 1,
    "depends_on": "eval: doc.ssl_enabled == 1",
    "fieldname": "section_break_tues",
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "traefik_domain",
    "fieldtype": "Data",
    "label": "Traefik Domain",
    "mandatory_depends_on": "eval:doc.ssl_enabled=='1'"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "traefik_email",
    "fieldtype": "Data",
    "label": "Traefik Email",
    "mandatory_depends_on": "eval:doc.ssl_enabled=='1'"
   },
   {
+   "allow_on_submit": 1,
    "description": "Leave it blank to generate random password",
    "fieldname": "traefik_password",
    "fieldtype": "Data",
@@ -141,21 +151,23 @@
    "fieldtype": "Data",
    "label": "Docker Image",
    "mandatory_depends_on": "eval:doc.is_custom=='0'"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Frappe Site",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [
-  {
-   "link_doctype": "Custom Image",
-   "link_fieldname": "server_name"
-  },
-  {
-   "link_doctype": "Server",
-   "link_fieldname": "server_name"
-  }
- ],
- "modified": "2025-08-29 00:17:14.326344",
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-08-30 15:11:11.390162",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
@@ -179,5 +191,7 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "site_name"
+ "title_field": "site_name",
+ "track_changes": 1,
+ "track_seen": 1
 }
