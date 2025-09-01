@@ -38,6 +38,7 @@
    "fieldname": "site_name",
    "fieldtype": "Data",
    "label": "Site Name",
+   "no_copy": 1,
    "placeholder": "site.example.com",
    "reqd": 1,
    "unique": 1
@@ -60,6 +61,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
+   "no_copy": 1,
    "options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped"
   },
   {
@@ -67,6 +69,7 @@
    "fieldname": "last_deployed_at",
    "fieldtype": "Datetime",
    "label": "Last Deployed At",
+   "no_copy": 1,
    "read_only": 1
   },
   {
@@ -75,6 +78,7 @@
    "fieldname": "deployment_log",
    "fieldtype": "Long Text",
    "label": "Deployment Log",
+   "no_copy": 1,
    "read_only": 1
   },
   {
@@ -109,17 +113,18 @@
    "mandatory_depends_on": "eval:doc.ssl_enabled=='1'"
   },
   {
-   "allow_on_submit": 1,
    "description": "Leave it blank to generate random password",
    "fieldname": "traefik_password",
    "fieldtype": "Data",
-   "label": "Traefik Password"
+   "label": "Traefik Password",
+   "no_copy": 1
   },
   {
    "description": "Leave it blank to generate random password",
    "fieldname": "admin_password",
    "fieldtype": "Data",
    "label": "Admin Password",
+   "no_copy": 1,
    "not_nullable": 1,
    "placeholder": "s0QlAPg8udcOvij"
   },
@@ -167,7 +172,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-30 15:11:11.390162",
+ "modified": "2025-08-30 16:51:52.537930",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",

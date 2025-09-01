@@ -14,7 +14,6 @@ const STATUS = {
 
 frappe.ui.form.on("Frappe Site", {
   async refresh(frm) {
-    console.log("[Frappe Site JS] refresh", { name: frm.doc.name, status: frm.doc.status, docstatus: frm.doc.docstatus });
 
     // Intro banners (submitted docs only)
     if (frm.doc.docstatus === 1 && frm.doc.status === STATUS.NOT_DEPLOYED) {
