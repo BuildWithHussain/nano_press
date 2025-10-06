@@ -12,3 +12,9 @@ def has_app_permission():
 		return False
 
 	return True
+
+
+@frappe.whitelist()
+def get_admin_password(site_name):
+	site = frappe.get_doc("Frappe Site", site_name)
+	return site.get_password("admin_password")
