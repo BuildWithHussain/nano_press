@@ -75,7 +75,7 @@ class FrappeSite(Document):
         Apps to Install: {install_apps_csv}
         SSL Enabled: {'Yes' if self.ssl_enabled else 'No'}
         Custom Image: {'Yes - ' + docker_image if self.is_custom else 'No'}
-        Admin Password: {'Set- ' if self.admin_password else 'admin'}
+        Admin Password: {'Set- ' if self.get_password('admin_password') else 'admin'}
         Traefik Domain: {self.traefik_domain or ''}
         Traefik Email: {self.traefik_email or ''}
         ================================
@@ -89,9 +89,9 @@ class FrappeSite(Document):
 			"site_name": self.site_name or "",
 			"traefik_domain": self.traefik_domain or "",
 			"traefik_email": self.traefik_email or "",
-			"traefik_plain_password": self.traefik_password,
+			"traefik_plain_password": self.get_password("traefik_password"),
 			"install_apps_csv": install_apps_csv,
-			"admin_password": self.admin_password,
+			"admin_password": self.get_password("admin_password"),
 		}
 
 	def append_log(self, text: str) -> None:

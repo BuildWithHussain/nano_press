@@ -113,16 +113,19 @@
    "mandatory_depends_on": "eval:doc.ssl_enabled=='1'"
   },
   {
+   "allow_on_submit": 1,
    "description": "Leave it blank to generate random password",
    "fieldname": "traefik_password",
-   "fieldtype": "Data",
+   "fieldtype": "Password",
    "label": "Traefik Password",
-   "no_copy": 1
+   "no_copy": 1,
+   "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "description": "Leave it blank to generate random password",
    "fieldname": "admin_password",
-   "fieldtype": "Data",
+   "fieldtype": "Password",
    "label": "Admin Password",
    "no_copy": 1,
    "not_nullable": 1,
@@ -172,7 +175,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-30 16:51:52.537930",
+ "modified": "2025-09-24 22:52:47.682349",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
