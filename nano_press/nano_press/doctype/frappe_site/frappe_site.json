@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "site_configuration_section",
   "server_name",
   "site_name",
   "status",
@@ -13,13 +14,19 @@
   "column_break_dkti",
   "docker_image",
   "custom_image",
+  "username",
   "admin_password",
   "section_break_hzks",
   "install_apps",
   "section_break_tues",
   "traefik_domain",
   "traefik_email",
+  "column_break_lpuc",
   "traefik_password",
+  "database_configuration_section",
+  "db_username",
+  "column_break_qyhi",
+  "db_password",
   "section_break_fsva",
   "last_deployed_at",
   "deployment_log",
@@ -83,7 +90,8 @@
   },
   {
    "fieldname": "section_break_fsva",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Logs"
   },
   {
    "allow_on_submit": 1,
@@ -96,7 +104,8 @@
    "allow_on_submit": 1,
    "depends_on": "eval: doc.ssl_enabled == 1",
    "fieldname": "section_break_tues",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "SSL Configuration"
   },
   {
    "allow_on_submit": 1,
@@ -117,6 +126,7 @@
    "description": "Leave it blank to generate random password",
    "fieldname": "traefik_password",
    "fieldtype": "Password",
+   "in_preview": 1,
    "label": "Traefik Password",
    "no_copy": 1,
    "read_only": 1
@@ -126,15 +136,18 @@
    "description": "Leave it blank to generate random password",
    "fieldname": "admin_password",
    "fieldtype": "Password",
+   "in_preview": 1,
    "label": "Admin Password",
    "no_copy": 1,
    "not_nullable": 1,
-   "placeholder": "s0QlAPg8udcOvij"
+   "placeholder": "s0QlAPg8udcOvij",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.is_custom=='1'",
    "fieldname": "section_break_hzks",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Apps to Install"
   },
   {
    "depends_on": "eval:doc.is_custom=='1'",
@@ -169,13 +182,48 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "site_configuration_section",
+   "fieldtype": "Section Break",
+   "label": "Site Configuration"
+  },
+  {
+   "fieldname": "column_break_lpuc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Administrator",
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "label": "Username"
+  },
+  {
+   "fieldname": "database_configuration_section",
+   "fieldtype": "Section Break",
+   "label": "Database Configuration"
+  },
+  {
+   "default": "root",
+   "fieldname": "db_username",
+   "fieldtype": "Data",
+   "label": "DB Username"
+  },
+  {
+   "fieldname": "column_break_qyhi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "db_password",
+   "fieldtype": "Password",
+   "label": "DB Password"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-24 22:52:47.682349",
+ "modified": "2025-10-07 00:08:30.206214",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
