@@ -1,181 +1,88 @@
-// Copyright (c) 2025
-// Frappe Site doctype JS
-
-console.log("[Frappe Site JS] loaded");
-
-const STATUS = {
-  NOT_DEPLOYED: "Not Deployed",
-  READY: "Ready To Deploy",
-  DEPLOYING: "Deploying",
-  DEPLOYED: "Deployed",
-  FAILED: "Failed",
-  STOPPED: "Stopped",
-};
-
 frappe.ui.form.on("Frappe Site", {
-  async refresh(frm) {
-
-    // Intro banners (submitted docs only)
-    if (frm.doc.docstatus === 1 && frm.doc.status === STATUS.NOT_DEPLOYED) {
-      frm.set_intro(__("Click on <b>Prepare for Deployment</b> to start the deployment process."), "info");
-    }
-    if (frm.doc.docstatus === 1 && frm.doc.status === STATUS.DEPLOYED) {
-      frm.set_intro(__("Site is deployed. App installs may still be running; it can take a few minutes to be fully functional."), "warning");
-    }
-
-    // A visible refresh button (header)
+  refresh(frm) {
     frm.add_custom_button(__("Refresh"), () => frm.reload_doc());
 
-    // Actions by status (shown as header buttons - no group param)
-    if (frm.doc.docstatus === 1 && frm.doc.status === STATUS.NOT_DEPLOYED) {
-      frm.add_custom_button(__("Prepare for Deployment"), () => queue_prepare_for_deployment(frm)).addClass("btn-primary");
+    if (frm.doc.status === "Not Deployed") {
+      frm.add_custom_button(__("Prepare for Deployment"), () => call_doc_method(frm, "prepare_for_deployment")).addClass("btn-default");
+    } else if (frm.doc.status === "Ready To Deploy") {
+      frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "queue_deploy_site")).addClass("btn-primary");
+    } else if (frm.doc.status === "Deployed") {
+      frm.add_custom_button(__("Stop Containers"), () => call_doc_method(frm, "queue_stop_all_containers")).addClass("btn-danger");
+      if (frm.doc.site_url) {
+        frm.add_custom_button(__("Visit Site"), () => window.open(frm.doc.site_url)).addClass("btn-info");
+      } else if (!frm.doc.ssl_enabled && frm.doc.server_name) {
+        frappe.db.get_doc("Server", frm.doc.server_name).then(server => {
+          const ip = server.server_ip || "localhost";
+          frm.add_custom_button(__("Visit Site (Insecure)"), () => window.open(`http://${ip}:8080`)).addClass("btn-warning");
+        });
+      }
     }
 
-    if (frm.doc.status === STATUS.READY) {
-      frm.add_custom_button(__("Deploy"), () => queue_deploy_site(frm)).addClass("btn-primary");
-    }
-
-    if (frm.doc.status === STATUS.DEPLOYING) {
-      frm.add_custom_button(__("Cancel Deployment"), () => {
-        frappe.msgprint(__("Cancel is not implemented yet."));
-      });
-    }
-
-    if (frm.doc.status === STATUS.DEPLOYED) {
-      frm.add_custom_button(__("View Site"), () => {
-        const url = (frm.doc.site_name || "").trim();
-        if (url) window.open(`https://${url}`, "_blank", "noopener,noreferrer");
-        else frappe.msgprint(__("Site URL (site_name) not found."));
-      });
-
-      frm.add_custom_button(__("Stop All Containers"), () => queue_stop_all_containers(frm)).addClass("btn-danger");
-
-	  frm.add_custom_button(__("Destroy Site"), () => {
-		frappe.warn(
-			__("Destroy Site"),
-			__("This will irreversibly remove containers/volumes. Are you sure?"),
-			() => frappe.msgprint(__("Not implemented yet.")),
-			__("I Understand"),
-			true
-		);
-		}).addClass("btn-danger");
-    }
-
-    if (frm.doc.status === STATUS.FAILED || frm.doc.status === STATUS.STOPPED) {
-      frm.add_custom_button(__("Retry Deployment"), () => queue_deploy_site(frm)).addClass("btn-primary");
-    }
-
-    // Realtime listeners once
-    setup_deployment_notifications(frm);
-  },
+    // (Re)bind clipboard handlers safely on every refresh
+    bind_clipboard_handlers(frm);
+  }
 });
 
-/* -------------------- Actions (background-queued) -------------------- */
+function bind_clipboard_handlers(frm) {
+  const hasCreds = frm.doc.admin_password && frm.doc.username;
+  const pwdField = frm.fields_dict["admin_password"];
+  const userField = frm.fields_dict["username"];
+  if (!hasCreds || !pwdField || !userField) return;
 
-async function queue_prepare_for_deployment(frm) {
-  if (frm.__busy_prepare) return;
-  frm.__busy_prepare = true;
-  try {
-    frappe.show_alert(__("Queuing server preparation..."), 5);
-    const r = await frm.call("queue_prepare_for_deployment");
-    const msg = r.message || {};
-    frappe.show_alert({ message: __("Queued: {0}", [msg.job_id || "job"]), indicator: "blue" }, 5);
-    frm.reload_doc();
-  } catch (e) {
-    frappe.throw(e.message || e);
-  } finally {
-    frm.__busy_prepare = false;
+  // Set labels once per form lifetime
+  if (!pwdField._label_patched) {
+    pwdField.set_label('Admin Password - <span class="fa fa-clipboard" title="Copy to Clipboard"></span>');
+    userField.set_label('Admin Username - <span class="fa fa-clipboard" title="Copy to Clipboard"></span>');
+    pwdField._label_patched = true;
+    userField._label_patched = true;
   }
-}
 
-async function queue_deploy_site(frm) {
-  if (frm.__busy_deploy) return;
-  frm.__busy_deploy = true;
-  try {
-    frappe.show_alert(__("Queuing deployment..."), 5);
-    const r = await frm.call("queue_deploy_site");
-    const msg = r.message || {};
-    frappe.show_alert({ message: __("Queued: {0}", [msg.job_id || "job"]), indicator: "blue" }, 5);
-    frm.reload_doc();
-  } catch (e) {
-    frappe.throw(e.message || e);
-  } finally {
-    frm.__busy_deploy = false;
-  }
-}
-
-async function queue_stop_all_containers(frm) {
-  if (frm.__busy_stop) return;
-  frappe.warn(
-    __("Stop All Containers"),
-    __("This will stop the running site and make it unavailable. You can redeploy later."),
-    async () => {
-      frm.__busy_stop = true;
-      try {
-        frappe.show_alert(__("Queuing stop-all-containers..."), 5);
-        const r = await frm.call("queue_stop_all_containers");
-        const msg = r.message || {};
-        frappe.show_alert({ message: __("Queued: {0}", [msg.job_id || "job"]), indicator: "orange" }, 5);
-        frm.reload_doc();
-      } catch (e) {
-        frappe.throw(e.message || e);
-      } finally {
-        frm.__busy_stop = false;
-      }
-    },
-    __("Stop Containers"),
-    true
-  );
-}
-
-/* -------------------- Realtime streaming + UX -------------------- */
-
-function setup_deployment_notifications(frm) {
-  if (frm.__siteRealtimeBound) return;
-  frm.__siteRealtimeBound = true;
-
-  frappe.realtime.on("frappe_site_update", (data) => {
-    if (!data || data.frappe_site !== frm.doc.name) return;
-    frappe.show_alert({ message: data.message || __("Update received"), indicator: data.status === "success" ? "green" : "red" }, 5);
-    frm.reload_doc();
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(`Frappe Site: ${frm.doc.site_name || frm.doc.name}`, {
-        body: data.message || "",
-        icon: "/assets/frappe/images/frappe-favicon.svg",
+  // Always remove old handlers before adding new ones (use event namespaces)
+  $(pwdField.label_area)
+    .off('click.copy') // prevent duplicates
+    .on('click.copy', function () {
+      frappe.call({
+        method: 'nano_press.get_admin_password',
+        args: { site_name: frm.doc.name },
+        callback: function (r) {
+          const val = r && r.message;
+          if (val) {
+            navigator.clipboard.writeText(val)
+              .then(() => frappe.show_alert('Admin password copied to clipboard!'))
+              .catch((error) => frappe.show_alert('Error copying password: ' + error));
+          } else {
+            frappe.show_alert('Could not retrieve admin password.');
+          }
+        }
       });
-    }
-  });
+    });
 
-  frappe.realtime.on("frappe_site_live_update", (data) => {
-    if (!data || data.frappe_site !== frm.doc.name) return;
-    update_live_deployment_log(frm, data.log_line || "");
-    auto_scroll_deployment_log();
-  });
-
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
-  }
+  $(userField.label_area)
+    .off('click.copy')
+    .on('click.copy', function () {
+      navigator.clipboard.writeText(frm.doc.username)
+        .then(() => frappe.show_alert('Username copied to clipboard!'))
+        .catch((error) => frappe.show_alert('Error copying username: ' + error));
+    });
 }
 
-function update_live_deployment_log(frm, log_line) {
-  if (!log_line) return;
-  const field = frm.get_field("deployment_log");
-  if (!field) return;
-
-  const current = frm.doc.deployment_log || "";
-  frm.doc.deployment_log = log_line + "\n" + current; // PREPEND newest first
-  field.refresh();
-
-  const line = (log_line || "").toLowerCase();
-  const hits = ["task", "step", "pulling", "creating", "starting", "installing", "error", "failed", "ok:", "changed:"];
-  if (hits.some((k) => line.includes(k))) {
-    frappe.show_alert({ message: `🚀 ${log_line}`, indicator: "blue" }, 5);
+function call_doc_method(frm, method_name) {
+  if (!frm.doc.name) {
+    frappe.msgprint(__("Please save the document before calling this action."));
+    return;
   }
-}
 
-function auto_scroll_deployment_log() {
-  setTimeout(() => {
-    const $ta = $(`div[data-fieldname="deployment_log"] textarea, textarea[data-fieldname="deployment_log"]`);
-    if ($ta && $ta.length) $ta.scrollTop(0); // stay at top
-  }, 100);
+  frappe.show_alert({ message: __("Processing..."), indicator: "blue" }, 3);
+
+  frm.call(method_name)
+    .then((r) => {
+      const msg = r?.message || {};
+      const display = (typeof msg === "string") ? msg : (msg.job_id || msg.message || JSON.stringify(msg));
+      frappe.show_alert({ message: __("Result: {0}", [display]), indicator: "green" }, 6);
+      frm.reload_doc();
+    })
+    .catch((err) => {
+      console.error(err);
+      frappe.msgprint(err?.message || __("Server call failed"));
+    });
 }

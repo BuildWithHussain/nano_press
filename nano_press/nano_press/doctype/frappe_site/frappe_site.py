@@ -8,9 +8,40 @@ from frappe.model.document import Document
 from frappe.utils import random_string
 
 from nano_press.nano_press.utils.ansible.src.AnsibleRunner import AnsibleRunner
+from nano_press.utils.log import append_long_text
 
 
 class FrappeSite(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		from nano_press.nano_press.doctype.app_install_item.app_install_item import AppInstallItem
+
+		admin_password: DF.Password
+		amended_from: DF.Link | None
+		custom_image: DF.Link | None
+		db_password: DF.Password | None
+		db_username: DF.Data | None
+		deployment_log: DF.LongText | None
+		docker_image: DF.Data | None
+		install_apps: DF.Table[AppInstallItem]
+		is_custom: DF.Check
+		last_deployed_at: DF.Datetime | None
+		server_name: DF.Link
+		site_name: DF.Data
+		ssl_enabled: DF.Check
+		status: DF.Literal["Not Deployed", "Ready To Deploy", "Deploying", "Deployed", "Failed", "Stopped"]
+		traefik_domain: DF.Data | None
+		traefik_email: DF.Data | None
+		traefik_password: DF.Password | None
+		username: DF.Data | None
+	# end: auto-generated types
+
 	def before_insert(self):
 		self._ensure_password()
 
@@ -28,7 +59,7 @@ class FrappeSite(Document):
 	def validate_server(self):
 		linked_server = (self.server_name or "").strip()
 		if not linked_server:
-			frappe.throw("Please select a Server in this record before deploying.")
+			frappe.throw("Please select a Server before deploying.")
 		if not frappe.db.exists("Server", linked_server):
 			frappe.throw(f"Linked Server '{linked_server}' does not exist.")
 		server = frappe.get_doc("Server", linked_server)
@@ -42,6 +73,9 @@ class FrappeSite(Document):
 
 		if self.ssl_enabled and not self.traefik_password:
 			self.traefik_password = random_string(10)
+
+		if not self.db_password:
+			self.db_password = random_string(10)
 
 	def _sync_apps_from_custom_image(self):
 		self.set("install_apps", [])
@@ -65,101 +99,27 @@ class FrappeSite(Document):
 
 		install_apps = [row.app_name for row in self.get("install_apps") if row.app_name]
 		install_apps_csv = ",".join(install_apps) if install_apps else "erpnext"
+		if not self.ssl_enabled:
+			traefik_password = ""
+		else:
+			traefik_password = self.get_password("traefik_password")
 
 		docker_image = self.get_docker_image()
-
-		log_text = f"""
-        === Deployment Configuration ===
-        Docker Image: {docker_image}
-        Site Name: {self.site_name}
-        Apps to Install: {install_apps_csv}
-        SSL Enabled: {'Yes' if self.ssl_enabled else 'No'}
-        Custom Image: {'Yes - ' + docker_image if self.is_custom else 'No'}
-        Admin Password: {'Set- ' if self.get_password('admin_password') else 'admin'}
-        Traefik Domain: {self.traefik_domain or ''}
-        Traefik Email: {self.traefik_email or ''}
-        ================================
-        """.strip()
-
-		self.append_log(log_text)
-
 		return {
 			"ssl_enabled": int(self.ssl_enabled or 0),
 			"docker_image": docker_image,
 			"site_name": self.site_name or "",
 			"traefik_domain": self.traefik_domain or "",
 			"traefik_email": self.traefik_email or "",
-			"traefik_plain_password": self.get_password("traefik_password"),
+			"traefik_plain_password": traefik_password,
 			"install_apps_csv": install_apps_csv,
-			"admin_password": self.get_password("admin_password"),
+			"admin_password": self.get_password("admin_password") or "admin",
 		}
-
-	def append_log(self, text: str) -> None:
-		frappe.db.sql(
-			"""UPDATE `tabFrappe Site`
-           SET deployment_log = CONCAT(%s, '\n', COALESCE(deployment_log, ''))
-           WHERE name = %s""",
-			(text, self.name),
-		)
-
-	def stream_deployment_update(self, log_line: str):
-		"""Stream individual log line to UI in real-time.
-
-		Args:
-			log_line: Single line from deployment output
-		"""
-		try:
-			# Send real-time notification to UI
-			frappe.publish_realtime(
-				event="frappe_site_live_update",
-				message={
-					"frappe_site": self.name,
-					"log_line": log_line,
-					"timestamp": frappe.utils.now_datetime(),
-				},
-				after_commit=False,
-			)
-
-			# Update document in database every 10 lines or on important lines
-			self._line_count = getattr(self, "_line_count", 0) + 1
-
-			# Update document for important lines or every 10 lines
-			important = (
-				self._line_count % 10 == 0  # Every 10 lines
-				or "TASK" in log_line  # Ansible tasks
-				or "Step" in log_line  # Docker steps
-				or "ERROR" in log_line  # Errors
-				or "FAILED" in log_line  # Failures
-				or "ok:" in log_line  # Ansible success
-				or "changed:" in log_line  # Ansible changes
-				or "Creating" in log_line  # Container creation
-				or "Starting" in log_line  # Container starting
-				or "Installing" in log_line  # App installation
-			)
-
-			if important or (self._line_count % 20 == 0):
-				frappe.db.sql(
-					"""UPDATE `tabFrappe Site`
-					   SET deployment_log = CONCAT(%s, '\n', COALESCE(deployment_log, ''))
-					   WHERE name = %s""",
-					(log_line + "\n", self.name),
-				)
-
-		except Exception as e:
-			frappe.log_error(f"Failed to stream deployment update: {e!s}", "Deployment Streaming")
-
-	def _trim_deployment_log(self, max_chars: int = 200_000):
-		frappe.db.sql(
-			"""UPDATE `tabFrappe Site`
-			SET deployment_log = RIGHT(deployment_log, %s)
-			WHERE name = %s AND CHAR_LENGTH(deployment_log) > %s""",
-			(max_chars, self.name, max_chars),
-		)
 
 	def _playbooks_base(self) -> str:
 		return frappe.get_app_path("nano_press", "nano_press", "utils", "ansible", "playbooks")
 
-	def _run_playbook_and_stream(
+	def _run_playbook(
 		self,
 		playbook_filename: str,
 		*,
@@ -180,10 +140,14 @@ class FrappeSite(Document):
 			timeout=timeout,
 			extra_vars=extra_vars,
 		)
-		for line in out.splitlines():
-			line = line.strip()
-			if line:
-				self.stream_deployment_update(line)
+		append_long_text(
+			self,
+			"deployment_log",
+			out,
+			header_title=f"Playbook: {playbook_filename}",
+			newest_on_top=True,
+			trim_to_bytes=100000,
+		)
 
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:
@@ -192,24 +156,15 @@ class FrappeSite(Document):
 		self.db_set("status", "Deploying", update_modified=False)
 
 		try:
-			self.stream_deployment_update("=== Installing Docker and Docker Compose ===")
-			self._run_playbook_and_stream("install_docker.yml")
-
-			self.stream_deployment_update("=== Preparing Frappe Docker Repository ===")
-			self._run_playbook_and_stream("prepare_repo.yml")
-
-			self.stream_deployment_update("=== Configuring Deployment Settings ===")
-			self._run_playbook_and_stream("render_pwd.yml", extra_vars=vars)
-
-			self.stream_deployment_update("=== Deployment Preparation Completed Successfully ===")
+			self._run_playbook("install_docker.yml")
+			self._run_playbook("prepare_repo.yml")
+			self._run_playbook("render_pwd.yml", extra_vars=vars)
 			self.db_set("status", "Ready To Deploy", update_modified=False)
 			self.db_set("last_deployed_at", frappe.utils.now_datetime(), update_modified=False)
 			return {"status": 200, "message": "Deployment prepared successfully"}
 
 		except Exception as exc:
-			msg = f"Deployment failed: {frappe.utils.cstr(exc)}"
-			self.stream_deployment_update(f"ERROR: {msg}")
-			self.append_log(msg)
+			frappe.log_error(frappe.get_traceback(), "prepare_for_deployment failed")
 			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
@@ -217,11 +172,7 @@ class FrappeSite(Document):
 	def deploy_site(self) -> dict:
 		self.validate_server()
 		try:
-			self.stream_deployment_update("=== Starting Server Deployment ===")
-			self.stream_deployment_update("Executing docker compose up...")
-			self._run_playbook_and_stream("compose_up.yml", timeout=60 * 20)
-
-			self.stream_deployment_update("=== Deployment Completed Successfully ===")
+			self._run_playbook("compose_up.yml", timeout=60 * 20)
 			self.db_set("status", "Deployed", update_modified=False)
 			frappe.publish_realtime(
 				event="frappe_site_update",
@@ -236,7 +187,6 @@ class FrappeSite(Document):
 
 		except Exception as exc:
 			err = f"Deployment failed: {frappe.utils.cstr(exc)}"
-			self.stream_deployment_update(f"ERROR: {err}")
 			frappe.publish_realtime(
 				event="frappe_site_update",
 				message={"frappe_site": self.name, "status": "error", "message": err},
@@ -248,10 +198,7 @@ class FrappeSite(Document):
 	@frappe.whitelist()
 	def stop_site(self) -> dict:
 		try:
-			self.stream_deployment_update("=== Stopping all containers ===")
-			self._run_playbook_and_stream("stop_all_containers.yml", timeout=60 * 15)
-
-			self.append_log("All containers stop playbook executed.")
+			self._run_playbook("stop_all_containers.yml", timeout=60 * 15)
 			self.db_set("status", "Stopped", update_modified=False)
 
 			return {"status": 200, "message": "All containers stopped successfully"}
@@ -259,43 +206,6 @@ class FrappeSite(Document):
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "stop_all_containers failed")
 			err = f"Stop failed: {frappe.utils.cstr(exc)}"
-			self.stream_deployment_update(f"ERROR: {err}")
 			self.append_log(err)
 			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
-
-	@frappe.whitelist()
-	def queue_prepare_for_deployment(self):
-		job = frappe.enqueue_doc(
-			self.doctype,
-			self.name,
-			"prepare_for_deployment",
-			queue="long",
-			timeout=60 * 45,
-			job_name=f"Prepare {self.name}",
-		)
-		return {"status": 202, "job_id": job.get_id()}
-
-	@frappe.whitelist()
-	def queue_deploy_site(self):
-		job = frappe.enqueue_doc(
-			self.doctype,
-			self.name,
-			"deploy_site",
-			queue="long",
-			timeout=60 * 45,
-			job_name=f"Deploy {self.name}",
-		)
-		return {"status": 202, "job_id": job.get_id()}
-
-	@frappe.whitelist()
-	def queue_stop_all_containers(self):
-		job = frappe.enqueue_doc(
-			self.doctype,
-			self.name,
-			"stop_site",
-			queue="short",
-			timeout=60 * 20,
-			job_name=f"Stop containers {self.name}",
-		)
-		return {"status": 202, "job_id": job.get_id()}
