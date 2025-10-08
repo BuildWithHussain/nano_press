@@ -20,9 +20,10 @@ frappe.ui.form.on("Frappe Site", {
         });
       }
     }
-    if (frm.doc.admin_password) {
+    if (frm.doc.admin_password && frm.doc.username) {
       // Add a clipboard icon to the label
       frm.fields_dict["admin_password"].set_label('Admin Password - <span class="fa fa-clipboard" title="Copy to Clipboard"></span>');
+      frm.fields_dict["username"].set_label('Admin Username - <span class="fa fa-clipboard" title="Copy to Clipboard"></span>');
 
       // Bind click event to copy the value
       $(frm.fields_dict["admin_password"].label_area).on('click', function () {
@@ -34,16 +35,25 @@ frappe.ui.form.on("Frappe Site", {
             if (r.message) {
               navigator.clipboard.writeText(r.message)
                 .then(function () {
-                  frappe.msgprint('Admin password copied to clipboard!');
+                  frappe.show_alert('Admin password copied to clipboard!');
                 })
                 .catch(function (error) {
-                  frappe.msgprint('Error copying password: ' + error);
+                  frappe.show_alert('Error copying password: ' + error);
                 });
             } else {
-              frappe.msgprint('Could not retrieve admin password.');
+              frappe.show_alert('Could not retrieve admin password.');
             }
           }
         });
+      });
+      $(frm.fields_dict["username"].label_area).on('click', function () {
+        navigator.clipboard.writeText(frm.doc.username)
+          .then(function () {
+            frappe.show_alert('Username copied to clipboard!');
+          })
+          .catch(function (error) {
+            frappe.show_alert('Error copying username: ' + error);
+          });
       });
     }
 
