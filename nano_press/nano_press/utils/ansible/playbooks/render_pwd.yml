@@ -78,5 +78,7 @@
         - { key: "HASHED_PASSWORD", value: "'{{ (traefik_hashed_password | default('')) }}'" }
         - { key: "INSTALL_APPS", value: "{{ install_apps_csv }}" }
         - { key: "ADMIN_PASSWORD", value: "{{ admin_password }}" }
+        - { key: "DB_PASSWORD", value: "{{ db_password }}" }
+        - { key: "DB_ROOT_USERNAME", value: "{{ db_root_username }}" }
 
 

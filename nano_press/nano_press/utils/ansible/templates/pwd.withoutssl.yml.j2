@@ -14,8 +14,8 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: "3306"
-      MYSQL_ROOT_PASSWORD: admin
-      MARIADB_ROOT_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-admin}
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-admin}
 
   configurator:
     image: {{ docker_image }}
@@ -55,6 +55,9 @@ services:
         condition: none
     environment:
       INSTALL_APPS: ${INSTALL_APPS:-erpnext}
+      DB_PASSWORD: ${DB_PASSWORD:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      DB_ROOT_USERNAME: ${DB_ROOT_USERNAME:-root}
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
@@ -79,7 +82,7 @@ services:
           fi
         done;
         echo "sites/common_site_config.json found";
-        bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${ADMIN_PASSWORD:-admin} --db-root-username=root --db-root-password=admin --set-default frontend;
+        bench new-site --mariadb-user-host-login-scope='%' --admin-password=$${ADMIN_PASSWORD:-admin} --db-root-username=$${DB_ROOT_USERNAME:-root} --db-root-password=$${DB_PASSWORD:-admin} --set-default frontend;
         for app in $$(echo "$${INSTALL_APPS:-erpnext}" | tr ',' ' '); do
           bench --site frontend install-app $$app || exit 1;
         done;
@@ -89,7 +92,7 @@ services:
     networks:
       - frappe_network
     healthcheck:
-      test: mysqladmin ping -h localhost --password=admin
+      test: mysqladmin ping -h localhost --password=${DB_PASSWORD:-admin}
       interval: 1s
       retries: 20
     deploy:
@@ -101,8 +104,8 @@ services:
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed
     environment:
-      MYSQL_ROOT_PASSWORD: admin
-      MARIADB_ROOT_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-admin}
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-admin}
     volumes:
       - db-data:/var/lib/mysql
 
