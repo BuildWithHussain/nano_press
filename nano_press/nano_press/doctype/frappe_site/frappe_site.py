@@ -114,6 +114,8 @@ class FrappeSite(Document):
 			"traefik_plain_password": traefik_password,
 			"install_apps_csv": install_apps_csv,
 			"admin_password": self.get_password("admin_password") or "admin",
+			"db_username": self.db_username or "root",
+			"db_password": self.get_password("db_password") or "admin",
 		}
 
 	def _playbooks_base(self) -> str:
