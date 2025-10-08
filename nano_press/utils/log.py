@@ -1,4 +1,4 @@
-from typing import Union, tuple
+from typing import Union
 
 import frappe
 from frappe.model.document import Document
