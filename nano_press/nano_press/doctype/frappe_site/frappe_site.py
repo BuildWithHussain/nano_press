@@ -8,6 +8,7 @@ from frappe.model.document import Document
 from frappe.utils import random_string
 
 from nano_press.nano_press.utils.ansible.src.AnsibleRunner import AnsibleRunner
+from nano_press.utils.log import append_long_text
 
 
 class FrappeSite(Document):
@@ -73,6 +74,9 @@ class FrappeSite(Document):
 		if self.ssl_enabled and not self.traefik_password:
 			self.traefik_password = random_string(10)
 
+		if not self.db_password:
+			self.db_password = random_string(10)
+
 	def _sync_apps_from_custom_image(self):
 		self.set("install_apps", [])
 		custom = frappe.get_doc("Custom Image", self.custom_image)
@@ -112,14 +116,6 @@ class FrappeSite(Document):
 			"admin_password": self.get_password("admin_password") or "admin",
 		}
 
-	def append_log(self, text: str) -> None:
-		frappe.db.sql(
-			"""UPDATE `tabFrappe Site`
-           SET deployment_log = CONCAT(%s, '\n', COALESCE(deployment_log, ''))
-           WHERE name = %s""",
-			(text, self.name),
-		)
-
 	def _playbooks_base(self) -> str:
 		return frappe.get_app_path("nano_press", "nano_press", "utils", "ansible", "playbooks")
 
@@ -144,8 +140,14 @@ class FrappeSite(Document):
 			timeout=timeout,
 			extra_vars=extra_vars,
 		)
-		for line in out:
-			self.append_log(line)
+		append_long_text(
+			self,
+			"deployment_log",
+			out,
+			header_title=f"Playbook: {playbook_filename}",
+			newest_on_top=True,
+			trim_to_bytes=100000,
+		)
 
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:
@@ -162,8 +164,7 @@ class FrappeSite(Document):
 			return {"status": 200, "message": "Deployment prepared successfully"}
 
 		except Exception as exc:
-			msg = f"Deployment failed: {frappe.utils.cstr(exc)}"
-			self.append_log(msg)
+			frappe.log_error(frappe.get_traceback(), "prepare_for_deployment failed")
 			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
