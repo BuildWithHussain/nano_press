@@ -84,9 +84,9 @@
    "description": "Real-time build output",
    "fieldname": "deployment_log",
    "fieldtype": "Long Text",
+   "in_preview": 1,
    "label": "Deployment Log",
-   "no_copy": 1,
-   "read_only": 1
+   "no_copy": 1
   },
   {
    "fieldname": "section_break_fsva",
@@ -216,14 +216,15 @@
   {
    "fieldname": "db_password",
    "fieldtype": "Password",
-   "label": "DB Password"
+   "label": "DB Password",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-08 13:01:36.168941",
+ "modified": "2025-10-08 15:43:32.278597",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
