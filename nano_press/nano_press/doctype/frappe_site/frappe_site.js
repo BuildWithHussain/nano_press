@@ -2,64 +2,69 @@ frappe.ui.form.on("Frappe Site", {
   refresh(frm) {
     frm.add_custom_button(__("Refresh"), () => frm.reload_doc());
 
-
-    frm.add_custom_button(__("Prepare for Deployment"), () => call_doc_method(frm, "prepare_for_deployment")).addClass("btn-default");
-
-    frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "queue_deploy_site")).addClass("btn-primary");
-
-    frm.add_custom_button(__("Stop Containers"), () => call_doc_method(frm, "queue_stop_all_containers")).addClass("btn-danger");
-
-    if (frm.doc.status === "Deployed") {
+    if (frm.doc.status === "Not Deployed") {
+      frm.add_custom_button(__("Prepare for Deployment"), () => call_doc_method(frm, "prepare_for_deployment")).addClass("btn-default");
+    } else if (frm.doc.status === "Ready To Deploy") {
+      frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "queue_deploy_site")).addClass("btn-primary");
+    } else if (frm.doc.status === "Deployed") {
+      frm.add_custom_button(__("Stop Containers"), () => call_doc_method(frm, "queue_stop_all_containers")).addClass("btn-danger");
       if (frm.doc.site_url) {
         frm.add_custom_button(__("Visit Site"), () => window.open(frm.doc.site_url)).addClass("btn-info");
       } else if (!frm.doc.ssl_enabled && frm.doc.server_name) {
-        // Fetch server doc to get IP
         frappe.db.get_doc("Server", frm.doc.server_name).then(server => {
           const ip = server.server_ip || "localhost";
           frm.add_custom_button(__("Visit Site (Insecure)"), () => window.open(`http://${ip}:8080`)).addClass("btn-warning");
         });
       }
     }
-    if (frm.doc.admin_password && frm.doc.username) {
-      // Add a clipboard icon to the label
-      frm.fields_dict["admin_password"].set_label('Admin Password - <span class="fa fa-clipboard" title="Copy to Clipboard"></span>');
-      frm.fields_dict["username"].set_label('Admin Username - <span class="fa fa-clipboard" title="Copy to Clipboard"></span>');
 
-      // Bind click event to copy the value
-      $(frm.fields_dict["admin_password"].label_area).on('click', function () {
-        // Call server to get the admin password
-        frappe.call({
-          method: 'nano_press.get_admin_password',
-          args: { site_name: frm.doc.name },
-          callback: function (r) {
-            if (r.message) {
-              navigator.clipboard.writeText(r.message)
-                .then(function () {
-                  frappe.show_alert('Admin password copied to clipboard!');
-                })
-                .catch(function (error) {
-                  frappe.show_alert('Error copying password: ' + error);
-                });
-            } else {
-              frappe.show_alert('Could not retrieve admin password.');
-            }
-          }
-        });
-      });
-      $(frm.fields_dict["username"].label_area).on('click', function () {
-        navigator.clipboard.writeText(frm.doc.username)
-          .then(function () {
-            frappe.show_alert('Username copied to clipboard!');
-          })
-          .catch(function (error) {
-            frappe.show_alert('Error copying username: ' + error);
-          });
-      });
-    }
-
+    // (Re)bind clipboard handlers safely on every refresh
+    bind_clipboard_handlers(frm);
   }
 });
 
+function bind_clipboard_handlers(frm) {
+  const hasCreds = frm.doc.admin_password && frm.doc.username;
+  const pwdField = frm.fields_dict["admin_password"];
+  const userField = frm.fields_dict["username"];
+  if (!hasCreds || !pwdField || !userField) return;
+
+  // Set labels once per form lifetime
+  if (!pwdField._label_patched) {
+    pwdField.set_label('Admin Password - <span class="fa fa-clipboard" title="Copy to Clipboard"></span>');
+    userField.set_label('Admin Username - <span class="fa fa-clipboard" title="Copy to Clipboard"></span>');
+    pwdField._label_patched = true;
+    userField._label_patched = true;
+  }
+
+  // Always remove old handlers before adding new ones (use event namespaces)
+  $(pwdField.label_area)
+    .off('click.copy') // prevent duplicates
+    .on('click.copy', function () {
+      frappe.call({
+        method: 'nano_press.get_admin_password',
+        args: { site_name: frm.doc.name },
+        callback: function (r) {
+          const val = r && r.message;
+          if (val) {
+            navigator.clipboard.writeText(val)
+              .then(() => frappe.show_alert('Admin password copied to clipboard!'))
+              .catch((error) => frappe.show_alert('Error copying password: ' + error));
+          } else {
+            frappe.show_alert('Could not retrieve admin password.');
+          }
+        }
+      });
+    });
+
+  $(userField.label_area)
+    .off('click.copy')
+    .on('click.copy', function () {
+      navigator.clipboard.writeText(frm.doc.username)
+        .then(() => frappe.show_alert('Username copied to clipboard!'))
+        .catch((error) => frappe.show_alert('Error copying username: ' + error));
+    });
+}
 
 function call_doc_method(frm, method_name) {
   if (!frm.doc.name) {
