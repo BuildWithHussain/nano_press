@@ -13,7 +13,8 @@ frappe.ui.form.on("Frappe Site", {
       } else if (!frm.doc.ssl_enabled && frm.doc.server_name) {
         frappe.db.get_doc("Server", frm.doc.server_name).then(server => {
           const ip = server.server_ip || "localhost";
-          frm.add_custom_button(__("Visit Site (Insecure)"), () => window.open(`http://${ip}:8080`)).addClass("btn-warning");
+          const port = frm.doc.port || 8080;
+          frm.add_custom_button(__("Visit Site (Insecure)"), () => window.open(`http://${ip}:${port}`)).addClass("btn-warning");
         });
       }
     }
