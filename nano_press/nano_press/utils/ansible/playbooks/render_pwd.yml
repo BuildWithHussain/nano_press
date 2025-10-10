@@ -1,7 +1,7 @@
 - hosts: all
   become: true
   vars:
-    repo_dir: "/home/frappe_docker"
+    repo_dir: "/home/{{ site_name }}/"
     ssl_enabled: "{{ ssl_enabled }}"
     docker_image: "{{ docker_image }}"
     site_name: "{{ site_name }}"
@@ -10,6 +10,7 @@
     traefik_plain_password: "{{ traefik_plain_password }}"
     install_apps_csv: "{{ install_apps_csv }}"
     env_path: "{{ repo_dir }}/.env"
+    project_name: "{{ site_name | regex_replace('[^a-zA-Z0-9_-]', '_') }}"
   tasks:
     - name: Ensure openssl present (SSL only)
       ansible.builtin.apt:
@@ -73,12 +74,13 @@
       loop:
         - { key: "SITES", value: "`{{ site_name }}`" }
         - { key: "TRAEFIK_DOMAIN", value: "{{ traefik_domain | default('') }}" }
-        - { key: "EMAIL", value: "{{ traefik_email | default('') }}" }
+        - { key: "LETSENCRYPT_EMAIL", value: "{{ traefik_email | default('') }}" }
         - { key: "LETSENCRYPT_EMAIL", value: "{{ traefik_email | default('') }}" }
         - { key: "HASHED_PASSWORD", value: "'{{ (traefik_hashed_password | default('')) }}'" }
         - { key: "INSTALL_APPS", value: "{{ install_apps_csv }}" }
         - { key: "ADMIN_PASSWORD", value: "{{ admin_password }}" }
         - { key: "DB_PASSWORD", value: "{{ db_password }}" }
-        - { key: "DB_ROOT_USERNAME", value: "{{ db_root_username }}" }
+        - { key: "DB_ROOT_USERNAME", value: "{{ db_username }}" }
+        - { key: "ROUTER", value: "{{ project_name }}" }
 
 

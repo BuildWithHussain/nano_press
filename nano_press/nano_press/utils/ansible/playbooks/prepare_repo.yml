@@ -1,10 +1,10 @@
 - hosts: all
   become: true
   tasks:
-    - name: Ensure frappe_docker repo present
+    - name: Install Frappe Docker inside the site user home directory
       ansible.builtin.git:
         repo: https://github.com/frappe/frappe_docker.git
-        dest: /home/frappe_docker
+        dest: "/home/{{ site_name }}/"
         version: main
         update: yes
 
