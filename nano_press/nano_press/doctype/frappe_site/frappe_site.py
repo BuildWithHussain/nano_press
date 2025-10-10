@@ -159,7 +159,7 @@ class FrappeSite(Document):
 
 		try:
 			self._run_playbook("install_docker.yml")
-			self._run_playbook("prepare_repo.yml")
+			self._run_playbook("prepare_repo.yml", extra_vars={"site_name": self.site_name})
 			self._run_playbook("render_pwd.yml", extra_vars=vars)
 			self.db_set("status", "Ready To Deploy", update_modified=False)
 			self.db_set("last_deployed_at", frappe.utils.now_datetime(), update_modified=False)
@@ -174,7 +174,7 @@ class FrappeSite(Document):
 	def deploy_site(self) -> dict:
 		self.validate_server()
 		try:
-			self._run_playbook("compose_up.yml", timeout=60 * 20)
+			self._run_playbook("compose_up.yml", extra_vars={"site_name": self.site_name})
 			self.db_set("status", "Deployed", update_modified=False)
 			frappe.publish_realtime(
 				event="frappe_site_update",
@@ -200,7 +200,9 @@ class FrappeSite(Document):
 	@frappe.whitelist()
 	def stop_site(self) -> dict:
 		try:
-			self._run_playbook("stop_all_containers.yml", timeout=60 * 15)
+			self._run_playbook(
+				"stop_all_containers.yml", timeout=60 * 15, extra_vars={"site_name": self.site_name}
+			)
 			self.db_set("status", "Stopped", update_modified=False)
 
 			return {"status": 200, "message": "All containers stopped successfully"}
@@ -211,3 +213,7 @@ class FrappeSite(Document):
 			self.append_log(err)
 			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
+
+	@frappe.whitelist()
+	def remove_site(self) -> dict:
+		pass

@@ -5,11 +5,18 @@ frappe.ui.form.on("Frappe Site", {
     if (frm.doc.status === "Not Deployed") {
       frm.add_custom_button(__("Prepare for Deployment"), () => call_doc_method(frm, "prepare_for_deployment")).addClass("btn-default");
     } else if (frm.doc.status === "Ready To Deploy") {
-      frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "queue_deploy_site")).addClass("btn-primary");
+      frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "deploy_site")).addClass("btn-primary");
     } else if (frm.doc.status === "Deployed") {
-      frm.add_custom_button(__("Stop Containers"), () => call_doc_method(frm, "queue_stop_all_containers")).addClass("btn-danger");
-      if (frm.doc.site_url) {
-        frm.add_custom_button(__("Visit Site"), () => window.open(frm.doc.site_url)).addClass("btn-info");
+      frm.add_custom_button(__("Stop Containers"), () => call_doc_method(frm, "stop_site")).addClass("btn-danger");
+      frm.add_custom_button(__("Visit Site"), () => window.open(`https://${frm.doc.site_name}`)).addClass("btn-info");
+      if (frm.doc.status === "Stopped") {
+        frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "deploy_site")).addClass("btn-primary");
+        frm.add_custom_button(__("Remove Site"), () => {
+          frappe.confirm(
+            __("Are you sure you want to remove this site? This action cannot be undone."),
+            () => call_doc_method(frm, "remove_site")
+          );
+        }).addClass("btn-danger");
       } else if (!frm.doc.ssl_enabled && frm.doc.server_name) {
         frappe.db.get_doc("Server", frm.doc.server_name).then(server => {
           const ip = server.server_ip || "localhost";
