@@ -1,22 +1,43 @@
 - hosts: all
   become: true
+  vars:
+    repo_dir: "/home/{{ site_name }}/"
+    compose_file: "pwd.yml"
+    local_compose_src: ""
+    project_name: "{{ site_name | regex_replace('[^a-zA-Z0-9_-]', '_') }}"
   tasks:
-    - name: Get running container IDs
-      ansible.builtin.command: docker ps -q
-      register: running_containers
-      changed_when: false
+    - name: Optionally upload compose file from controller
+      ansible.builtin.copy:
+        src: "{{ local_compose_src }}"
+        dest: "{{ repo_dir }}/{{ compose_file }}"
+        mode: "0644"
+      when: local_compose_src | length > 0
 
-    - name: Stop all running containers
-      ansible.builtin.shell: >
-        docker stop {{ running_containers.stdout_lines | join(' ') }}
-      when: running_containers.stdout | length > 0
-      changed_when: true
+    - name: Ensure compose file exists
+      ansible.builtin.stat:
+        path: "{{ repo_dir }}/{{ compose_file }}"
+      register: compose_file_stat
+
+    - name: Fail if compose file is missing
+      ansible.builtin.fail:
+        msg: "Compose file {{ repo_dir }}/{{ compose_file }} not found"
+      when: not compose_file_stat.stat.exists
+
+    - name: Run compose Down (prefer v2, fallback to v1/plugin path)
+      ansible.builtin.shell: |
+        set -e
+        if docker compose version >/dev/null 2>&1; then
+          docker compose -p {{ project_name }} -f {{ compose_file }} down
+        elif command -v docker-compose >/dev/null 2>&1; then
+          docker-compose -p {{ project_name }} -f {{ compose_file }} down
+        elif [ -x "$HOME/.docker/cli-plugins/docker-compose" ]; then
+          "$HOME/.docker/cli-plugins/docker-compose" -f {{ compose_file }} down
+        else
+          echo "Docker Compose not found (checked: 'docker compose', 'docker-compose', '$HOME/.docker/cli-plugins/docker-compose')" >&2
+          exit 127
+        fi
       args:
+        chdir: "{{ repo_dir }}"
         executable: /bin/bash
-
-    - name: No containers were running
-      ansible.builtin.debug:
-        msg: "No running containers to stop"
-      when: running_containers.stdout | length == 0
 
 
