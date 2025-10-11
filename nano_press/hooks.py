@@ -143,23 +143,14 @@ add_to_apps_screen = [
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"nano_press.tasks.all"
-# 	],
-# 	"daily": [
-# 		"nano_press.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"nano_press.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"nano_press.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"nano_press.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"cron": {
+		"*/5 * * * *": [
+			"nano_press.utils.ansible_runner.ping_server",
+		],
+	}
+}
+
 
 # Testing
 # -------
@@ -231,7 +222,7 @@ add_to_apps_screen = [
 # ]
 
 # Automatically update python controller files with type annotations for this app.
-export_python_type_annotations = True
+# export_python_type_annotations = True
 
 default_log_clearing_doctypes = {
 	"Ansible Log": 30  # days to retain logs
