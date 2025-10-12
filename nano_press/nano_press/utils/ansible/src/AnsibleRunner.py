@@ -13,6 +13,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+import frappe
+
 
 @dataclass(frozen=True)
 class RunResult:
@@ -66,9 +68,13 @@ class AnsibleOps:
 	def run_playbook(
 		self,
 		*,
-		host: str,
-		user: str,
-		port: int,
+		# EITHER provide host/user/port OR provide server_ip/server_name to resolve from Doctype
+		host: str | None = None,
+		user: str | None = None,
+		port: int | None = None,
+		server_ip: str | None = None,
+		server_name: str | None = None,
+		# Playbook can be absolute path or short name like 'prepare.yml'
 		playbook_path: str,
 		private_key: str | None = None,
 		extra_vars: Mapping[str, Any] | None = None,
@@ -78,8 +84,24 @@ class AnsibleOps:
 	) -> dict[str, Any]:
 		"""Run an Ansible playbook and return a structured JSON response."""
 
-		with self._temp_inventory(host, user, port) as inv, self._temp_vars(extra_vars) as vars_file:
-			cmd = [self.ansible_playbook_bin, "-i", str(inv), playbook_path]
+		# Resolve connection from Server doctype if host not explicitly given
+		if not host:
+			host, resolved_user, resolved_port, resolved_key = self._get_server_conn(
+				server_ip=server_ip, server_name=server_name
+			)
+			user = user or resolved_user
+			port = port or resolved_port
+			private_key = private_key or resolved_key
+
+		# Safety checks
+		if not host or not user or port is None:
+			frappe.throw("Insufficient connection details: host/user/port are required.")
+
+		# Resolve playbook path if short name was passed
+		playbook_abs = self._resolve_playbook_path(playbook_path)
+
+		with self._temp_inventory(host, user, int(port)) as inv, self._temp_vars(extra_vars) as vars_file:
+			cmd = [self.ansible_playbook_bin, "-i", str(inv), playbook_abs]
 
 			if become:
 				cmd.append("--become")
@@ -101,20 +123,43 @@ class AnsibleOps:
 				stderr=err,
 				duration_s=duration,
 				operation="playbook",
-				meta={"host": host, "user": user, "port": port, "playbook": playbook_path},
+				meta={
+					"host": host,
+					"user": user,
+					"port": port,
+					"playbook": playbook_abs,
+					"source_playbook_arg": playbook_path,
+					"server_ip": server_ip,
+					"server_name": server_name,
+				},
 			)
 
 	def run_ping(
 		self,
 		*,
-		host: str,
-		user: str,
-		port: int,
+		# EITHER provide host/user/port OR provide server_ip/server_name to resolve from Doctype
+		host: str | None = None,
+		user: str | None = None,
+		port: int | None = None,
+		server_ip: str | None = None,
+		server_name: str | None = None,
 		private_key: str | None = None,
 		timeout: int | None = None,
 	) -> dict[str, Any]:
 		"""Simple Ansible ping module."""
-		with self._temp_inventory(host, user, port) as inv:
+
+		if not host:
+			host, resolved_user, resolved_port, resolved_key = self._get_server_conn(
+				server_ip=server_ip, server_name=server_name
+			)
+			user = user or resolved_user
+			port = port or resolved_port
+			private_key = private_key or resolved_key
+
+		if not host or not user or port is None:
+			frappe.throw("Insufficient connection details: host/user/port are required.")
+
+		with self._temp_inventory(host, user, int(port)) as inv:
 			cmd = [self.ansible_bin, "all", "-i", str(inv), "-m", "ping"]
 			if private_key:
 				cmd.extend(["--private-key", str(private_key)])
@@ -128,7 +173,13 @@ class AnsibleOps:
 				stderr=err,
 				duration_s=duration,
 				operation="ping",
-				meta={"host": host, "user": user, "port": port},
+				meta={
+					"host": host,
+					"user": user,
+					"port": port,
+					"server_ip": server_ip,
+					"server_name": server_name,
+				},
 			)
 
 	# ---------------------
@@ -203,3 +254,63 @@ class AnsibleOps:
 			"stderr_tail": stderr[-2000:],
 			"raw_json": ansible_json,
 		}
+
+	def _playbooks_base(self) -> str:
+		return frappe.get_app_path("nano_press", "nano_press", "utils", "ansible", "playbooks")
+
+	def _get_server_conn(
+		self,
+		*,
+		server_ip: str | None = None,
+		server_name: str | None = None,
+		prefer_field_private_key: bool = True,
+	) -> tuple[str, str, int, str | None]:
+		"""
+		Resolve host, user, port, private_key from the Server doctype.
+		You can pass either server_ip or server_name.
+		Returns: (host, user, port, private_key_path_or_None)
+		"""
+		if not (server_ip or server_name):
+			frappe.throw("Pass either server_ip or server_name to resolve connection details.")
+
+		filters = {"server_ip": server_ip} if server_ip else {"server_name": server_name}
+		# Try common fieldnames; adjust if your doctype differs.
+		row = frappe.db.get_value(
+			"Server",
+			filters,
+			["server_ip", "ssh_user", "ssh_port"],
+			as_dict=True,
+		)
+		if not row:
+			frappe.throw(f"Server not found for filter: {filters}")
+
+		host = row.get("server_ip") or server_ip
+		user = row.get("ssh_user") or "frappe"
+		port = int(row.get("ssh_port") or 22)
+
+		# Prefer explicit ssh_private_key_path, fallback to private_key_path if present
+		private_key = None
+		if prefer_field_private_key:
+			private_key = row.get("ssh_private_key_path") or row.get("private_key_path")
+
+		return host, user, port, private_key
+
+	def _resolve_playbook_path(self, playbook: str) -> str:
+		"""
+		Accepts either an absolute path or a short name like 'prepare' or 'prepare.yml'.
+		Returns an absolute, existing path under the app's playbooks base if needed.
+		"""
+		# Absolute path: use as-is
+		if os.path.isabs(playbook) and os.path.isfile(playbook):
+			return playbook
+
+		# Append .yml if missing an extension
+		candidate = playbook if os.path.splitext(playbook)[1] else f"{playbook}.yml"
+
+		base = self._playbooks_base()
+		full = os.path.join(base, candidate)
+		if os.path.isfile(full):
+			return full
+
+		# Last-chance helpful error
+		raise FileNotFoundError(f"Playbook not found: {playbook} (looked in {base})")
