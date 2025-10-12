@@ -14,10 +14,26 @@
   "column_break_nzti",
   "verify_status",
   "last_verified_at",
+  "traefik_configuration_section",
+  "traefik_domain",
+  "traefik_email",
+  "column_break_kdcw",
+  "traefik_username",
+  "traefik_password",
   "host_public_key_section",
   "public_key",
-  "log_section",
-  "verification_log"
+  "preparation_and_dependencies_tab",
+  "docker_section",
+  "docker_installed",
+  "docker_version",
+  "column_break_qdul",
+  "compose_installed",
+  "compose_version",
+  "traefik_section",
+  "traefik_deployed",
+  "traefik_version",
+  "section_break_blcq",
+  "last_prepared_at"
  ],
  "fields": [
   {
@@ -43,6 +59,7 @@
    "fieldname": "ssh_port",
    "fieldtype": "Int",
    "label": "SSH Port",
+   "non_negative": 1,
    "reqd": 1
   },
   {
@@ -51,8 +68,8 @@
    "fieldname": "verify_status",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Verify Status",
-   "options": "Not Verified\nVerifying\nVerified\nFailed",
+   "label": "Status",
+   "options": "Not Verified\nVerifying\nVerified\nFailed\nNot Prepared\nPreparing\nPrepared",
    "read_only": 1
   },
   {
@@ -65,7 +82,7 @@
   {
    "fieldname": "server_details_section",
    "fieldtype": "Section Break",
-   "label": "Server Details"
+   "label": "Server Configuration"
   },
   {
    "depends_on": "eval:!!doc.server_ip",
@@ -80,21 +97,8 @@
    "read_only": 1
   },
   {
-   "description": "Detailed logs of the server verification process, including success or error messages.",
-   "fieldname": "verification_log",
-   "fieldtype": "Long Text",
-   "label": "Verification Log",
-   "read_only": 1
-  },
-  {
    "fieldname": "column_break_nzti",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "Contains logs related to server verification attempts.",
-   "fieldname": "log_section",
-   "fieldtype": "Section Break",
-   "label": "Log"
   },
   {
    "fieldname": "server_name",
@@ -103,11 +107,115 @@
    "placeholder": "My Development Server",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "traefik_configuration_section",
+   "fieldtype": "Section Break",
+   "label": "Traefik Configuration"
+  },
+  {
+   "fieldname": "traefik_domain",
+   "fieldtype": "Data",
+   "label": "Traefik Domain",
+   "placeholder": "traefik.example.com",
+   "reqd": 1
+  },
+  {
+   "fieldname": "traefik_email",
+   "fieldtype": "Data",
+   "label": "Traefik Email",
+   "placeholder": "developer@example.com",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_kdcw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "admin",
+   "fieldname": "traefik_username",
+   "fieldtype": "Data",
+   "label": "Traefik Username",
+   "reqd": 1
+  },
+  {
+   "fieldname": "traefik_password",
+   "fieldtype": "Password",
+   "label": "Traefik Password",
+   "placeholder": "V2POWHDGe500",
+   "reqd": 1
+  },
+  {
+   "fieldname": "preparation_and_dependencies_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dependencies"
+  },
+  {
+   "fieldname": "docker_section",
+   "fieldtype": "Section Break",
+   "label": "Docker"
+  },
+  {
+   "default": "0",
+   "fieldname": "docker_installed",
+   "fieldtype": "Check",
+   "label": "Docker Installed"
+  },
+  {
+   "fieldname": "docker_version",
+   "fieldtype": "Data",
+   "label": "Docker Version"
+  },
+  {
+   "fieldname": "column_break_qdul",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "compose_installed",
+   "fieldtype": "Check",
+   "label": "Docker Compose Installed"
+  },
+  {
+   "fieldname": "compose_version",
+   "fieldtype": "Data",
+   "label": "Docker Compose Version"
+  },
+  {
+   "fieldname": "traefik_section",
+   "fieldtype": "Section Break",
+   "label": "Traefik"
+  },
+  {
+   "default": "0",
+   "fieldname": "traefik_deployed",
+   "fieldtype": "Check",
+   "label": "Traefik Deployed"
+  },
+  {
+   "fieldname": "traefik_version",
+   "fieldtype": "Data",
+   "label": "Traefik Version"
+  },
+  {
+   "fieldname": "section_break_blcq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "last_prepared_at",
+   "fieldtype": "Datetime",
+   "label": "Last Prepared at",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
- "links": [],
- "modified": "2025-08-29 00:14:59.332123",
+ "links": [
+  {
+   "link_doctype": "Ansible Log",
+   "link_fieldname": "server_name"
+  }
+ ],
+ "modified": "2025-10-12 11:31:46.545339",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Server",

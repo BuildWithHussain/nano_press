@@ -6,6 +6,11 @@
       args:
         executable: /bin/bash
 
+    - name: Get Docker version
+      ansible.builtin.command: docker --version
+      register: docker_version_output
+      changed_when: false
+
     - name: Install Compose v2 binary
       ansible.builtin.shell: |
         DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
@@ -14,4 +19,15 @@
         chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
       args:
         executable: /bin/bash
+
+    - name: Get Docker Compose version
+      ansible.builtin.command: docker compose version
+      register: compose_version_output
+      changed_when: false
+
+    - name: Display versions
+      ansible.builtin.debug:
+        msg:
+          - "Docker Version: {{ docker_version_output.stdout }}"
+          - "Compose Version: {{ compose_version_output.stdout }}"
 

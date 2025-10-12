@@ -7,8 +7,39 @@ import subprocess
 import frappe
 from frappe.model.document import Document
 
+from nano_press.utils.ansible_runner import run_playbook
+
 
 class Server(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		compose_installed: DF.Check
+		compose_version: DF.Data | None
+		docker_installed: DF.Check
+		docker_version: DF.Data | None
+		last_prepared_at: DF.Datetime | None
+		last_verified_at: DF.Datetime | None
+		server_ip: DF.Data
+		server_name: DF.Data
+		ssh_port: DF.Int
+		ssh_user: DF.Data
+		traefik_deployed: DF.Check
+		traefik_domain: DF.Data
+		traefik_email: DF.Data
+		traefik_password: DF.Password
+		traefik_username: DF.Data
+		traefik_version: DF.Data | None
+		verify_status: DF.Literal[
+			"Not Verified", "Verifying", "Verified", "Failed", "Not Prepared", "Preparing", "Prepared"
+		]
+	# end: auto-generated types
+
 	@staticmethod
 	def _read_local_public_key() -> str | None:
 		"""Attempt to read a usable SSH public key from standard locations.
@@ -60,14 +91,171 @@ class Server(Document):
 				continue
 		return None
 
-	def _append_log(self, text: str) -> None:
-		"""Append timestamped text to the Server.verification_log (newest at top)."""
-		timestamp = frappe.utils.format_datetime(frappe.utils.now_datetime())
-		header = f"\n\n===== Verification at {timestamp} =====\n"
-		existing = self.get("verification_log") or ""
-		self.verification_log = f"{header}{text}\n{existing}".strip()
-		self.save(ignore_version=True)
-		frappe.db.commit()
+	def prepare_server(self):
+		result = run_playbook(host=self.server_ip, playbook_path="install_docker.yml", become=True)
+
+		if not result.get("ok"):
+			data = result.get("data", {})
+			stderr = data.get("stderr", "Unknown error")
+			error_msg = data.get("message", stderr)
+			frappe.throw(f"Failed to install docker: {error_msg}")
+
+		data = result.get("data", {})
+
+		if data.get("stderr"):
+			frappe.log_error(f"Docker installation stderr: {data.get('stderr')}", "Docker Install Warning")
+
+		# Extract versions from Ansible playbook results
+		docker_version = "Unknown"
+		compose_version = "Unknown"
+
+		# Parse through plays and tasks to find registered variables
+		# The actual playbook results are in raw_json
+		raw_json = data.get("raw_json", {})
+		plays = raw_json.get("plays", [])
+
+		for play in plays:
+			tasks = play.get("tasks", [])
+			for task in tasks:
+				# Task name is in task["task"]["name"]
+				task_info = task.get("task", {})
+				task_name = task_info.get("name", "")
+				hosts_data = task.get("hosts", {})
+
+				# Get the first host's data (assuming single host execution)
+				for _host, host_result in hosts_data.items():
+					if task_name == "Get Docker version":
+						docker_version = host_result.get("stdout", "").strip() or "Unknown"
+					elif task_name == "Get Docker Compose version":
+						compose_version = host_result.get("stdout", "").strip() or "Unknown"
+
+		# Update server fields
+		self.db_set("docker_installed", True)
+		self.db_set("docker_version", docker_version)
+		self.db_set("compose_installed", True)
+		self.db_set("compose_version", compose_version)
+		self.db_set("verify_status", "Prepared")
+		self.db_set("last_prepared_at", frappe.utils.now_datetime())
+
+		return {
+			"status": 200,
+			"message": f"Docker {docker_version} and Compose {compose_version} installed successfully",
+			"log_id": result.get("log_id"),
+			"docker_version": docker_version,
+			"compose_version": compose_version,
+		}
+
+	def deploy_traefik(self):
+		"""Deploy Traefik reverse proxy with Let's Encrypt SSL."""
+		# Validate required fields
+		if not self.traefik_domain:
+			frappe.throw("Traefik domain is required")
+		if not self.traefik_email:
+			frappe.throw("Traefik email is required")
+		if not self.traefik_username:
+			frappe.throw("Traefik username is required")
+		if not self.traefik_password:
+			frappe.throw("Traefik password is required")
+
+		# Prepare extra vars for the playbook
+		extra_vars = {
+			"traefik_domain": self.traefik_domain,
+			"traefik_email": self.traefik_email,
+			"traefik_username": self.traefik_username,
+			"traefik_password": self.get_password("traefik_password"),
+		}
+
+		result = run_playbook(
+			host=self.server_ip, playbook_path="install_traefik.yml", become=True, extra_vars=extra_vars
+		)
+
+		if not result.get("ok"):
+			data = result.get("data", {})
+
+			# Try multiple ways to extract error message
+			error_msg = (
+				data.get("message") or data.get("stderr_tail") or data.get("stderr") or "Unknown error"
+			)
+
+			# Get log_id for reference
+			log_ref = f" (Check log: {result.get('log_id')})" if result.get("log_id") else ""
+
+			# Log full response for debugging
+			frappe.log_error(
+				title="Traefik Deployment Failed",
+				message=f"Server: {self.name}\nFull response: {frappe.as_json(result, indent=2)}",
+			)
+
+			frappe.throw(f"Failed to deploy Traefik: {error_msg}{log_ref}")
+
+		data = result.get("data", {})
+
+		if data.get("stderr"):
+			frappe.log_error(f"Traefik deployment stderr: {data.get('stderr')}", "Traefik Deploy Warning")
+
+		# Extract version info from raw_json
+		traefik_version = "v2.11"  # Default from template
+		raw_json = data.get("raw_json", {})
+		plays = raw_json.get("plays", [])
+
+		for play in plays:
+			tasks = play.get("tasks", [])
+			for task in tasks:
+				task_info = task.get("task", {})
+				task_name = task_info.get("name", "")
+				hosts_data = task.get("hosts", {})
+
+				for _host, host_result in hosts_data.items():
+					if task_name == "Get Traefik version":
+						traefik_version = host_result.get("stdout", "").strip() or traefik_version
+
+		# Update server fields
+		self.db_set("traefik_deployed", True)
+		self.db_set("traefik_version", traefik_version)
+
+		return {
+			"status": 200,
+			"message": f"Traefik {traefik_version} deployed successfully on {self.traefik_domain}",
+			"log_id": result.get("log_id"),
+			"traefik_version": traefik_version,
+			"traefik_domain": self.traefik_domain,
+		}
+
+
+@frappe.whitelist()
+def prepare_server(server_name: str):
+	"""
+	Whitelisted wrapper to prepare a server by installing Docker.
+
+	Args:
+		server_name: Name of the Server document
+
+	Returns:
+		dict with status, message, and log_id
+	"""
+	if not server_name:
+		frappe.throw("Server name is required")
+
+	server = frappe.get_doc("Server", server_name)
+	return server.prepare_server()
+
+
+@frappe.whitelist()
+def deploy_traefik(server_name: str):
+	"""
+	Whitelisted wrapper to deploy Traefik reverse proxy on a server.
+
+	Args:
+		server_name: Name of the Server document
+
+	Returns:
+		dict with status, message, log_id, and traefik info
+	"""
+	if not server_name:
+		frappe.throw("Server name is required")
+
+	server = frappe.get_doc("Server", server_name)
+	return server.deploy_traefik()
 
 
 @frappe.whitelist()
@@ -96,56 +284,3 @@ def get_public_key_html() -> str:
         </div>
     """
 	return html
-
-
-@frappe.whitelist()
-def run_ad_hoc_ping_api(name: str) -> dict:
-	"""Run ad-hoc Ansible ping synchronously and update the Server doc.
-
-	Returns a dict: {"success": bool, "last_verified_at": str|None}
-	"""
-	doc = frappe.get_doc("Server", name)
-
-	# Set status to Verifying before running
-	doc.verify_status = "Verifying"
-	doc.save(ignore_version=True)
-	frappe.db.commit()
-
-	from nano_press.nano_press.utils.ansible_runner import run_ad_hoc_ping as _runner_ping
-
-	try:
-		output = _runner_ping(
-			hostname=doc.server_ip,
-			ssh_user=(doc.ssh_user or "root"),
-			ssh_port=int(doc.ssh_port or 22),
-		)
-		doc._append_log(output)
-
-		normalized = (output or "").upper()
-		success = (
-			("SUCCESS" in normalized) and ("UNREACHABLE" not in normalized) and ("FAILED" not in normalized)
-		)
-
-		if success:
-			doc = frappe.get_doc("Server", name)
-			doc.verify_status = "Verified"
-			doc.last_verified_at = frappe.utils.now_datetime()
-			doc.save(ignore_version=True)
-			frappe.db.commit()
-			return {
-				"success": True,
-				"last_verified_at": frappe.utils.format_datetime(doc.last_verified_at),
-			}
-		else:
-			doc = frappe.get_doc("Server", name)
-			doc.verify_status = "Failed"
-			doc.save(ignore_version=True)
-			frappe.db.commit()
-			return {"success": False, "last_verified_at": None}
-	except Exception as exc:
-		doc = frappe.get_doc("Server", name)
-		doc._append_log(f"Verification failed: {frappe.utils.cstr(exc)}")
-		doc.verify_status = "Failed"
-		doc.save(ignore_version=True)
-		frappe.db.commit()
-		return {"success": False, "last_verified_at": None}
