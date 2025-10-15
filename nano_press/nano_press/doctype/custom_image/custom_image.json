@@ -89,7 +89,7 @@
    "fieldname": "server_name",
    "fieldtype": "Link",
    "label": "Server",
-   "link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Verified\"]]",
+   "link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Prepared\"]]",
    "options": "Server",
    "reqd": 1
   }
@@ -97,9 +97,9 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-19 21:06:58.443927",
+ "modified": "2025-10-15 08:19:59.777623",
  "modified_by": "Administrator",
- 		"module": "Nano Press",
+ "module": "Nano Press",
  "name": "Custom Image",
  "owner": "Administrator",
  "permissions": [
