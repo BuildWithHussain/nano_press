@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "field:bench_name",
+ "autoname": "field:site_url",
  "creation": "2025-08-15 15:16:06.808974",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -184,8 +184,10 @@
    "fieldname": "site_url",
    "fieldtype": "Data",
    "label": "Site Url",
+   "no_copy": 1,
    "placeholder": "site.example.com",
-   "read_only_depends_on": "eval:doc.is_development==1"
+   "read_only_depends_on": "eval:doc.is_development==1",
+   "unique": 1
   },
   {
    "fieldname": "bench_name",
@@ -206,7 +208,7 @@
    "link_fieldname": "bench_name"
   }
  ],
- "modified": "2025-10-15 06:46:05.862108",
+ "modified": "2025-10-15 07:19:54.675092",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
