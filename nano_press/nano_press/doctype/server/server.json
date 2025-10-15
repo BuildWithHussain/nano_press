@@ -213,9 +213,13 @@
   {
    "link_doctype": "Ansible Log",
    "link_fieldname": "server_name"
+  },
+  {
+   "link_doctype": "Frappe Site",
+   "link_fieldname": "server_name"
   }
  ],
- "modified": "2025-10-12 11:31:46.545339",
+ "modified": "2025-10-15 08:08:32.481512",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Server",
