@@ -1,14 +1,12 @@
 frappe.ui.form.on("Frappe Site", {
   refresh(frm) {
-    frm.add_custom_button(__("Refresh"), () => frm.reload_doc());
-
     if (frm.doc.status === "Not Deployed") {
       frm.add_custom_button(__("Prepare for Deployment"), () => call_doc_method(frm, "prepare_for_deployment")).addClass("btn-default");
     } else if (frm.doc.status === "Ready To Deploy") {
       frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "deploy_site")).addClass("btn-primary");
     } else if (frm.doc.status === "Deployed") {
       frm.add_custom_button(__("Stop Containers"), () => call_doc_method(frm, "stop_site")).addClass("btn-danger");
-      frm.add_custom_button(__("Visit Site"), () => window.open(`https://${frm.doc.site_name}`)).addClass("btn-info");
+      frm.add_custom_button(__("Visit Site"), () => window.open(`https://${frm.doc.site_url}`)).addClass("btn-info");
       if (frm.doc.status === "Stopped") {
         frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "deploy_site")).addClass("btn-primary");
         frm.add_custom_button(__("Remove Site"), () => {

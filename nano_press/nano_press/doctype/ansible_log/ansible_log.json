@@ -12,7 +12,7 @@
   "triggered_by",
   "column_break_okfm",
   "bench_name",
-  "site",
+  "site_name",
   "command",
   "executed_on"
  ],
@@ -32,12 +32,6 @@
   {
    "fieldname": "column_break_okfm",
    "fieldtype": "Column Break"
-  },
-  {
-   "fetch_from": "bench_name.site_url",
-   "fieldname": "site",
-   "fieldtype": "Data",
-   "label": "Site"
   },
   {
    "fieldname": "bench_name",
@@ -71,13 +65,19 @@
    "fieldname": "executed_on",
    "fieldtype": "Datetime",
    "label": "Run Timestamp"
+  },
+  {
+   "fetch_from": "bench_name.site_url",
+   "fieldname": "site_name",
+   "fieldtype": "Data",
+   "label": "Site"
   }
  ],
  "grid_page_length": 50,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-11 14:08:33.038357",
+ "modified": "2025-10-15 05:50:17.048195",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Ansible Log",

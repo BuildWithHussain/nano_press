@@ -1,16 +1,17 @@
 {
  "actions": [],
- "autoname": "field:site_name",
+ "autoname": "field:bench_name",
  "creation": "2025-08-15 15:16:06.808974",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "site_configuration_section",
   "server_name",
-  "site_name",
+  "bench_name",
   "site_url",
   "status",
   "is_custom",
+  "ssl_enabled",
   "is_development",
   "column_break_dkti",
   "docker_image",
@@ -20,19 +21,12 @@
   "port",
   "section_break_hzks",
   "install_apps",
-  "section_break_tues",
-  "ssl_enabled",
-  "traefik_domain",
-  "traefik_password",
-  "column_break_lpuc",
-  "traefik_email",
   "database_configuration_section",
   "db_username",
   "column_break_qyhi",
   "db_password",
   "section_break_fsva",
   "last_deployed_at",
-  "deployment_log",
   "amended_from"
  ],
  "fields": [
@@ -40,18 +34,9 @@
    "fieldname": "server_name",
    "fieldtype": "Link",
    "label": "Server",
-   "link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Verified\"]]",
+   "link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Prepared\"]]",
    "options": "Server",
    "reqd": 1
-  },
-  {
-   "fieldname": "site_name",
-   "fieldtype": "Data",
-   "label": "Bench Name",
-   "no_copy": 1,
-   "placeholder": "site.example.com",
-   "reqd": 1,
-   "unique": 1
   },
   {
    "fieldname": "column_break_dkti",
@@ -83,55 +68,16 @@
    "read_only": 1
   },
   {
-   "allow_on_submit": 1,
-   "description": "Real-time build output",
-   "fieldname": "deployment_log",
-   "fieldtype": "Long Text",
-   "in_preview": 1,
-   "label": "Deployment Log",
-   "no_copy": 1
-  },
-  {
    "fieldname": "section_break_fsva",
    "fieldtype": "Section Break",
    "label": "Logs"
   },
   {
    "allow_on_submit": 1,
-   "default": "0",
+   "default": "1",
    "fieldname": "ssl_enabled",
    "fieldtype": "Check",
    "label": "Enable SSL"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "section_break_tues",
-   "fieldtype": "Section Break",
-   "label": "SSL Configuration"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "traefik_domain",
-   "fieldtype": "Data",
-   "label": "Traefik Domain",
-   "mandatory_depends_on": "eval:doc.ssl_enabled=='1'"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "traefik_email",
-   "fieldtype": "Data",
-   "label": "Traefik Email",
-   "mandatory_depends_on": "eval:doc.ssl_enabled=='1'"
-  },
-  {
-   "allow_on_submit": 1,
-   "description": "Leave it blank to generate random password",
-   "fieldname": "traefik_password",
-   "fieldtype": "Password",
-   "in_preview": 1,
-   "label": "Traefik Password",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "allow_on_submit": 1,
@@ -191,10 +137,6 @@
    "label": "Site Configuration"
   },
   {
-   "fieldname": "column_break_lpuc",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "Administrator",
    "fieldname": "username",
    "fieldtype": "Data",
@@ -223,7 +165,7 @@
   },
   {
    "allow_on_submit": 1,
-   "default": "1",
+   "default": "0",
    "fieldname": "is_development",
    "fieldtype": "Check",
    "label": "Is Development"
@@ -242,14 +184,29 @@
    "fieldname": "site_url",
    "fieldtype": "Data",
    "label": "Site Url",
+   "placeholder": "site.example.com",
    "read_only_depends_on": "eval:doc.is_development==1"
+  },
+  {
+   "fieldname": "bench_name",
+   "fieldtype": "Data",
+   "label": "Bench Name",
+   "no_copy": 1,
+   "placeholder": "ERPNEXTv1",
+   "reqd": 1,
+   "unique": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2025-10-10 13:17:54.522335",
+ "links": [
+  {
+   "link_doctype": "Ansible Log",
+   "link_fieldname": "bench_name"
+  }
+ ],
+ "modified": "2025-10-15 05:50:50.210811",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
@@ -273,7 +230,7 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "site_name",
+ "title_field": "bench_name",
  "track_changes": 1,
  "track_seen": 1
 }

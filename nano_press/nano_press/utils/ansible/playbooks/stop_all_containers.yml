@@ -1,10 +1,10 @@
 - hosts: all
   become: true
   vars:
-    repo_dir: "/home/{{ site_name }}/"
+    repo_dir: "/home/{{ bench_name }}/"
     compose_file: "pwd.yml"
     local_compose_src: ""
-    project_name: "{{ site_name | regex_replace('[^a-zA-Z0-9_-]', '_') }}"
+    project_name: "{{ bench_name | regex_replace('[^a-zA-Z0-9_-]', '_') | lower }}"
   tasks:
     - name: Optionally upload compose file from controller
       ansible.builtin.copy:

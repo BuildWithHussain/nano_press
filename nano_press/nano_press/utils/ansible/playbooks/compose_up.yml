@@ -1,9 +1,9 @@
 - hosts: all
   become: true
   vars:
-    repo_dir: "/home/{{ site_name }}/"
+    repo_dir: "/home/{{ bench_name }}/"
     compose_file: "pwd.yml"
-    project_name: "{{ site_name | regex_replace('[^a-zA-Z0-9_-]', '_') }}"
+    project_name: "{{ bench_name | regex_replace('[^a-zA-Z0-9_-]', '_') | lower }}"
   tasks:
 
     - name: Ensure compose file exists

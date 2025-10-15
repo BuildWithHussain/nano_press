@@ -4,7 +4,8 @@
     - name: Install Frappe Docker inside the site user home directory
       ansible.builtin.git:
         repo: https://github.com/frappe/frappe_docker.git
-        dest: "/home/{{ site_name }}/"
+        dest: "/home/{{ bench_name }}/"
         version: main
         update: yes
+        force: yes
 

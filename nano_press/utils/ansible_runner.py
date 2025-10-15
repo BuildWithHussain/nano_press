@@ -72,6 +72,7 @@ def run_playbook(**kwargs):
 			"server": server_docname,
 			"message": f"Playbook executed on {server_docname}",
 			"log_id": log_id,
+			"data": result,
 		}
 
 	except Exception as e:
