@@ -206,7 +206,7 @@
    "link_fieldname": "bench_name"
   }
  ],
- "modified": "2025-10-15 05:50:50.210811",
+ "modified": "2025-10-15 06:46:05.862108",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
@@ -230,7 +230,7 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "bench_name",
+ "title_field": "site_url",
  "track_changes": 1,
  "track_seen": 1
 }

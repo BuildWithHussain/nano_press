@@ -162,17 +162,20 @@ class FrappeSite(Document):
 	@frappe.whitelist()
 	def stop_site(self) -> dict:
 		try:
-			run_playbook(
-				"stop_all_containers.yml", timeout=60 * 15, extra_vars={"bench_name": self.bench_name}
+			result = run_playbook(
+				server_name=self.server_name,
+				playbook_path="stop_all_containers.yml",
+				timeout=60 * 15,
+				extra_vars={"bench_name": self.bench_name},
 			)
+			if result.get("status") != "success":
+				raise Exception(f"compose_up.yml failed: {result.get('message', 'Unknown error')}")
 			self.db_set("status", "Stopped", update_modified=False)
 
 			return {"status": 200, "message": "All containers stopped successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "stop_all_containers failed")
-			err = f"Stop failed: {frappe.utils.cstr(exc)}"
-			self.append_log(err)
 			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
