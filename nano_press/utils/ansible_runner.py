@@ -63,12 +63,13 @@ def run_playbook(**kwargs):
 			operation="Playbook",
 			server=server_docname,
 			bench=extra_vars.get("bench_name"),
-			site=extra_vars.get("site_url"),
+			site=None,
 		)
 
 		return {
 			"status": "success" if ok else "error",
 			"ok": ok,
+			"bench": extra_vars.get("bench_name"),
 			"server": server_docname,
 			"message": f"Playbook executed on {server_docname}",
 			"log_id": log_id,

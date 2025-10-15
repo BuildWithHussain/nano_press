@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "field:site_url",
+ "autoname": "field:bench_name",
  "creation": "2025-08-15 15:16:06.808974",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -208,7 +208,7 @@
    "link_fieldname": "bench_name"
   }
  ],
- "modified": "2025-10-15 07:19:54.675092",
+ "modified": "2025-10-15 07:51:21.465771",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
@@ -232,7 +232,7 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "site_url",
+ "title_field": "bench_name",
  "track_changes": 1,
  "track_seen": 1
 }
