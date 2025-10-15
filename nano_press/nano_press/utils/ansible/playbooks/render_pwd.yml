@@ -1,40 +1,14 @@
 - hosts: all
   become: true
   vars:
-    repo_dir: "/home/{{ site_name }}/"
+    repo_dir: "/home/{{ bench_name }}/"
     ssl_enabled: "{{ ssl_enabled }}"
     docker_image: "{{ docker_image }}"
-    site_name: "{{ site_name }}"
-    traefik_domain: "{{ traefik_domain }}"
-    traefik_email: "{{ traefik_email }}"
-    traefik_plain_password: "{{ traefik_plain_password }}"
+    site_name: "{{ site_url }}"
     install_apps_csv: "{{ install_apps_csv }}"
     env_path: "{{ repo_dir }}/.env"
-    project_name: "{{ site_name | regex_replace('[^a-zA-Z0-9_-]', '_') }}"
+    project_name: "{{ bench_name | regex_replace('[^a-zA-Z0-9_-]', '_') | lower }}"
   tasks:
-    - name: Ensure openssl present (SSL only)
-      ansible.builtin.apt:
-        name: openssl
-        state: present
-        update_cache: yes
-      when: ssl_enabled|int == 1
-
-    - name: Generate apr1 hash for Traefik admin (SSL only)
-      ansible.builtin.shell: |
-        set -e
-        PASS={{ (traefik_plain_password | length > 0) | ternary(traefik_plain_password, 'changeit') }}
-        openssl passwd -apr1 "$PASS"
-      register: openssl_out
-      changed_when: false
-      when: ssl_enabled|int == 1
-      args:
-        executable: /bin/bash
-
-    - name: Save hashed password fact
-      set_fact:
-        traefik_hashed_password: "{{ openssl_out.stdout | trim }}"
-      when: ssl_enabled|int == 1
-
     - name: Select template based on SSL
       set_fact:
         pwd_template: "{{ 'pwd.withssl.yml.j2' if ssl_enabled|int == 1 else 'pwd.withoutssl.yml.j2' }}"
@@ -46,16 +20,6 @@
         mode: "0644"
       vars:
         docker_image: "{{ docker_image }}"
-
-    - name: Ensure external traefik-public network exists when SSL is enabled
-      ansible.builtin.shell: |
-        set -e
-        if ! docker network inspect traefik-public >/dev/null 2>&1; then
-          docker network create traefik-public
-        fi
-      when: ssl_enabled|int == 1
-      args:
-        executable: /bin/bash
 
     - name: Seed .env from example.env if missing
       ansible.builtin.copy:
@@ -73,10 +37,6 @@
         create: yes
       loop:
         - { key: "SITES", value: "`{{ site_name }}`" }
-        - { key: "TRAEFIK_DOMAIN", value: "{{ traefik_domain | default('') }}" }
-        - { key: "LETSENCRYPT_EMAIL", value: "{{ traefik_email | default('') }}" }
-        - { key: "LETSENCRYPT_EMAIL", value: "{{ traefik_email | default('') }}" }
-        - { key: "HASHED_PASSWORD", value: "'{{ (traefik_hashed_password | default('')) }}'" }
         - { key: "INSTALL_APPS", value: "{{ install_apps_csv }}" }
         - { key: "ADMIN_PASSWORD", value: "{{ admin_password }}" }
         - { key: "DB_PASSWORD", value: "{{ db_password }}" }

@@ -7,8 +7,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import random_string
 
-from nano_press.nano_press.utils.ansible.src.AnsibleRunner import AnsibleRunner
-from nano_press.utils.log import append_long_text
+from nano_press.utils.ansible_runner import run_playbook
 
 
 class FrappeSite(Document):
@@ -24,21 +23,20 @@ class FrappeSite(Document):
 
 		admin_password: DF.Password
 		amended_from: DF.Link | None
+		bench_name: DF.Data
 		custom_image: DF.Link | None
 		db_password: DF.Password | None
 		db_username: DF.Data | None
-		deployment_log: DF.LongText | None
 		docker_image: DF.Data | None
 		install_apps: DF.Table[AppInstallItem]
 		is_custom: DF.Check
+		is_development: DF.Check
 		last_deployed_at: DF.Datetime | None
+		port: DF.Int
 		server_name: DF.Link
-		site_name: DF.Data
+		site_url: DF.Data | None
 		ssl_enabled: DF.Check
 		status: DF.Literal["Not Deployed", "Ready To Deploy", "Deploying", "Deployed", "Failed", "Stopped"]
-		traefik_domain: DF.Data | None
-		traefik_email: DF.Data | None
-		traefik_password: DF.Password | None
 		username: DF.Data | None
 	# end: auto-generated types
 
@@ -63,16 +61,13 @@ class FrappeSite(Document):
 		if not frappe.db.exists("Server", linked_server):
 			frappe.throw(f"Linked Server '{linked_server}' does not exist.")
 		server = frappe.get_doc("Server", linked_server)
-		if getattr(server, "verify_status", "Not Verified") != "Verified":
+		if getattr(server, "verify_status", "Not Verified") != "Prepared":
 			frappe.throw("Server is not verified. Please verify the server first.")
 		return server
 
 	def _ensure_password(self):
 		if not self.admin_password:
 			self.admin_password = random_string(10)
-
-		if self.ssl_enabled and not self.traefik_password:
-			self.traefik_password = random_string(10)
 
 		if not self.db_password:
 			self.db_password = random_string(10)
@@ -99,57 +94,18 @@ class FrappeSite(Document):
 
 		install_apps = [row.app_name for row in self.get("install_apps") if row.app_name]
 		install_apps_csv = ",".join(install_apps) if install_apps else "erpnext"
-		if not self.ssl_enabled:
-			traefik_password = ""
-		else:
-			traefik_password = self.get_password("traefik_password")
 
 		docker_image = self.get_docker_image()
 		return {
 			"ssl_enabled": int(self.ssl_enabled or 0),
 			"docker_image": docker_image,
-			"site_name": self.site_name or "",
-			"traefik_domain": self.traefik_domain or "",
-			"traefik_email": self.traefik_email or "",
-			"traefik_plain_password": traefik_password,
+			"site_url": self.site_url or "",
 			"install_apps_csv": install_apps_csv,
 			"admin_password": self.get_password("admin_password") or "admin",
 			"db_username": self.db_username or "root",
 			"db_password": self.get_password("db_password") or "admin",
+			"bench_name": self.bench_name or "",
 		}
-
-	def _playbooks_base(self) -> str:
-		return frappe.get_app_path("nano_press", "nano_press", "utils", "ansible", "playbooks")
-
-	def _run_playbook(
-		self,
-		playbook_filename: str,
-		*,
-		extra_vars: dict | None = None,
-		verbosity: int = 2,
-		timeout: int = 60 * 20,
-	):
-		server = frappe.get_doc("Server", self.server_name)
-		runner = AnsibleRunner()
-		playbook_path = os.path.join(self._playbooks_base(), playbook_filename)
-
-		out = runner.run_playbook_text(
-			inventory_host=server.server_ip,
-			ssh_user=(server.ssh_user or "root"),
-			ssh_port=int(server.ssh_port or 22),
-			playbook_path=playbook_path,
-			verbosity=verbosity,
-			timeout=timeout,
-			extra_vars=extra_vars,
-		)
-		append_long_text(
-			self,
-			"deployment_log",
-			out,
-			header_title=f"Playbook: {playbook_filename}",
-			newest_on_top=True,
-			trim_to_bytes=100000,
-		)
 
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:
@@ -158,9 +114,22 @@ class FrappeSite(Document):
 		self.db_set("status", "Deploying", update_modified=False)
 
 		try:
-			self._run_playbook("install_docker.yml")
-			self._run_playbook("prepare_repo.yml", extra_vars={"site_name": self.site_name})
-			self._run_playbook("render_pwd.yml", extra_vars=vars)
+			# Step 1: Prepare repository
+			result1 = run_playbook(
+				server_name=self.server_name,
+				playbook_path="prepare_repo.yml",
+				extra_vars={"bench_name": self.bench_name},
+			)
+			if result1.get("status") != "success":
+				raise Exception(f"prepare_repo.yml failed: {result1.get('message', 'Unknown error')}")
+
+			# Step 2: Render pwd.yml with deployment vars
+			result2 = run_playbook(
+				server_name=self.server_name, playbook_path="render_pwd.yml", extra_vars=vars
+			)
+			if result2.get("status") != "success":
+				raise Exception(f"render_pwd.yml failed: {result2.get('message', 'Unknown error')}")
+
 			self.db_set("status", "Ready To Deploy", update_modified=False)
 			self.db_set("last_deployed_at", frappe.utils.now_datetime(), update_modified=False)
 			return {"status": 200, "message": "Deployment prepared successfully"}
@@ -174,34 +143,27 @@ class FrappeSite(Document):
 	def deploy_site(self) -> dict:
 		self.validate_server()
 		try:
-			self._run_playbook("compose_up.yml", extra_vars={"site_name": self.site_name})
-			self.db_set("status", "Deployed", update_modified=False)
-			frappe.publish_realtime(
-				event="frappe_site_update",
-				message={
-					"frappe_site": self.name,
-					"status": "success",
-					"message": "Deployment completed successfully",
-				},
-				after_commit=False,
+			result = run_playbook(
+				server_name=self.server_name,
+				playbook_path="compose_up.yml",
+				extra_vars={"bench_name": self.bench_name},
 			)
+			if result.get("status") != "success":
+				raise Exception(f"compose_up.yml failed: {result.get('message', 'Unknown error')}")
+
+			self.db_set("status", "Deployed", update_modified=False)
 			return {"status": 200, "message": "Deployment completed successfully"}
 
 		except Exception as exc:
-			err = f"Deployment failed: {frappe.utils.cstr(exc)}"
-			frappe.publish_realtime(
-				event="frappe_site_update",
-				message={"frappe_site": self.name, "status": "error", "message": err},
-				after_commit=False,
-			)
+			frappe.log_error(frappe.get_traceback(), "prepare_for_deployment failed")
 			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
 	def stop_site(self) -> dict:
 		try:
-			self._run_playbook(
-				"stop_all_containers.yml", timeout=60 * 15, extra_vars={"site_name": self.site_name}
+			run_playbook(
+				"stop_all_containers.yml", timeout=60 * 15, extra_vars={"bench_name": self.bench_name}
 			)
 			self.db_set("status", "Stopped", update_modified=False)
 

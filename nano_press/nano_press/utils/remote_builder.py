@@ -9,7 +9,7 @@ from typing import Any
 
 import frappe
 
-from nano_press.nano_press.utils.ansible_runner import run_playbook
+from nano_press.utils.ansible_runner import run_playbook
 
 
 class RemoteImageBuilder:

@@ -20,7 +20,7 @@ class AnsibleLog(Document):
 		operation: DF.Literal["Playbook", "Ping", "Command", "Setup"]
 		rc: DF.Int
 		server_name: DF.Link | None
-		site: DF.Data | None
+		site_name: DF.Data | None
 		status: DF.Literal["Success", "Failed", "Unreachable", "Running"]
 		triggered_by: DF.Link | None
 	# end: auto-generated types
