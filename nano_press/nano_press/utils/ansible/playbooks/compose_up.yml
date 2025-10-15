@@ -24,22 +24,3 @@
         chdir: "{{ repo_dir }}"
         executable: /bin/bash
 
-    - name: Get frontend published port via compose
-      ansible.builtin.shell: |
-        set -e
-        docker compose -p {{ project_name }} -f {{ compose_file }} port frontend 8080 | awk -F: '{print $NF}'
-      args:
-        chdir: "{{ repo_dir }}"
-        executable: /bin/bash
-      register: frontend_port_cmd
-      changed_when: false
-
-    - name: Set fact frontend_port
-      ansible.builtin.set_fact:
-        frontend_port: "{{ frontend_port_cmd.stdout | trim }}"
-      when: frontend_port_cmd.stdout | length > 0
-
-    - name: Show frontend port
-      ansible.builtin.debug:
-        msg: "Frontend available on port {{ frontend_port }}"
-
