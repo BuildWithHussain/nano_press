@@ -62,8 +62,8 @@ def run_playbook(**kwargs):
 			result_json=result,
 			operation="Playbook",
 			server=server_docname,
-			bench=None,
-			site=extra_vars.get("site_name"),
+			bench=extra_vars.get("bench_name"),
+			site=extra_vars.get("site_url"),
 		)
 
 		return {
