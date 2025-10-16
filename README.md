@@ -49,7 +49,7 @@ First, ensure your server meets the minimum requirements:
 
 Watch this step-by-step video guide for adding and configuring a server:
 
-![Server Creation Tutorial](nano_press/public/images/addserver.gif)
+<video controls style="width: 100%; height: auto;" src="nano_press/public/images/addserver.mp4" title="Server Creation Tutorial"></video>
 
 #### 2.2 Configure and Verify Server
 
@@ -63,7 +63,7 @@ Follow the video tutorial above to configure server details and verify the conne
 
 Watch this step-by-step video guide for adding custom apps:
 
-![Adding Apps Tutorial](nano_press/public/images/addapps.gif)
+<video controls style="width: 100%; height: auto;" src="nano_press/public/images/addapps.mp4" title="Adding Apps Tutorial"></video>
 
 ### Step 3.5: Build Custom Image (Optional)
 
@@ -73,7 +73,7 @@ Watch this step-by-step video guide for adding custom apps:
 
 Watch this step-by-step video guide for building custom images with pre-installed apps:
 
-![Building Custom Apps Tutorial](nano_press/public/images/imagebuild.gif)
+<video controls style="width: 100%; height: auto;" src="nano_press/public/images/imagebuild.mp4" title="Building Custom Apps Tutorial"></video>
 
 #### 3.5.2 Monitor Build Process
 
@@ -98,8 +98,7 @@ The build process may take up to 30 minutes depending on the number of apps sele
 
 Watch this step-by-step video guide for creating and deploying a Frappe site:
 
-![Frappe Site Creation Tutorial](nano_press/public/images/frappesite.gif)
-
+<video controls style="width: 100%; height: auto;" src="nano_press/public/images/1016.mp4" title="Frappe Site Creation Tutorial"></video>
 #### 4.2 Access Your Site
 
 Once deployment is complete, you can access your Frappe/ERPNext instance:
