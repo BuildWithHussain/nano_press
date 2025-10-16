@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from nano_press.utils.ansible_runner import run_playbook
@@ -182,6 +183,9 @@ class CustomImage(Document):
 
 	def build_custom_image(self):
 		try:
+			self.db_set("build_status", "Building")
+			frappe.db.commit()
+
 			vars = self.get_deployment_vars()
 			result = run_playbook(
 				server_name=self.server_name, playbook_path="build_custom_image.yml", extra_vars=vars
@@ -191,18 +195,25 @@ class CustomImage(Document):
 				self.db_set("build_status", "Failed")
 				self._send_build_notification("error", result.get("message", "Unknown error"))
 				self._send_email_notification("error")
+				frappe.log_error(result.get("message"), _("Custom Image Build Failed"))
 				raise Exception(f"Build failed: {result.get('message', 'Unknown error')}")
 
 			self.db_set("build_status", "Built")
 			self._send_build_notification("success", "Image built successfully")
 			self._send_email_notification("success")
+			self.built_at = frappe.utils.now_datetime()
+			self.build_duration = (self.built_at - self.creation).total_seconds()
+			self.save()
+			frappe.db.commit()
 
 		except Exception as e:
 			frappe.log_error(str(e), "Image Build Failed")
+			self.db_set("build_status", "Failed")
 			raise
 
 	@frappe.whitelist()
 	def enqueue_build_custom_image(self):
+		"""Enqueue the build process for this Custom Image."""
 		frappe.enqueue_doc(
 			"Custom Image",
 			self.name,
@@ -257,6 +268,10 @@ class CustomImage(Document):
 			status: 'success' or 'error'
 		"""
 		try:
+			recipient = frappe.db.get_value("User", self.owner, "email") or frappe.session.user
+			if not recipient or "@" not in recipient:
+				frappe.log_error(f"Invalid email for user {self.owner}", "Email Notification")
+				return
 			if status == "success":
 				subject = f"🚀 Custom Image Build Successful - {self.image_name}"
 				message = f"""
@@ -285,7 +300,7 @@ class CustomImage(Document):
 
 			# Send email to document owner
 			frappe.sendmail(
-				recipients=[self.owner],
+				recipients=[recipient],
 				subject=subject,
 				message=message,
 				reference_doctype="Custom Image",
