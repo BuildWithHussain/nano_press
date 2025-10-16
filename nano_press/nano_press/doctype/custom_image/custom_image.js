@@ -30,8 +30,6 @@ frappe.ui.form.on("Custom Image", {
 			show_build_status_indicator(frm);
 		}
 
-		// Setup real-time notifications
-		setup_realtime_notifications(frm);
 	},
 
 	apps_config: function (frm) {
@@ -129,12 +127,10 @@ function build_custom_image(frm) {
 		function () {
 			// Start build process
 			frappe.call({
-				method: "nano_press.nano_press.utils.remote_builder.trigger_remote_build",
-				args: {
-					custom_image_name: frm.doc.name,
-				},
+				method: "enqueue_build_custom_image",
+				doc: frm.doc,
 				callback: function (r) {
-					if (r.message && r.message.success) {
+					if (r.message && r.message.status == 'queued') {
 						frappe.msgprint({
 							title: __("Build Started"),
 							message: __(
@@ -185,95 +181,6 @@ function show_build_status_indicator(frm) {
 	frm.dashboard.add_indicator(message, indicator_color);
 }
 
-function setup_realtime_notifications(frm) {
-	// Listen for build completion updates
-	frappe.realtime.on("custom_image_build_update", function (data) {
-		if (data.custom_image === frm.doc.name) {
-			// Show notification
-			frappe.show_alert(
-				{
-					message: data.message,
-					indicator: data.status === "success" ? "green" : "red",
-				},
-				5
-			);
 
-			// Refresh form to show updated status
-			frm.reload_doc();
 
-			// Show desktop notification if supported
-			if ("Notification" in window && Notification.permission === "granted") {
-				new Notification(`Custom Image: ${frm.doc.image_name}`, {
-					body: data.message,
-					icon: "/assets/frappe/images/frappe-favicon.svg",
-				});
-			}
-		}
-	});
 
-	// Listen for live build updates (real-time streaming)
-	frappe.realtime.on("custom_image_build_live_update", function (data) {
-		console.log("Received live update:", data); // Debug log
-		if (data.custom_image === frm.doc.name) {
-			// Update live build log in UI
-			update_live_build_log(frm, data.log_line);
-
-			// Auto-scroll to bottom if build log is visible
-			auto_scroll_build_log();
-		}
-	});
-
-	// Request notification permission
-	if ("Notification" in window && Notification.permission === "default") {
-		Notification.requestPermission();
-	}
-}
-
-function update_live_build_log(frm, log_line) {
-	console.log("Updating build log with:", log_line); // Debug log
-
-	// Find the build_log field and append new line
-	const build_log_field = frm.get_field("build_log");
-	if (build_log_field) {
-		const current_value = frm.doc.build_log || "";
-		const new_value = current_value + log_line + "\n";
-
-		// Update the field directly without triggering save
-		frm.doc.build_log = new_value;
-		build_log_field.refresh();
-
-		// Show live indicator
-		show_live_build_indicator(frm, log_line);
-
-		console.log("Build log updated successfully"); // Debug log
-	} else {
-		console.log("Build log field not found"); // Debug log
-	}
-}
-
-function show_live_build_indicator(frm, latest_line) {
-	// Show a small indicator with latest build activity
-	if (
-		latest_line.includes("TASK") ||
-		latest_line.includes("Step") ||
-		latest_line.includes("Pulling")
-	) {
-		frappe.show_alert(
-			{
-				message: `🔨 ${latest_line}`,
-				indicator: "blue",
-			},
-			3
-		);
-	}
-}
-
-function auto_scroll_build_log() {
-	// Auto-scroll build log textarea to bottom
-	setTimeout(() => {
-		const build_log_textarea = $('textarea[data-fieldname="build_log"]');
-		if (build_log_textarea.length) {
-			build_log_textarea.scrollTop(build_log_textarea[0].scrollHeight);
-		}
-	}, 100);
-}

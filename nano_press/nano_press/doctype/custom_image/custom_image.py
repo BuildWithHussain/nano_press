@@ -8,8 +8,14 @@ from typing import Any
 import frappe
 from frappe.model.document import Document
 
+from nano_press.utils.ansible_runner import run_playbook
+
 
 class CustomImage(Document):
+	def before_save(self):
+		self.apps_json_base64 = self.generate_apps_json_base64()
+		self.set_image_tag()
+
 	def generate_apps_json(self) -> str:
 		"""Generate apps.json content from this Custom Image's apps configuration.
 
@@ -51,6 +57,11 @@ class CustomImage(Document):
 
 		return json.dumps(sorted_apps, indent=2)
 
+	def set_image_tag(self) -> str:
+		"""Generate image tag using just the image name."""
+		clean_name = self.image_name.lower().replace(" ", "-")
+		self.image_tag = f"{clean_name}:latest"
+
 	def generate_apps_json_base64(self) -> str:
 		"""Generate base64 encoded apps.json for docker build args.
 
@@ -59,6 +70,15 @@ class CustomImage(Document):
 		"""
 		apps_json = self.generate_apps_json()
 		return base64.b64encode(apps_json.encode("utf-8")).decode("utf-8")
+
+	def get_deployment_vars(self) -> dict:
+		"""Prepare all variables needed for Image Build"""
+
+		return {
+			"image_name": self.image_name,
+			"frappe_version": self.frappe_version,
+			"apps_json_base64": self.generate_apps_json_base64(),
+		}
 
 	def _build_repo_url(self, app_doc) -> str:
 		"""Build repository URL with PAT token if private repo.
@@ -160,64 +180,38 @@ class CustomImage(Document):
 				"apps_summary": [],
 			}
 
-	def build_image_background(self, server_name: str | None = None):
-		"""Background job method to build image on remote server.
-
-		Args:
-			server_name: Optional server name. Uses linked server if not provided
-		"""
-		import time
-
-		from nano_press.nano_press.utils.remote_builder import RemoteImageBuilder
-
-		start_time = time.time()
-
+	def build_custom_image(self):
 		try:
-			# Update status
-			self.reload()
-			self.build_log += f"\n=== Background build started at {frappe.utils.now_datetime()} ===\n"
-			self.save(ignore_permissions=True)
-			frappe.db.commit()
+			vars = self.get_deployment_vars()
+			result = run_playbook(
+				server_name=self.server_name, playbook_path="build_custom_image.yml", extra_vars=vars
+			)
 
-			# Create builder and execute
-			builder = RemoteImageBuilder(self.name)
-			output = builder.build_image_on_server(server_name)
+			if result.get("status") != "success":
+				self.db_set("build_status", "Failed")
+				self._send_build_notification("error", result.get("message", "Unknown error"))
+				self._send_email_notification("error")
+				raise Exception(f"Build failed: {result.get('message', 'Unknown error')}")
 
-			# Calculate duration
-			build_duration = int(time.time() - start_time)
-
-			# Update success status
-			self.reload()
-			self.build_status = "Built"
-			self.built_at = frappe.utils.now_datetime()
-			self.build_duration = build_duration
-			self.build_log += f"\n=== Build completed successfully ===\n{output}"
-			self.save(ignore_permissions=True)
-			frappe.db.commit()
-
-			# Send success notification
-			self._send_build_notification("success", f"Image built successfully in {build_duration}s")
-
-			# Trigger email notification manually to ensure it works
+			self.db_set("build_status", "Built")
+			self._send_build_notification("success", "Image built successfully")
 			self._send_email_notification("success")
 
 		except Exception as e:
-			# Calculate duration even on failure
-			build_duration = int(time.time() - start_time)
+			frappe.log_error(str(e), "Image Build Failed")
+			raise
 
-			# Update failure status
-			self.reload()
-			self.build_status = "Failed"
-			self.build_duration = build_duration
-			self.build_log += f"\n=== Build failed after {build_duration}s ===\n{e!s}"
-			self.save(ignore_permissions=True)
-			frappe.db.commit()
-
-			# Send failure notification
-			self._send_build_notification("error", f"Image build failed: {e!s}")
-
-			# Log error for debugging
-			frappe.log_error(f"Background build failed for {self.name}: {e!s}", "Custom Image Build")
+	@frappe.whitelist()
+	def enqueue_build_custom_image(self):
+		frappe.enqueue_doc(
+			"Custom Image",
+			self.name,
+			"build_custom_image",
+			queue="long",
+			timeout=60 * 20,
+			enqueue_after_commit=True,
+		)
+		return {"status": "queued", "message": f"Build process for {self.name} has been queued."}
 
 	def _send_build_notification(self, status: str, message: str):
 		"""Send real-time notification about build status.
