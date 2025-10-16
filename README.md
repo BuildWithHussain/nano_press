@@ -6,6 +6,14 @@ Nano Press automates your Frappe/ERPNext deployment from zero to production. Con
 
 This guide will walk you through deploying a Frappe/ERPNext server using Nano Press, from server setup to production deployment.
 
+### Nano Press Dashboard
+
+The Nano Press application provides an intuitive dashboard to manage your Frappe/ERPNext deployments:
+
+![Nano Press Dashboard](nano_press/public/images/dashboard.png)
+
+*Note: Screenshot shows the main Nano Press interface with deployment workflow and management options.*
+
 ### Prerequisites
 
 Before starting, ensure you have:
@@ -37,77 +45,35 @@ First, ensure your server meets the minimum requirements:
 
 ![Server Management Dashboard](nano_press/public/images/server.png)
 
-#### 2.2 Configure Server Details
+#### Video Tutorial: Server Creation
 
-Fill in the server configuration:
+Watch this step-by-step video guide for adding and configuring a server:
 
-- **Domain Name**: Enter your server's domain or hostname (e.g., `mycompany.com` or `server1.example.com`)
-- **Server IP**: Enter the public IP address of your server
-- **SSH User**: Usually `root` (default)
-- **SSH Port**: Usually `22` (default)
+![Server Creation Tutorial](nano_press/public/images/addserver.gif)
 
-![Server Configuration Form](nano_press/public/images/verify_server.png)
+#### 2.2 Configure and Verify Server
 
-#### 2.3 Verify Server Connection
-
-1. Click **Save** to create the server record
-2. Click **Verify Server** to test the SSH connection
-3. **Important**: Copy the public key displayed in the verification log
-4. Add this public key to your server's authorized keys:
-
-```bash
-# SSH into your server
-ssh root@your-server-ip
-
-# Add the public key to authorized_keys
-echo "YOUR_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
-
-# Set proper permissions
-chmod 600 ~/.ssh/authorized_keys
-chmod 700 ~/.ssh
-```
-
-5. Wait for the verification process to complete
-
-![Server Verification](nano_press/public/images/server_verified.png)
-
-**Note**: The verification process will:
-- Test SSH connectivity
-- **Require the public key to be added to authorized_keys for successful verification**
+Follow the video tutorial above to configure server details and verify the connection.
 
 ### Step 3: Configure Apps (Optional)
 
 #### 3.1 Add Custom Apps
 
-If you want to install custom apps beyond ERPNext:
+#### Video Tutorial: Adding Private and Public Apps
 
-1. Go to **Apps** Doctype
-2. Click **New** to add a new app
-3. Configure the app details:
-   - **App Name**: Name of the app
-   - **Repository URL**: GitHub repository URL
-   - **Branch**: Branch to install from (e.g., `develop`, `main`)
-   - **Is Private**: Check if it's a private repository
-   - **PAT Token**: Personal Access Token for private repos
+Watch this step-by-step video guide for adding custom apps:
 
-![Apps Configuration](nano_press/public/images/apps.png)
+![Adding Apps Tutorial](nano_press/public/images/addapps.gif)
 
 ### Step 3.5: Build Custom Image (Optional)
 
-#### 3.5.1 Create Custom Image
+#### 3.5.1 Build Custom Image
 
-For faster deployments and better performance, you can build a custom Docker image with your apps pre-installed:
+#### Video Tutorial: Building Custom Apps
 
-1. Go to **Custom Image** Doctype
-2. Click **New** to create a new custom image
-3. Configure the image details:
-   - **Server**: Choose the server to which this image to be build on.
-   - **Verion**: Choose the Framwork version.
-   - **Image name**: Keep a valid image name to be used.
-   - **Apps to Include**: Select the apps you want pre-installed
-   - **Build Configuration**: Set build parameters
+Watch this step-by-step video guide for building custom images with pre-installed apps:
 
-![Custom Image Configuration](nano_press/public/images/build_image.png)
+![Building Custom Apps Tutorial](nano_press/public/images/imagebuild.gif)
 
 #### 3.5.2 Monitor Build Process
 
@@ -120,104 +86,24 @@ The build process may take up to 30 minutes depending on the number of apps sele
 
 ![Custom Image Built](nano_press/public/images/image_built.png)
 
-**Note**: Custom images significantly reduce deployment time for subsequent deployments with the same app configuration. The system will notify you when the build process is finished, so you don't need to continuously monitor the progress.
+**Note**: Custom images significantly reduce deployment time for subsequent deployments with the same app configuration. You will receive both system notifications and email notifications when the build process is finished, so you don't need to continuously monitor the progress.
+
+![Email Notification for Custom Image Build](nano_press/public/images/email.png)
 
 ### Step 4: Deploy Your Instance
 
-#### 4.1 Create Deployment
+#### 4.1 Create and Deploy Frappe Site
 
-1. Go to **Frappe Site** Doctype
-2. Click **New** to create a new deployment
-3. Select your verified server from the dropdown
-4. The server name will be automatically fetched from the server configuration
+#### Video Tutorial: Frappe Site Creation
 
-![Frappe Site Form](nano_press/public/images/ready_to_deploy.png)
+Watch this step-by-step video guide for creating and deploying a Frappe site:
 
-#### 4.2 Configure Deployment Settings
+![Frappe Site Creation Tutorial](nano_press/public/images/frappesite.gif)
 
-Fill in the deployment configuration:
+#### 4.2 Access Your Site
 
-**Basic Settings:**
-- **Site Name**: Choose a unique site name (e.g., `mycompany`)
-- **Admin Password**: Set the admin password (or leave blank for auto-generation)
-- **Docker Image**: By default, `frappe/erpnext:v15.76.0` will be used (contains only ERPNext)
+Once deployment is complete, you can access your Frappe/ERPNext instance:
 
-**Custom Image Configuration:**
-- **Is Custom**: Check this if you want to install additional apps
-- **Custom Image**: Select the custom image you built earlier
-- **Apps Section**: Will be automatically populated with all apps used to build the custom image
-
-**SSL Configuration (Optional):**
-- **Enable SSL**: Check to enable HTTPS
-- **Traefik Domain**: Your domain name (e.g., `erp.mycompany.com`) - **Mandatory if SSL is enabled**
-- **Traefik Email**: Email for Let's Encrypt certificates - **Mandatory if SSL is enabled**
-- **Traefik Password**: Password for Traefik dashboard
-
-![Deployment Configuration](nano_press/public/images/deploy_withoutssl.png)
-
-#### 4.3 Prepare for Deployment
-
-1. Review all settings
-2. Click **Prepare for Deployment**
-3. This process will:
-   - Install Docker and Docker Compose if they don't exist
-   - Install the Frappe Docker repository
-   - Override the `pwd.yml` file with your deployment details
-   - Set up the deployment environment
-
-#### 4.4 Deploy Your Server
-
-1. Once the status changes to "Ready to Deploy"
-2. Click **Deploy** to start the deployment process
-3. This will execute `docker compose up` on your server
-
-![Deployment Process](nano_press/public/images/deployed_custom.png)
-
-#### 4.5 Access Your Site
-
-1. Wait for the deployment to complete (5-10 minutes depending on apps)
-2. You'll see a **Visit Site** button appear
-3. Click **Visit Site** to access your Frappe/ERPNext instance
-
-**Important Notes:**
-- **For Production**: Configure your domain name to point to your server IP
-- **For Local Development**: Don't use SSL and map your IP to hostname in `/etc/hosts` file
-- **Access Details**: 
-  - **URL**: `http://your-server-ip:8000` (or `https://your-domain` if SSL enabled)
-  - **Username**: `Administrator`
-  - **Password**: The password you set during deployment
-
-### Step 5: Monitor Deployment
-
-#### 5.1 Track Progress
-
-The deployment process will:
-
-1. **Prepare Environment**: Install Docker, Docker Compose, and Frappe repository
-2. **Initialize**: Set up Docker containers and networks
-3. **Install Frappe**: Install Frappe framework
-4. **Install ERPNext**: Install ERPNext application
-5. **Install Custom Apps**: Install any additional apps (if using custom image)
-6. **Configure SSL**: Set up HTTPS if enabled
-7. **Finalize**: Complete setup and start services
-
-You can monitor progress in the **Deployment Log** section.
-
-![Deployment Log](nano_press/public/images/deployed_custom.png)
-
-#### 5.2 Deployment Status
-
-- **Not Deployed**: Initial state
-- **Ready to Deploy**: After "Prepare for Deployment" is complete
-- **Deploying**: During the deployment process
-- **Deployed**: Successfully completed
-- **Failed**: If deployment encounters errors
-
-#### 5.3 Access Your Instance
-
-Once deployment is complete and status shows "Deployed":
-
-- Click the **Visit Site** button to access your Frappe/ERPNext instance
 - **URL**: `http://your-server-ip:8000` (or `https://your-domain` if SSL enabled)
 - **Username**: `Administrator`
 - **Password**: The password you set during deployment
