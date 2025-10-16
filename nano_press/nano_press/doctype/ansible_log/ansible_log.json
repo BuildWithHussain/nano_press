@@ -13,8 +13,11 @@
   "column_break_okfm",
   "bench_name",
   "site_name",
-  "command",
-  "executed_on"
+  "executed_on",
+  "log_section",
+  "output",
+  "stdout_tail",
+  "stderr_tail"
  ],
  "fields": [
   {
@@ -57,11 +60,6 @@
    "options": "User"
   },
   {
-   "fieldname": "command",
-   "fieldtype": "Text",
-   "label": "Command"
-  },
-  {
    "fieldname": "executed_on",
    "fieldtype": "Datetime",
    "label": "Run Timestamp"
@@ -71,13 +69,33 @@
    "fieldname": "site_name",
    "fieldtype": "Data",
    "label": "Site"
+  },
+  {
+   "fieldname": "log_section",
+   "fieldtype": "Section Break",
+   "label": "Log"
+  },
+  {
+   "fieldname": "output",
+   "fieldtype": "Long Text",
+   "label": "Output"
+  },
+  {
+   "fieldname": "stdout_tail",
+   "fieldtype": "Long Text",
+   "label": "STDOUT"
+  },
+  {
+   "fieldname": "stderr_tail",
+   "fieldtype": "Long Text",
+   "label": "STDERR"
   }
  ],
  "grid_page_length": 50,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-15 08:04:08.682692",
+ "modified": "2025-10-16 17:25:46.366393",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Ansible Log",
