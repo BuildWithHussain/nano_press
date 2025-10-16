@@ -181,4 +181,20 @@ class FrappeSite(Document):
 
 	@frappe.whitelist()
 	def remove_site(self) -> dict:
-		pass
+		try:
+			result = run_playbook(
+				server_name=self.server_name,
+				playbook_path="destroy_site.yml",
+				timeout=60 * 15,
+				extra_vars={"bench_name": self.bench_name},
+			)
+			if result.get("status") != "success":
+				raise Exception(f"destroy_site.yml failed: {result.get('message', 'Unknown error')}")
+			self.db_set("status", "Stopped", update_modified=False)
+
+			return {"status": 200, "message": "Site Destroyed successfully"}
+
+		except Exception as exc:
+			frappe.log_error(frappe.get_traceback(), "destroy_site.yml failed")
+			self.db_set("status", "Failed", update_modified=False)
+			return {"status": 500, "message": frappe.utils.cstr(exc)}

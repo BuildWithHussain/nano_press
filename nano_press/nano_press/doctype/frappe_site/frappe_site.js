@@ -7,21 +7,20 @@ frappe.ui.form.on("Frappe Site", {
     } else if (frm.doc.status === "Deployed") {
       frm.add_custom_button(__("Stop Containers"), () => call_doc_method(frm, "stop_site")).addClass("btn-danger");
       frm.add_custom_button(__("Visit Site"), () => window.open(`https://${frm.doc.site_url}`)).addClass("btn-info");
-      if (frm.doc.status === "Stopped") {
-        frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "deploy_site")).addClass("btn-primary");
-        frm.add_custom_button(__("Remove Site"), () => {
-          frappe.confirm(
-            __("Are you sure you want to remove this site? This action cannot be undone."),
-            () => call_doc_method(frm, "remove_site")
-          );
-        }).addClass("btn-danger");
-      } else if (!frm.doc.ssl_enabled && frm.doc.server_name) {
-        frappe.db.get_doc("Server", frm.doc.server_name).then(server => {
-          const ip = server.server_ip || "localhost";
-          const port = frm.doc.port || 8080;
-          frm.add_custom_button(__("Visit Site (Insecure)"), () => window.open(`http://${ip}:${port}`)).addClass("btn-warning");
-        });
-      }
+    } else if (frm.doc.status === "Stopped") {
+      frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "deploy_site")).addClass("btn-primary");
+      frm.add_custom_button(__("Remove Site"), () => {
+        frappe.confirm(
+          __("Are you sure you want to remove this site? This action cannot be undone."),
+          () => call_doc_method(frm, "remove_site")
+        );
+      }).addClass("btn-danger");
+    } else if (!frm.doc.ssl_enabled && frm.doc.server_name) {
+      frappe.db.get_doc("Server", frm.doc.server_name).then(server => {
+        const ip = server.server_ip || "localhost";
+        const port = frm.doc.port || 8080;
+        frm.add_custom_button(__("Visit Site (Insecure)"), () => window.open(`http://${ip}:${port}`)).addClass("btn-warning");
+      });
     }
 
     // (Re)bind clipboard handlers safely on every refresh
@@ -78,7 +77,14 @@ function call_doc_method(frm, method_name) {
     return;
   }
 
-  frappe.show_alert({ message: __("Processing..."), indicator: "blue" }, 3);
+  const actionLabels = {
+    prepare_for_deployment: __("Prepare for Deployment"),
+    deploy_site: __("Deploy Site"),
+    stop_site: __("Stop Containers"),
+    remove_site: __("Remove Site")
+  };
+  const actionLabel = actionLabels[method_name] || method_name;
+  frappe.show_alert({ message: __("Processing: {0}", [actionLabel]), indicator: "blue" }, 3);
 
   frm.call(method_name)
     .then((r) => {

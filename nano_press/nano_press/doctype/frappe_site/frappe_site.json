@@ -183,6 +183,7 @@
    "depends_on": "eval:doc.is_development==0",
    "fieldname": "site_url",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Site Url",
    "no_copy": 1,
    "placeholder": "site.example.com",
@@ -208,7 +209,7 @@
    "link_fieldname": "bench_name"
   }
  ],
- "modified": "2025-10-15 07:51:21.465771",
+ "modified": "2025-10-16 17:42:47.455048",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
