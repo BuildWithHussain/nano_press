@@ -12,14 +12,14 @@
   "image_tag",
   "section_break_rgqg",
   "apps_config",
+  "apps_json_base64",
   "log_section",
   "build_duration",
-  "built_at",
-  "build_log"
+  "built_at"
  ],
  "fields": [
   {
-   		"description": "e.g., \"nano_press-v1.0.0\"",
+   "description": "e.g., \"nano_press-v1.0.0\"",
    "fieldname": "image_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -80,24 +80,24 @@
    "label": "Build At"
   },
   {
-   "description": "Real-time build output",
-   "fieldname": "build_log",
-   "fieldtype": "Long Text",
-   "label": "Build Log"
-  },
-  {
    "fieldname": "server_name",
    "fieldtype": "Link",
    "label": "Server",
    "link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Prepared\"]]",
    "options": "Server",
    "reqd": 1
+  },
+  {
+   "fieldname": "apps_json_base64",
+   "fieldtype": "Small Text",
+   "label": "Apps Base64",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-15 08:19:59.777623",
+ "modified": "2025-10-16 16:16:39.053759",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Custom Image",
