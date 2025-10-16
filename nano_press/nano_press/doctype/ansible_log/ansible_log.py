@@ -49,12 +49,42 @@ def log_ansible_result(
 		doc.executed_on = frappe.utils.now_datetime()
 		doc.triggered_by = getattr(frappe.session, "user", None)
 
-		# Command text (best-effort from result payload)
-		cmd_val = (result_json.get("raw_json", {}) or {}).get("cmd") or result_json.get("cmd") or ""
-		if isinstance(cmd_val, list | tuple):
-			doc.command = " ".join(map(str, cmd_val))
+		# Extract command string
+		cmd_val = None
+		# Top-level "cmd"
+		if result_json.get("cmd"):
+			cmd_val = result_json["cmd"]
 		else:
-			doc.command = str(cmd_val)
+			# Try inside raw_json → plays → tasks → hosts
+			raw = result_json.get("raw_json", {})
+			for play in raw.get("plays", []):
+				for task in play.get("tasks", []):
+					hosts = task.get("hosts", {})
+					for _h, host_data in hosts.items():
+						if "cmd" in host_data:
+							cmd_val = host_data["cmd"]
+							break
+					if cmd_val:
+						break
+				if cmd_val:
+					break
+
+		doc.stdout_tail = result_json.get("stdout_tail") or result_json.get("data", {}).get("stdout_tail")
+		doc.stderr_tail = result_json.get("stderr_tail") or result_json.get("data", {}).get("stderr_tail")
+
+		# Optional: store summary or stats
+		summary = None
+		# e.g. summary under result_json["data"]["summary"] or result_json["summary"] or raw_json["stats"]
+		if result_json.get("data", {}).get("summary"):
+			summary = result_json["data"]["summary"]
+		elif result_json.get("summary"):
+			summary = result_json["summary"]
+		elif result_json.get("raw_json", {}).get("stats"):
+			summary = result_json["raw_json"]["stats"]
+
+		if summary is not None:
+			# store as JSON string
+			doc.output = frappe.as_json(summary)
 
 		doc.insert(ignore_permissions=True)
 		frappe.db.commit()

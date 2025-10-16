@@ -28,10 +28,10 @@ def run_playbook(**kwargs):
 	try:
 		host = kwargs.get("host") or kwargs.get("server_ip")
 		server_name = kwargs.get("server_name")
-
 		playbook_arg = kwargs.get("playbook_path")
-		if not playbook_arg:
-			frappe.throw("Missing required field: playbook_path")
+		# require playbook_path and at least one of host/server_name
+		if not playbook_arg or not (host or server_name):
+			frappe.throw("Missing required fields: playbook_path and one of host or server_name")
 
 		extra_vars = kwargs.get("extra_vars", {}) or {}
 		become = bool(kwargs.get("become", False))
