@@ -1,0 +1,23 @@
+{
+ "action": "Update Settings",
+ "action_label": "Prepare Server",
+ "creation": "2025-10-17 12:20:20.717481",
+ "description": "This step ensures that Ansible can connect to the server via SSH, checks for a valid Docker and Docker Compose installation, and validates the server\u2019s system specifications.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "field": "verify_status",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2025-10-17 12:20:20.717481",
+ "modified_by": "Administrator",
+ "name": "Prepare Server",
+ "owner": "Administrator",
+ "reference_document": "Server",
+ "show_form_tour": 0,
+ "show_full_form": 0,
+ "title": "Prepare Server for Deployment",
+ "validate_action": 1,
+ "value_to_validate": "Prepared"
+}
