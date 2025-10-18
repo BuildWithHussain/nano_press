@@ -21,11 +21,11 @@ services:
       traefik.http.middlewares.https-redirect.redirectscheme.scheme: https
       traefik.http.routers.traefik-public-http.entrypoints: http
       traefik.http.routers.traefik-public-http.middlewares: https-redirect
-      traefik.http.routers.traefik-public-http.rule: Host(`{{ traefik_domain }}`)
+      traefik.http.routers.traefik-public-http.rule: Host(`{{ traefik_domain | default("traefik.localhost") }}`)
       traefik.http.routers.traefik-public-http.service: api@internal
       traefik.http.routers.traefik-public-https.entrypoints: https
       traefik.http.routers.traefik-public-https.middlewares: admin-auth
-      traefik.http.routers.traefik-public-https.rule: Host(`{{ traefik_domain }}`)
+      traefik.http.routers.traefik-public-https.rule: Host(`{{ traefik_domain | default("traefik.localhost") }}`)
       traefik.http.routers.traefik-public-https.service: api@internal
       traefik.http.routers.traefik-public-https.tls: "true"
       traefik.http.routers.traefik-public-https.tls.certresolver: le
