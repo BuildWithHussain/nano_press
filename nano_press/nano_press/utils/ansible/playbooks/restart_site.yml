@@ -1,0 +1,43 @@
+- hosts: all
+  become: true
+  vars:
+    repo_dir: "/home/{{ bench_name }}/"
+    compose_file: "pwd.yml"
+    local_compose_src: ""
+    project_name: "{{ bench_name | regex_replace('[^a-zA-Z0-9_-]', '_') | lower }}"
+  tasks:
+    - name: Optionally upload compose file from controller
+      ansible.builtin.copy:
+        src: "{{ local_compose_src }}"
+        dest: "{{ repo_dir }}/{{ compose_file }}"
+        mode: "0644"
+      when: local_compose_src | length > 0
+
+    - name: Ensure compose file exists
+      ansible.builtin.stat:
+        path: "{{ repo_dir }}/{{ compose_file }}"
+      register: compose_file_stat
+
+    - name: Fail if compose file is missing
+      ansible.builtin.fail:
+        msg: "Compose file {{ repo_dir }}/{{ compose_file }} not found"
+      when: not compose_file_stat.stat.exists
+
+    - name: Run compose restart (prefer v2, fallback to v1/plugin path)
+      ansible.builtin.shell: |
+        set -e
+        if docker compose version >/dev/null 2>&1; then
+          docker compose -p {{ project_name }} -f {{ compose_file }} restart
+        elif command -v docker-compose >/dev/null 2>&1; then
+          docker-compose -p {{ project_name }} -f {{ compose_file }} restart
+        elif [ -x "$HOME/.docker/cli-plugins/docker-compose" ]; then
+          "$HOME/.docker/cli-plugins/docker-compose" -f {{ compose_file }} restart
+        else
+          echo "Docker Compose not found (checked: 'docker compose', 'docker-compose', '$HOME/.docker/cli-plugins/docker-compose')" >&2
+          exit 127
+        fi
+      args:
+        chdir: "{{ repo_dir }}"
+        executable: /bin/bash
+
+

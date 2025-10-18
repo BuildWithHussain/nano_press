@@ -6,7 +6,17 @@ frappe.ui.form.on("Frappe Site", {
       frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "deploy_site")).addClass("btn-primary");
     } else if (frm.doc.status === "Deployed") {
       frm.add_custom_button(__("Stop Containers"), () => call_doc_method(frm, "stop_site")).addClass("btn-danger");
+      frm.add_custom_button(__("Restart Containers"), () => call_doc_method(frm, "restart_site")).addClass("btn-warning");
       frm.add_custom_button(__("Visit Site"), () => window.open(`https://${frm.doc.site_url}`)).addClass("btn-info");
+      frm.set_intro(
+        `The site has been successfully deployed and will soon be accessible at:
+        <strong>https://${frm.doc.site_url}</strong>.
+        Please note that deployment time may vary depending on the number of applications being installed.
+        Typically, the first app becomes available within 5 minutes.
+        If the site remains inaccessible after 10 minutes, you are advised to restart the containers.`,
+              'yellow'
+      );
+
     } else if (frm.doc.status === "Stopped") {
       frm.add_custom_button(__("Deploy Site"), () => call_doc_method(frm, "deploy_site")).addClass("btn-primary");
       frm.add_custom_button(__("Remove Site"), () => {
@@ -18,10 +28,12 @@ frappe.ui.form.on("Frappe Site", {
     } else if (!frm.doc.ssl_enabled && frm.doc.server_name) {
       frappe.db.get_doc("Server", frm.doc.server_name).then(server => {
         const ip = server.server_ip || "localhost";
-        const port = frm.doc.port || 8080;
-        frm.add_custom_button(__("Visit Site (Insecure)"), () => window.open(`http://${ip}:${port}`)).addClass("btn-warning");
+        frm.add_custom_button(__("Visit Site (Insecure)"), () => window.open(`http://${ip}:8080`)).addClass("btn-warning");
       });
+    } else if (frm.doc.status === "Failed") {
+      frm.add_custom_button(__("Retry Deployment"), () => call_doc_method(frm, "prepare_for_deployment")).addClass("btn-default");
     }
+
 
     // (Re)bind clipboard handlers safely on every refresh
     bind_clipboard_handlers(frm);

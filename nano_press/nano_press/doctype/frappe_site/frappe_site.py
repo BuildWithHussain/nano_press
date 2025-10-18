@@ -42,6 +42,8 @@ class FrappeSite(Document):
 
 	def before_insert(self):
 		self._ensure_password()
+		if not self.site_url:
+			self.set_site_url()
 
 	def before_save(self):
 		if self.docstatus == 1:
@@ -106,6 +108,10 @@ class FrappeSite(Document):
 			"db_password": self.get_password("db_password") or "admin",
 			"bench_name": self.bench_name or "",
 		}
+
+	def set_site_url(self) -> None:
+		server = frappe.get_doc("Server", self.server_name)
+		self.site_url = f"{self.bench_name}.{server.server_ip}.traefik.me"
 
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:
@@ -196,5 +202,25 @@ class FrappeSite(Document):
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "destroy_site.yml failed")
+			self.db_set("status", "Failed", update_modified=False)
+			return {"status": 500, "message": frappe.utils.cstr(exc)}
+
+	@frappe.whitelist()
+	def restart_site(self) -> dict:
+		try:
+			result = run_playbook(
+				server_name=self.server_name,
+				playbook_path="restart_site.yml",
+				timeout=60 * 15,
+				extra_vars={"bench_name": self.bench_name},
+			)
+			if result.get("status") != "success":
+				raise Exception(f"restart_site.yml failed: {result.get('message', 'Unknown error')}")
+			self.db_set("status", "Stopped", update_modified=False)
+
+			return {"status": 200, "message": "Site Restarted successfully"}
+
+		except Exception as exc:
+			frappe.log_error(frappe.get_traceback(), "restart_site.yml failed")
 			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}

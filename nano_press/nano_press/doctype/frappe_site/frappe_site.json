@@ -12,13 +12,11 @@
   "status",
   "is_custom",
   "ssl_enabled",
-  "is_development",
   "column_break_dkti",
   "docker_image",
   "custom_image",
   "username",
   "admin_password",
-  "port",
   "section_break_hzks",
   "install_apps",
   "database_configuration_section",
@@ -69,8 +67,7 @@
   },
   {
    "fieldname": "section_break_fsva",
-   "fieldtype": "Section Break",
-   "label": "Logs"
+   "fieldtype": "Section Break"
   },
   {
    "allow_on_submit": 1,
@@ -164,23 +161,6 @@
    "read_only": 1
   },
   {
-   "allow_on_submit": 1,
-   "default": "0",
-   "fieldname": "is_development",
-   "fieldtype": "Check",
-   "label": "Is Development"
-  },
-  {
-   "default": "8080",
-   "depends_on": "eval:doc.is_development==1",
-   "fieldname": "port",
-   "fieldtype": "Int",
-   "label": "Port",
-   "non_negative": 1,
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.is_development==0",
    "fieldname": "site_url",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -209,7 +189,7 @@
    "link_fieldname": "bench_name"
   }
  ],
- "modified": "2025-10-16 17:42:47.455048",
+ "modified": "2025-10-18 15:10:19.298805",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Frappe Site",
