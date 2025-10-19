@@ -1,0 +1,63 @@
+<div x-show="currentStep === 2" class="animate-fade-in">
+    <h2 class="text-xl font-semibold mb-6 text-gray-900">Select Apps</h2>
+
+    <div class="mb-6">
+        <label class="block text-sm font-medium mb-2 text-gray-900">Frappe Version</label>
+        <div class="flex gap-2">
+            <button @click="frappeVersion = 'version-15'"
+                    :class="frappeVersion === 'version-15' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-300'"
+                    class="flex-1 px-4 py-2.5 bg-white border border-gray-300 rounded-md text-gray-400 cursor-pointer transition-all duration-200 font-medium text-sm hover:border-gray-900">
+                Version 15
+            </button>
+            <button @click="frappeVersion = 'nightly'"
+                    :class="frappeVersion === 'nightly' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-300'"
+                    class="flex-1 px-4 py-2.5 bg-white border border-gray-300 rounded-md text-gray-400 cursor-pointer transition-all duration-200 font-medium text-sm hover:border-gray-900">
+                Nightly
+            </button>
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <label class="block text-sm font-medium mb-2 text-gray-900">Apps</label>
+        <div class="grid grid-cols-2 gap-2 mb-4">
+            <template x-for="app in availableApps" :key="app.id">
+                <button @click="toggleApp(app.id)"
+                        :class="selectedApps.includes(app.id) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900 border-gray-300'"
+                        class="p-3 bg-white border border-gray-300 rounded-md cursor-pointer transition-all duration-200 text-left hover:border-gray-900">
+                    <div class="font-medium mb-1 text-sm" x-text="app.name"></div>
+                    <div class="text-xs text-gray-400" x-text="app.desc"></div>
+                </button>
+            </template>
+        </div>
+    </div>
+
+    <button @click="showCustomAppDialog = true"
+            class="w-full p-3 bg-white border border-dashed border-gray-300 rounded-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 text-gray-400 font-medium text-sm hover:border-gray-900 hover:text-gray-900">
+        <span class="text-xl">+</span> Add Custom App
+    </button>
+
+    <template x-if="customApps.length > 0">
+        <div class="mt-4">
+            <template x-for="(app, index) in customApps" :key="index">
+                <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-300 rounded-md mb-2">
+                    <span class="text-sm" x-text="app.name"></span>
+                    <button @click="removeCustomApp(index)"
+                            class="bg-none border-none text-gray-400 cursor-pointer px-2 py-1 text-xs underline hover:text-gray-900">
+                        Remove
+                    </button>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <div class="flex gap-3 mt-6">
+        <button @click="prevStep()"
+                class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+            Back
+        </button>
+        <button @click="nextStep()"
+                class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
+            Continue
+        </button>
+    </div>
+</div>

@@ -1,0 +1,36 @@
+<div x-show="showCustomAppDialog"
+     class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+     @click.self="showCustomAppDialog = false">
+    <div class="bg-white rounded-lg p-8 max-w-md w-11/12 mx-4 border border-gray-300" @click.stop>
+        <h3 class="text-lg font-semibold mb-6 text-gray-900">Add Custom App</h3>
+
+        <div class="mb-5">
+            <label class="block text-sm font-medium mb-2 text-gray-900">App Name</label>
+            <input type="text" x-model="customAppForm.name" placeholder="my-custom-app"
+                   class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+        </div>
+
+        <div class="mb-5">
+            <label class="block text-sm font-medium mb-2 text-gray-900">GitHub URL</label>
+            <input type="text" x-model="customAppForm.githubUrl" placeholder="https://github.com/user/repo"
+                   class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-medium mb-2 text-gray-900">GitHub Token</label>
+            <input type="password" x-model="customAppForm.token" placeholder="ghp_xxxxxxxxxxxx"
+                   class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+        </div>
+
+        <div class="flex gap-3">
+            <button @click="showCustomAppDialog = false"
+                    class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+                Cancel
+            </button>
+            <button @click="addCustomApp()"
+                    class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
+                Add App
+            </button>
+        </div>
+    </div>
+</div>

@@ -57,3 +57,6 @@ jspm_packages/
 
 # Cursor rules files
 .cursors/*
+
+# Static files build output
+nano_press/public/css/output.css

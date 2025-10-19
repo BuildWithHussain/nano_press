@@ -1,0 +1,21 @@
+<div x-show="currentStep === 3" class="animate-fade-in">
+    <h2 class="text-xl font-semibold mb-6 text-gray-900">Domain</h2>
+
+    <div class="mb-5">
+        <label class="block text-sm font-medium mb-2 text-gray-900">Domain (Optional)</label>
+        <input type="text" x-model="domain" placeholder="example.com"
+               class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+        <p class="text-xs text-gray-400 mt-1.5">Leave empty to skip domain setup</p>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+        <button @click="prevStep()"
+                class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+            Back
+        </button>
+        <button @click="nextStep()"
+                class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
+            Continue
+        </button>
+    </div>
+</div>

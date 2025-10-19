@@ -1,0 +1,25 @@
+{% macro button(text, variant="primary", size="md", classes="", **kwargs) %}
+    {% set base_classes = "inline-flex justify-center items-center rounded-md font-medium cursor-pointer transition-all duration-200 text-sm" %}
+    {% set size_classes = {
+        'sm': 'px-3 py-1.5 text-xs',
+        'md': 'px-4 py-2.5 text-sm',
+        'lg': 'px-6 py-3 text-base'
+    } %}
+    {% set variant_classes = {
+        'primary': 'bg-gray-900 text-white border border-gray-900 hover:bg-gray-800',
+        'secondary': 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-50',
+        'outline': 'bg-transparent text-gray-900 border border-gray-300 hover:bg-gray-50'
+    } %}
+
+    <button class="{{ base_classes }} {{ size_classes[size] }} {{ variant_classes[variant] }} {{ classes }}" {{ kwargs | xmlattr }}>
+        {{ text }}
+    </button>
+{% endmacro %}
+
+{% macro button_group(buttons, classes="") %}
+    <div class="flex gap-3 {{ classes }}">
+        {% for button in buttons %}
+            {{ button }}
+        {% endfor %}
+    </div>
+{% endmacro %}
