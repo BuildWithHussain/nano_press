@@ -1,0 +1,30 @@
+{% extends "templates/__base.html" %}
+
+{% block page_title %}Self Host Frappe{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js" defer></script>
+    <link rel="stylesheet" href="/assets/nano_press/css/style.css">
+{% endblock %}
+
+{% block page_content %}
+<div x-data="frappeInstaller()" class="container">
+    {% include "templates/includes/home/header.html" %}
+    {% include "templates/includes/home/stepper.html" %}
+
+    <div class="card">
+        {% include "templates/includes/home/step_server_details.html" %}
+        {% include "templates/includes/home/step_select_apps.html" %}
+        {% include "templates/includes/home/step_domain.html" %}
+        {% include "templates/includes/home/step_summary.html" %}
+    </div>
+
+    {% include "templates/includes/home/custom_app_modal.html" %}
+</div>
+{% endblock %}
+
+{% block script %}
+    {{ super() }}
+    <script src="/assets/nano_press/js/script.js"></script>
+{% endblock %}

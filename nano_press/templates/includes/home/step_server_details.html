@@ -1,0 +1,41 @@
+<div x-show="currentStep === 1" class="fade-in">
+    <h2>Server Details</h2>
+    
+    <div class="form-group">
+        <label>IP Address</label>
+        <input type="text" x-model="serverDetails.ip" placeholder="192.168.1.100">
+    </div>
+    
+    <div class="form-group">
+        <label>SSH Public Key</label>
+        <div class="textarea-wrapper">
+            <textarea x-model="generatedSSHKey" rows="3" readonly style="padding-right: 4rem;"></textarea>
+            <button @click="copyToClipboard()" class="copy-btn" x-text="copied ? 'Copied' : 'Copy'"></button>
+        </div>
+        <p class="hint">Copy this key and add it to your server. <a href="https://www.ssh.com/academy/ssh/authorized-keys" target="_blank">Learn how</a></p>
+    </div>
+    
+    <div class="accordion">
+        <div class="accordion-header" @click="showAdvanced = !showAdvanced">
+            <span>Advanced Settings</span>
+            <svg class="accordion-icon" :class="showAdvanced ? 'open' : ''" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </div>
+        <div x-show="showAdvanced" x-transition class="accordion-content">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Root User</label>
+                <input type="text" x-model="serverDetails.rootUser" placeholder="root">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>SSH Port</label>
+                <input type="text" x-model="serverDetails.sshPort" placeholder="22">
+            </div>
+        </div>
+    </div>
+    
+    <button @click="nextStep()" class="btn btn-primary" style="margin-top: 1.5rem;">
+        Continue
+    </button>
+</div>
