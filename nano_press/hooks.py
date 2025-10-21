@@ -77,10 +77,7 @@ add_to_apps_screen = [
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "nano_press.utils.jinja_methods",
-# 	"filters": "nano_press.utils.jinja_filters"
-# }
+jinja = {"methods": "nano_press.api.get_public_ssh_key"}
 
 # Installation
 # ------------
