@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 
 from nano_press.nano_press.doctype.server.server import Server
 from nano_press.utils.ansible_runner import AnsibleOps
@@ -12,7 +13,7 @@ def ping_server(**kwargs):
 		port = kwargs.get("port")
 
 		if not host and not user and not port:
-			frappe.throw("Missing required connection details: provide 'host', 'user', and 'port'")
+			frappe.throw(_("Missing required connection details: provide 'host', 'user', and 'port'"))
 
 		runner = AnsibleOps()
 		result = runner.run_ping(
@@ -39,5 +40,5 @@ def ping_server(**kwargs):
 def get_public_ssh_key():
 	data = Server._read_local_public_key()
 	if not data:
-		frappe.throw("No local SSH public key found. Please generate one first.")
+		frappe.throw(_("No local SSH public key found. Please generate one first."))
 	return data
