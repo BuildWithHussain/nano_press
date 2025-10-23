@@ -1,7 +1,6 @@
 import frappe
 from frappe import _
 
-from nano_press.nano_press.doctype.server.server import Server
 from nano_press.utils.ansible_runner import AnsibleOps
 
 
@@ -35,10 +34,3 @@ def ping_server(**kwargs):
 
 	except Exception as e:
 		return {"status": "error", "message": str(e)}
-
-
-def get_public_ssh_key():
-	data = Server._read_local_public_key()
-	if not data:
-		frappe.throw(_("No local SSH public key found. Please generate one first."))
-	return data

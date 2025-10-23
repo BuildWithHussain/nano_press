@@ -31,8 +31,8 @@
         <div class="relative">
             <textarea x-ref="publicKey" readonly rows="3"
                 class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-mono resize-none pr-16">
-{{ get_public_ssh_key() }}
-    </textarea>
+{{ public_key }}
+            </textarea>
             <button @click="copyToClipboard()"
                 class="absolute right-2 top-2 px-3 py-1.5 text-xs bg-gray-50 border border-gray-300 rounded hover:bg-gray-100 transition-colors duration-200"
                 x-text="copied ? 'Copied' : 'Copy'"></button>
