@@ -4,7 +4,6 @@
   "description": "Nano Press automates the full lifecycle of a self-hosted Frappe/ERPNext deployment—from connecting a fresh server to shipping production-ready sites. It wraps Ansible automation, server health checks, app management, and site provisioning into a guided workflow that lives inside your Frappe desk.",
   "main": "index.js",
   "scripts": {
-		"postinstall": "yarn tailwind:build",
 		"build": "yarn tailwind:build",
 		"tailwind:watch": "npx @tailwindcss/cli -i ./nano_press/public/css/style.css -o ./nano_press/public/css/output.css --watch",
 		"tailwind:build": "npx @tailwindcss/cli -i ./nano_press/public/css/style.css -o ./nano_press/public/css/output.css"
