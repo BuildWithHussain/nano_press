@@ -95,7 +95,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-16 17:25:46.366393",
+ "modified": "2025-10-23 23:42:49.354130",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Ansible Log",
@@ -125,6 +125,15 @@
    "role": "Server Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nano Press User",
+   "share": 1
   }
  ],
  "row_format": "Dynamic",

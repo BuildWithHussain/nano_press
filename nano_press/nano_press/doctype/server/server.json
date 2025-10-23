@@ -14,6 +14,7 @@
   "column_break_nzti",
   "verify_status",
   "last_verified_at",
+  "created_by",
   "traefik_configuration_section",
   "traefik_domain",
   "traefik_email",
@@ -207,6 +208,12 @@
    "fieldtype": "Datetime",
    "label": "Last Prepared at",
    "read_only": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created by",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
@@ -220,7 +227,7 @@
    "link_fieldname": "server_name"
   }
  ],
- "modified": "2025-10-18 16:05:40.390740",
+ "modified": "2025-10-23 23:40:22.875888",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Server",
@@ -251,10 +258,23 @@
    "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nano Press User",
+   "share": 1,
+   "write": 1
   }
  ],
  "quick_entry": 1,
  "row_format": "Dynamic",
+ "show_name_in_global_search": 1,
  "show_title_field_in_link": 1,
  "sort_field": "creation",
  "sort_order": "DESC",

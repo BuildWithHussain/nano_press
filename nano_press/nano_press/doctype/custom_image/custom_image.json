@@ -10,6 +10,7 @@
   "column_break_zpqr",
   "build_status",
   "image_tag",
+  "created_by",
   "section_break_rgqg",
   "apps_config",
   "apps_json_base64",
@@ -92,12 +93,18 @@
    "fieldtype": "Small Text",
    "label": "Apps Base64",
    "read_only": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created by",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-16 16:16:39.053759",
+ "modified": "2025-10-23 23:50:38.572587",
  "modified_by": "Administrator",
  "module": "Nano Press",
  "name": "Custom Image",
@@ -112,6 +119,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nano Press User",
    "share": 1,
    "write": 1
   }
