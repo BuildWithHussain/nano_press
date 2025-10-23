@@ -16,6 +16,10 @@ def has_app_permission():
 	return True
 
 
+def add_user_role(doc, event=None):
+	doc.add_roles("Nano Press User")
+
+
 @frappe.whitelist()
 def get_admin_password(site_name):
 	site = frappe.get_doc("Frappe Site", site_name)

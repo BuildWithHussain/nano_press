@@ -21,6 +21,11 @@ add_to_apps_screen = [
 	}
 ]
 
+
+doc_events = {"User": {"after_insert": "nano_press.add_user_role"}}
+
+fixtures = [{"dt": "Role", "filters": {"name": ("in", ("Nano Press User",))}}]
+
 # Includes in <head>
 # ------------------
 
