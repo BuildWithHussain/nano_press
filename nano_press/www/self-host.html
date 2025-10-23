@@ -16,14 +16,14 @@
 
         <!-- Main Card -->
         <div class="bg-white border border-gray-200 rounded-lg p-8">
-            {% include "templates/components/core/step_1_server.html" %}
-            {% include "templates/components/core/step_2_apps.html" %}
-            {% include "templates/components/core/step_3_domain.html" %}
-            {% include "templates/components/core/step_4_summary.html" %}
+            {% include "templates/components/core/server.html" %}
+            {% include "templates/components/core/apps.html" %}
+            {% include "templates/components/core/domain.html" %}
+            {% include "templates/components/core/summery.html" %}
         </div>
 
         <!-- Custom App Modal -->
-        {% include "templates/components/core/custom_app_modal.html" %}
+        {% include "templates/components/core/custom_app.html" %}
     </div>
 </div>
 {% endblock %}
