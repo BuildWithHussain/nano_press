@@ -59,4 +59,4 @@ jspm_packages/
 .cursors/*
 
 # Static files build output
-nano_press/public/css/output.css
+nano_press/public/css/tailwind.css

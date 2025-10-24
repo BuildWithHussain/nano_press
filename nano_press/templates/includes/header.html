@@ -1,0 +1,74 @@
+
+      {% set user_image = frappe.db.get_value("User", frappe.session.user, "user_image") or "/assets/frappe/images/default-avatar.png" %}
+      {% set full_name = frappe.utils.get_fullname(frappe.session.user) if frappe.utils.get_fullname else frappe.session.user %}
+
+    
+<header class="flex items-center justify-between p-3  bg-surface max-w-5xl mx-auto px-6 md:px-10 ">
+
+  <a href="/home" class="flex items-center space-x-2 text-primary font-semibold text-lg">
+    <span>Nano Press</span>
+  </a>
+
+
+  <div class="flex items-center md:space-x-6">
+    <nav class="flex space-x-2 md:space-x-6 text-text-muted text-sm">
+      <a href="/home" class="hover:text-primary transition hidden md:flex md:items-center">Home</a>
+      <a href="/fl-project" class="hover:text-primary transition hidden md:flex md:items-center">Project</a>
+
+
+      <a href="/chat" class="hover:text-primary transition hidden md:flex md:items-center">Chat</a>
+      <a href="/gig" class="hover:text-primary transition hidden md:flex md:items-center">Gig</a>
+        <div class="relative">
+        <button 
+          id="userMenuButton"
+          class="flex items-center gap-2 text-sm font-medium text-text hover:text-primary transition focus:outline-none">
+          <img src="{{ user_image }}" alt="avatar" class="w-8 h-8 rounded-full object-cover border border-gray-200">
+          <span class="hidden sm:inline">{{ full_name }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <div 
+          id="userDropdown" 
+          class="hidden absolute right-0 mt-4 w-24 bg-white dark:bg-surface border border-gray-200 rounded-lg shadow-md z-9999">
+          <a href="/?cmd=web_logout" 
+   class="flex items-center justify-center gap-2 px-4 py-2 text-sm text-gray-500 hover:bg-gray-800 hover:text-white dark:hover:bg-gray-900 transition rounded-md">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" 
+       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+       class="lucide lucide-log-out">
+    <path d="m16 17 5-5-5-5"/>
+    <path d="M21 12H9"/>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+  </svg>
+  <span>Logout</span>
+</a>
+
+
+
+        </div>
+      </div>
+      {% include "templates/components/mobile_header.html" %}
+
+    </nav>
+
+
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const button = document.getElementById("userMenuButton");
+          const dropdown = document.getElementById("userDropdown");
+
+          button.addEventListener("click", (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle("hidden");
+          });
+
+          document.addEventListener("click", (e) => {
+            if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+              dropdown.classList.add("hidden");
+            }
+          });
+        });
+      </script>
+  </div>
+</header>

@@ -1,0 +1,41 @@
+{% set transition_class = 'transition-transform duration-300' %}
+{% if direction == 'left' %}
+    {% set transform_classes = 'translate-x-0 -translate-x-full' %}
+{% elif direction == 'bottom' %}
+    {% set transform_classes = 'translate-y-0 translate-y-full' %}
+{% else %}
+    {% set transform_classes = 'translate-x-0 -translate-x-full' %}
+{% endif %}
+
+<div x-data="{ is_offcanvas_open: false }" @keydown.escape.window="is_offcanvas_open = false">
+    <!-- Toggle Button -->
+    <div @click="is_offcanvas_open = true">
+        {% block offcanvas_button %}
+        <button class="hover:bg-dark flex rounded-md  bg-white px-2 py-1 text-black hover:text-white md:hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+
+        </button>
+        {% endblock %}
+    </div>
+    <!-- Off-Canvas Panel -->
+    <div
+    id="offcanvas"
+    :class="`fixed {{ position }} z-52 overflow-y-auto bg-white {{ transition_class }} ${is_offcanvas_open ? '{{ transform_classes.split()[0] }}' : '{{ transform_classes.split()[1] }}'} {{width}} {{height}}` "
+    tabindex="-1"
+    aria-labelledby="offcanvas-label"
+    @click.away="mobile_menu_open = false"
+      x-cloak
+    >
+        <div class="p-4 mt-2">
+            {% block offcanvas_header %} Off-Canvas {% endblock %}
+            <!-- Content -->
+            <div>
+                {% block offcanvas_content %} No content {% endblock %}
+            </div>
+        </div>
+    </div>
+    <!-- Backdrop -->
+    <div x-show="is_offcanvas_open" class="fixed inset-0 z-51 bg-gray-900 opacity-25 md:hidden" @click="is_offcanvas_open = false" x-cloak></div>
+</div>

@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
 		"build": "yarn tailwind:build",
-		"tailwind:watch": "npx @tailwindcss/cli -i ./nano_press/public/css/style.css -o ./nano_press/public/css/output.css --watch",
-		"tailwind:build": "npx @tailwindcss/cli -i ./nano_press/public/css/style.css -o ./nano_press/public/css/output.css"
+		"tailwind:watch": "npx @tailwindcss/cli -i ./nano_press/public/css/main.css -o ./nano_press/public/css/tailwind.css --watch",
+		"tailwind:build": "npx @tailwindcss/cli -i ./nano_press/public/css/main.css -o ./nano_press/public/css/tailwind.css"
 	},
   "repository": {
 		"type": "git",
@@ -21,5 +21,9 @@
 		"dependencies": {
 			"@tailwindcss/cli": "^4.1.14",
 			"tailwindcss": "^4.1.14"
-		}
+		},
+		"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@tailwindcss/typography": "^0.5.16"
+	}
 	}
