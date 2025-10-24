@@ -1,38 +1,39 @@
-<div x-show="currentStep === 2" class="animate-fade-in">
+<div x-show="currentStep === 2" class="animate-fade-in" x-data="appsComponent()">
     <h2 class="text-xl font-semibold mb-6 text-gray-900">Select Apps</h2>
 
     <div class="mb-6">
         <label class="block text-sm font-medium mb-2 text-gray-900">Frappe Version</label>
         <div class="flex gap-2">
-            <button @click="frappeVersion = 'version-15'"
-                    :class="frappeVersion === 'version-15' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-300'"
-                    class="flex-1 px-4 py-2.5 bg-white border border-gray-300 rounded-md text-gray-400 cursor-pointer transition-all duration-200 font-medium text-sm hover:border-gray-900">
-                Version 15
-            </button>
-            <button @click="frappeVersion = 'nightly'"
-                    :class="frappeVersion === 'nightly' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-300'"
-                    class="flex-1 px-4 py-2.5 bg-white border border-gray-300 rounded-md text-gray-400 cursor-pointer transition-all duration-200 font-medium text-sm hover:border-gray-900">
-                Nightly
-            </button>
+            <template x-for="version in frappeVersionOptions" :key="version">
+                <button @click="selectFrappeVersion(version)"
+                    :class="frappeVersion === version
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                    class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm"
+                    x-text="formatVersionLabel(version)">
+                </button>
+            </template>
         </div>
     </div>
+
 
     <div class="mb-6">
         <label class="block text-sm font-medium mb-2 text-gray-900">Apps</label>
         <div class="grid grid-cols-2 gap-2 mb-4">
-            <template x-for="app in availableApps" :key="app.id">
-                <button @click="toggleApp(app.id)"
-                        :class="selectedApps.includes(app.id) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900 border-gray-300'"
-                        class="p-3 bg-white border border-gray-300 rounded-md cursor-pointer transition-all duration-200 text-left hover:border-gray-900">
+            <template x-for="app in availableApps" :key="app.name">
+                <button @click="toggleApp(app.name)" :class="selectedApps.includes(app.name)
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-900 border-gray-300'"
+                    class="p-3 border rounded-md text-left cursor-pointer transition-all duration-200 hover:border-gray-900">
                     <div class="font-medium mb-1 text-sm" x-text="app.name"></div>
-                    <div class="text-xs text-gray-400" x-text="app.desc"></div>
+                    <div class="text-xs text-gray-400" x-text="app.branch"></div>
                 </button>
             </template>
         </div>
     </div>
 
     <button @click="showCustomAppDialog = true"
-            class="w-full p-3 bg-white border border-dashed border-gray-300 rounded-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 text-gray-400 font-medium text-sm hover:border-gray-900 hover:text-gray-900">
+        class="w-full p-3 bg-white border border-dashed border-gray-300 rounded-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 text-gray-400 font-medium text-sm hover:border-gray-900 hover:text-gray-900">
         <span class="text-xl">+</span> Add Custom App
     </button>
 
@@ -42,7 +43,7 @@
                 <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-300 rounded-md mb-2">
                     <span class="text-sm" x-text="app.name"></span>
                     <button @click="removeCustomApp(index)"
-                            class="bg-none border-none text-gray-400 cursor-pointer px-2 py-1 text-xs underline hover:text-gray-900">
+                        class="bg-none border-none text-gray-400 cursor-pointer px-2 py-1 text-xs underline hover:text-gray-900">
                         Remove
                     </button>
                 </div>
@@ -52,12 +53,64 @@
 
     <div class="flex gap-3 mt-6">
         <button @click="prevStep()"
-                class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+            class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
             Back
         </button>
         <button @click="nextStep()"
-                class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
+            class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
             Continue
         </button>
     </div>
 </div>
+<script>
+    function appsComponent() {
+        return {
+            // No need to JSON.parse — this is already a valid JS array
+            availableApps: {{ apps | tojson }},
+            frappeVersionOptions: ['version-15', 'nightly'],
+            frappeVersion: '',
+            selectedApps: [],
+            customApps: [],
+            showCustomAppDialog: false,
+            customAppForm: {
+                name: '',
+                githubUrl: '',
+                token: ''
+            },
+            addCustomApp() {
+                if (this.customAppForm.name && this.customAppForm.githubUrl) {
+                    this.customApps.push({
+                        name: this.customAppForm.name,
+                        githubUrl: this.customAppForm.githubUrl,
+                        token: this.customAppForm.token
+                    });
+                    this.customAppForm = { name: '', githubUrl: '', token: '' };
+                    this.showCustomAppDialog = false;
+                }
+            },
+            removeCustomApp(index) {
+                this.customApps.splice(index, 1);
+            },
+            toggleApp(appName) {
+                if (this.selectedApps.includes(appName)) {
+                    this.selectedApps = this.selectedApps.filter(name => name !== appName);
+                } else {
+                    this.selectedApps.push(appName);
+                }
+            },
+            selectFrappeVersion(version) {
+            this.frappeVersion = version;
+            },
+            formatVersionLabel(version) {
+                if (version === 'nightly') {
+                    return 'Nightly';
+                }
+                if (version.startsWith('version-')) {
+                    const versionNumber = version.replace('version-', '').replace('-', ' ');
+                    return `Version ${versionNumber}`;
+                }
+                return version;
+            },
+        };
+    }
+</script>
