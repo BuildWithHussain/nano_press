@@ -1,13 +1,80 @@
-{% extends "templates/__base.html" %}
+{% extends "templates/layout.html" %}
 
 {% block page_title %}Self Host Frappe{% endblock %}
 
-{% block page_content %}
-<div class="max-w-3xl mx-auto px-4 py-8">
+{% block body %}
+<div class="mx-auto px-4 py-8">
     <!-- Header -->
     <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Self Host Frappe</h1>
-        <p class="text-gray-600">Deploy your Frappe applications in minutes</p>
+        <div x-data="{
+        text: '',
+        textArray : ['Instant deployments. Infinite possibilities', 'Go from code to cloud in minutes!', 'Launch your Frappe apps instantly!'],
+        textIndex: 0,
+        charIndex: 0,
+        typeSpeed: 110,
+        cursorSpeed: 550,
+        pauseEnd: 1500,
+        pauseStart: 20,
+        direction: 'forward',
+    }" x-init="$nextTick(() => {
+        let typingInterval = setInterval(startTyping, $data.typeSpeed);
+    
+        function startTyping(){
+            let current = $data.textArray[ $data.textIndex ];
+            
+            // check to see if we hit the end of the string
+            if($data.charIndex > current.length){
+                    $data.direction = 'backward';
+                    clearInterval(typingInterval);
+                    
+                    setTimeout(function(){
+                        typingInterval = setInterval(startTyping, $data.typeSpeed);
+                    }, $data.pauseEnd);
+            }   
+                
+            $data.text = current.substring(0, $data.charIndex);
+            
+            if($data.direction == 'forward')
+            {
+                $data.charIndex += 1;
+            } 
+            else 
+            {
+                if($data.charIndex == 0)
+                {
+                    $data.direction = 'forward';
+                    clearInterval(typingInterval);
+                    setTimeout(function(){
+                        $data.textIndex += 1;
+                        if($data.textIndex >= $data.textArray.length)
+                        {
+                            $data.textIndex = 0;
+                        }
+                        typingInterval = setInterval(startTyping, $data.typeSpeed);
+                    }, $data.pauseStart);
+                }
+                $data.charIndex -= 1;
+            }
+        }
+                    
+        setInterval(function(){
+            if($refs.cursor.classList.contains('hidden'))
+            {
+                $refs.cursor.classList.remove('hidden');
+            } 
+            else 
+            {
+                $refs.cursor.classList.add('hidden');
+            }
+        }, $data.cursorSpeed);
+
+    })" class="flex items-center justify-center mx-auto text-center max-w-7xl">
+            <div class="relative flex items-center justify-center h-auto">
+                <p class="text-gray-950" x-text="text"></p>
+                <span class="absolute right-0 w-2 -mr-2 bg-black h-3/4" x-ref="cursor"></span>
+            </div>
+        </div>
     </div>
 
     <div x-data="frappeInstaller()">
@@ -29,127 +96,127 @@
 {% endblock %}
 
 {% block script %}
-    {{ super() }}
-    <script>
-        function frappeInstaller() {
-            return {
-                currentStep: 1,
-                stepNames: ['Server', 'Apps', 'Domain', 'Deploy'],
-                showAdvanced: false,
+{{ super() }}
+<script>
+    function frappeInstaller() {
+        return {
+            currentStep: 1,
+            stepNames: ['Server', 'Apps', 'Domain', 'Deploy'],
+            showAdvanced: false,
 
-                serverDetails: {
-                    ip: '',
-                    rootUser: 'root',
-                    sshPort: '22'
-                },
+            serverDetails: {
+                ip: '',
+                rootUser: 'root',
+                sshPort: '22'
+            },
 
-                generatedSSHKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... frappe@deploy',
+            generatedSSHKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... frappe@deploy',
 
-                frappeVersion: 'version-15',
-                availableApps: [
-                    { id: 'erpnext', name: 'ERPNext', desc: 'ERP System' },
-                    { id: 'hrms', name: 'HRMS', desc: 'HR Management' },
-                    { id: 'lms', name: 'LMS', desc: 'Learning' },
-                    { id: 'crm', name: 'CRM', desc: 'Customer Relations' }
-                ],
-                selectedApps: [],
-                customApps: [],
-                showCustomAppDialog: false,
-                customAppForm: {
-                    name: '',
-                    githubUrl: '',
-                    token: ''
-                },
+            frappeVersion: 'version-15',
+            availableApps: [
+                { id: 'erpnext', name: 'ERPNext', desc: 'ERP System' },
+                { id: 'hrms', name: 'HRMS', desc: 'HR Management' },
+                { id: 'lms', name: 'LMS', desc: 'Learning' },
+                { id: 'crm', name: 'CRM', desc: 'Customer Relations' }
+            ],
+            selectedApps: [],
+            customApps: [],
+            showCustomAppDialog: false,
+            customAppForm: {
+                name: '',
+                githubUrl: '',
+                token: ''
+            },
 
-                domain: '',
+            domain: '',
 
-                deploying: false,
-                deployComplete: false,
-                deployStep: 0,
-                deploymentStatus: 'Preparing server...',
+            deploying: false,
+            deployComplete: false,
+            deployStep: 0,
+            deploymentStatus: 'Preparing server...',
 
-                copied: false,
+            copied: false,
 
-                copyToClipboard() {
-                    navigator.clipboard.writeText(this.generatedSSHKey).then(() => {
-                        this.copied = true;
-                        setTimeout(() => {
-                            this.copied = false;
-                        }, 2000);
+            copyToClipboard() {
+                navigator.clipboard.writeText(this.generatedSSHKey).then(() => {
+                    this.copied = true;
+                    setTimeout(() => {
+                        this.copied = false;
+                    }, 2000);
+                });
+            },
+
+            toggleApp(appId) {
+                const index = this.selectedApps.indexOf(appId);
+                if (index > -1) {
+                    this.selectedApps.splice(index, 1);
+                } else {
+                    this.selectedApps.push(appId);
+                }
+            },
+
+            addCustomApp() {
+                if (this.customAppForm.name && this.customAppForm.githubUrl) {
+                    this.customApps.push({
+                        name: this.customAppForm.name,
+                        githubUrl: this.customAppForm.githubUrl,
+                        token: this.customAppForm.token
                     });
-                },
+                    this.customAppForm = { name: '', githubUrl: '', token: '' };
+                    this.showCustomAppDialog = false;
+                }
+            },
 
-                toggleApp(appId) {
-                    const index = this.selectedApps.indexOf(appId);
-                    if (index > -1) {
-                        this.selectedApps.splice(index, 1);
-                    } else {
-                        this.selectedApps.push(appId);
-                    }
-                },
+            removeCustomApp(index) {
+                this.customApps.splice(index, 1);
+            },
 
-                addCustomApp() {
-                    if (this.customAppForm.name && this.customAppForm.githubUrl) {
-                        this.customApps.push({
-                            name: this.customAppForm.name,
-                            githubUrl: this.customAppForm.githubUrl,
-                            token: this.customAppForm.token
-                        });
-                        this.customAppForm = { name: '', githubUrl: '', token: '' };
-                        this.showCustomAppDialog = false;
-                    }
-                },
+            getSelectedAppsNames() {
+                const appNames = this.selectedApps.map(id => {
+                    const app = this.availableApps.find(a => a.id === id);
+                    return app ? app.name : '';
+                });
+                const allApps = [...appNames, ...this.customApps.map(a => a.name)];
+                return allApps.join(', ') || 'None';
+            },
 
-                removeCustomApp(index) {
-                    this.customApps.splice(index, 1);
-                },
+            startDeployment() {
+                this.deploying = true;
+                this.deployStep = 0;
 
-                getSelectedAppsNames() {
-                    const appNames = this.selectedApps.map(id => {
-                        const app = this.availableApps.find(a => a.id === id);
-                        return app ? app.name : '';
-                    });
-                    const allApps = [...appNames, ...this.customApps.map(a => a.name)];
-                    return allApps.join(', ') || 'None';
-                },
+                setTimeout(() => {
+                    this.deployStep = 1;
+                    this.deploymentStatus = 'Preparing server...';
+                }, 1000);
 
-                startDeployment() {
-                    this.deploying = true;
-                    this.deployStep = 0;
+                setTimeout(() => {
+                    this.deployStep = 2;
+                    this.deploymentStatus = 'Deploying site...';
+                }, 3000);
 
-                    setTimeout(() => {
-                        this.deployStep = 1;
-                        this.deploymentStatus = 'Preparing server...';
-                    }, 1000);
+                setTimeout(() => {
+                    this.deploying = false;
+                    this.deployComplete = true;
+                }, 5000);
+            },
 
-                    setTimeout(() => {
-                        this.deployStep = 2;
-                        this.deploymentStatus = 'Deploying site...';
-                    }, 3000);
+            visitSite() {
+                const siteUrl = this.domain || this.serverDetails.ip;
+                alert(`Opening site: ${siteUrl}`);
+            },
 
-                    setTimeout(() => {
-                        this.deploying = false;
-                        this.deployComplete = true;
-                    }, 5000);
-                },
+            nextStep() {
+                if (this.currentStep < 4) {
+                    this.currentStep++;
+                }
+            },
 
-                visitSite() {
-                    const siteUrl = this.domain || this.serverDetails.ip;
-                    alert(`Opening site: ${siteUrl}`);
-                },
-
-                nextStep() {
-                    if (this.currentStep < 4) {
-                        this.currentStep++;
-                    }
-                },
-
-                prevStep() {
-                    if (this.currentStep > 1) {
-                        this.currentStep--;
-                    }
+            prevStep() {
+                if (this.currentStep > 1) {
+                    this.currentStep--;
                 }
             }
         }
-    </script>
+    }
+</script>
 {% endblock %}
