@@ -116,7 +116,7 @@
             serverDetails: {
                 ip: '',
                 rootUser: 'root',
-                sshPort: '22',
+                sshPort: '22'
             },
             copied: false,
             isLoading: false,
@@ -124,35 +124,21 @@
             isVerified: false,
             isValidIP: false,
 
-
-            copyToClipboard() {
-                const key = this.$refs.publicKey.value.trim();
-                navigator.clipboard.writeText(key)
-                    .then(() => {
-                        this.copied = true;
-                        setTimeout(() => {
-                            this.copied = false;
-                        }, 2000);
-                    })
-                    .catch(err => {
-                        console.error('Clipboard copy failed::: ', err);
-                    });
-            },
-
             validateIP(ip) {
                 // Basic IPv4 validation regex
                 const regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
                 return regex.test(ip);
             },
-
             async nextStep() {
                 if (this.isVerified) {
                     this.currentStep = 2;
                     return;
                 }
+
                 this.error = '';
                 this.isLoading = true;
 
+                // Validate IP format first
                 if (!this.validateIP(this.serverDetails.ip)) {
                     this.error = 'Invalid IP address. Please check and try again.';
                     this.isLoading = false;
@@ -160,29 +146,87 @@
                 }
 
                 try {
-                    const response = await fetch('/api/v2/method/nano_press.api.ping_server', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            host: this.serverDetails.ip,
-                            user: this.serverDetails.rootUser,
-                            port: this.serverDetails.sshPort
-                        })
+                    // Call the combined function: ping + create server
+                    const serverData = await verify_and_create_server(
+                        this.serverDetails.ip,
+                        this.serverDetails.rootUser,
+                        this.serverDetails.sshPort
 
-                    });
-                    console.log(response);
-                    const result = await response.json();
-                    if (!result.data.ok) {
-                        throw new Error(result.data.message);
-                    }
-                    this.currentStep = 2;
+                    );
+
+                    // If server creation succeeded
+                    const message = "Server verified and created successfully";
+                    toast(message, { type: "success" });
+
+                    console.log("Created server:", serverData);
+
                     this.isVerified = true;
+                    this.currentStep = 2;
+
                 } catch (err) {
-                    this.error = err.message;
+                    const message = err.message || "Unable to verify or create server";
+                    this.error = message;
+                    toast(message, { type: "danger" });
                 } finally {
                     this.isLoading = false;
                 }
             }
         }
     }
+    async function create_server_doc(server_ip, ssh_user, ssh_port) {
+        const url = '/api/resource/Server';
+        try {
+            const payload = {
+                server_ip,
+                ssh_user,
+                ssh_port
+            };
+
+            // Create document using frappe_call()
+            const response = await frappe_call(url, payload, "POST");
+
+            // Check if the response looks good
+            if (response?.data?.name) {
+                const message = ("Server record created successfully");
+                toast(message, { type: "success" });
+                return response.data;
+            } else {
+                throw new Error("Failed to create server record.");
+            }
+        } catch (err) {
+            const message = err.message || ("Error creating server record");
+            toast(message, { type: "danger" });
+            throw err; // rethrow if you want the caller to handle it
+        }
+    }
+    async function ping_server(server_ip, ssh_user = "root", ssh_port = 22) {
+        const url = '/api/v2/method/nano_press.api.ping_server';
+        try {
+            const payload = {
+                host: server_ip,
+                user: ssh_user,
+                port: ssh_port
+            };
+
+            const response = await frappe_call(url, payload, "POST");
+
+            if (!response?.data?.ok) {
+                throw new Error(response?.data?.message || "Server is unreachable.");
+            }
+
+            const message = ("Server connection verified successfully");
+            toast(message, { type: "success" });
+
+            return response.data;
+        } catch (err) {
+            const message = err.message || ("Failed to verify server connection");
+            toast(message, { type: "danger" });
+            throw err;
+        }
+    }
+    async function verify_and_create_server(server_ip, ssh_user = "root", ssh_port = 22) {
+        await ping_server(server_ip, ssh_user, ssh_port);
+        return await create_server_doc(server_ip, ssh_user, ssh_port);
+    }
+
 </script>

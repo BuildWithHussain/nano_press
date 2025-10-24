@@ -1,283 +1,281 @@
 {
- "actions": [],
- "allow_rename": 1,
- "autoname": "field:server_name",
- "creation": "2025-08-09 22:14:24.260383",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "server_details_section",
-  "server_name",
-  "server_ip",
-  "ssh_user",
-  "ssh_port",
-  "column_break_nzti",
-  "verify_status",
-  "last_verified_at",
-  "created_by",
-  "traefik_configuration_section",
-  "traefik_domain",
-  "traefik_email",
-  "column_break_kdcw",
-  "traefik_username",
-  "traefik_password",
-  "host_public_key_section",
-  "public_key",
-  "preparation_and_dependencies_tab",
-  "docker_section",
-  "docker_installed",
-  "docker_version",
-  "column_break_qdul",
-  "compose_installed",
-  "compose_version",
-  "traefik_section",
-  "traefik_deployed",
-  "traefik_version",
-  "section_break_blcq",
-  "last_prepared_at"
- ],
- "fields": [
-  {
-   "description": "Enter the public or private IP address of the server. This will be used for SSH connections.\nExample: 192.168.1.10 or 203.0.113.15",
-   "fieldname": "server_ip",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Server IP",
-   "reqd": 1,
-   "unique": 1
-  },
-  {
-   "default": "root",
-   "description": "The SSH username used to connect to the server. Default is root",
-   "fieldname": "ssh_user",
-   "fieldtype": "Data",
-   "label": "SSH User",
-   "reqd": 1
-  },
-  {
-   "default": "22",
-   "description": "The port used for SSH connections. Default is 22. Change if your server uses a custom SSH port.",
-   "fieldname": "ssh_port",
-   "fieldtype": "Int",
-   "label": "SSH Port",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "Not Verified",
-   "description": "Indicates the current verification status of the server",
-   "fieldname": "verify_status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Status",
-   "options": "Not Verified\nVerifying\nVerified\nFailed\nNot Prepared\nPreparing\nPrepared",
-   "read_only": 1
-  },
-  {
-   "description": "The timestamp when the server was last verified.",
-   "fieldname": "last_verified_at",
-   "fieldtype": "Datetime",
-   "label": "Last Verified At",
-   "read_only": 1
-  },
-  {
-   "fieldname": "server_details_section",
-   "fieldtype": "Section Break",
-   "label": "Server Configuration"
-  },
-  {
-   "depends_on": "eval:!!doc.server_ip",
-   "fieldname": "host_public_key_section",
-   "fieldtype": "Section Break",
-   "label": "Host Public Key"
-  },
-  {
-   "description": "Displays the public key of the server.",
-   "fieldname": "public_key",
-   "fieldtype": "HTML",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_nzti",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "server_name",
-   "fieldtype": "Data",
-   "label": "Server Name",
-   "placeholder": "My Development Server",
-   "reqd": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "traefik_configuration_section",
-   "fieldtype": "Section Break",
-   "label": "Traefik Configuration"
-  },
-  {
-   "default": "traefik.localhost",
-   "fieldname": "traefik_domain",
-   "fieldtype": "Data",
-   "label": "Traefik Domain",
-   "placeholder": "traefik.example.com"
-  },
-  {
-   "fieldname": "traefik_email",
-   "fieldtype": "Data",
-   "label": "Traefik Email",
-   "placeholder": "developer@example.com",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_kdcw",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "admin",
-   "fieldname": "traefik_username",
-   "fieldtype": "Data",
-   "label": "Traefik Username",
-   "reqd": 1
-  },
-  {
-   "default": "password",
-   "fieldname": "traefik_password",
-   "fieldtype": "Password",
-   "label": "Traefik Password",
-   "placeholder": "V2POWHDGe500",
-   "reqd": 1
-  },
-  {
-   "fieldname": "preparation_and_dependencies_tab",
-   "fieldtype": "Tab Break",
-   "label": "Dependencies"
-  },
-  {
-   "fieldname": "docker_section",
-   "fieldtype": "Section Break",
-   "label": "Docker"
-  },
-  {
-   "default": "0",
-   "fieldname": "docker_installed",
-   "fieldtype": "Check",
-   "label": "Docker Installed"
-  },
-  {
-   "fieldname": "docker_version",
-   "fieldtype": "Data",
-   "label": "Docker Version"
-  },
-  {
-   "fieldname": "column_break_qdul",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "fieldname": "compose_installed",
-   "fieldtype": "Check",
-   "label": "Docker Compose Installed"
-  },
-  {
-   "fieldname": "compose_version",
-   "fieldtype": "Data",
-   "label": "Docker Compose Version"
-  },
-  {
-   "fieldname": "traefik_section",
-   "fieldtype": "Section Break",
-   "label": "Traefik"
-  },
-  {
-   "default": "0",
-   "fieldname": "traefik_deployed",
-   "fieldtype": "Check",
-   "label": "Traefik Deployed"
-  },
-  {
-   "fieldname": "traefik_version",
-   "fieldtype": "Data",
-   "label": "Traefik Version"
-  },
-  {
-   "fieldname": "section_break_blcq",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "last_prepared_at",
-   "fieldtype": "Datetime",
-   "label": "Last Prepared at",
-   "read_only": 1
-  },
-  {
-   "fieldname": "created_by",
-   "fieldtype": "Link",
-   "label": "Created by",
-   "options": "User"
-  }
- ],
- "grid_page_length": 50,
- "links": [
-  {
-   "link_doctype": "Ansible Log",
-   "link_fieldname": "server_name"
-  },
-  {
-   "link_doctype": "Frappe Site",
-   "link_fieldname": "server_name"
-  }
- ],
- "modified": "2025-10-23 23:40:22.875888",
- "modified_by": "Administrator",
- "module": "Nano Press",
- "name": "Server",
- "naming_rule": "By fieldname",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Server Manager",
-   "select": 1,
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Nano Press User",
-   "share": 1,
-   "write": 1
-  }
- ],
- "quick_entry": 1,
- "row_format": "Dynamic",
- "show_name_in_global_search": 1,
- "show_title_field_in_link": 1,
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": [],
- "title_field": "server_name"
+	"actions": [],
+	"allow_rename": 1,
+	"autoname": "format:BENCH-{#####}",
+	"creation": "2025-08-09 22:14:24.260383",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"server_details_section",
+		"server_name",
+		"server_ip",
+		"ssh_user",
+		"ssh_port",
+		"column_break_nzti",
+		"verify_status",
+		"last_verified_at",
+		"created_by",
+		"traefik_configuration_section",
+		"traefik_domain",
+		"traefik_email",
+		"column_break_kdcw",
+		"traefik_username",
+		"traefik_password",
+		"host_public_key_section",
+		"public_key",
+		"preparation_and_dependencies_tab",
+		"docker_section",
+		"docker_installed",
+		"docker_version",
+		"column_break_qdul",
+		"compose_installed",
+		"compose_version",
+		"traefik_section",
+		"traefik_deployed",
+		"traefik_version",
+		"section_break_blcq",
+		"last_prepared_at"
+	],
+	"fields": [
+		{
+			"description": "Enter the public or private IP address of the server. This will be used for SSH connections.\nExample: 192.168.1.10 or 203.0.113.15",
+			"fieldname": "server_ip",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Server IP",
+			"reqd": 1,
+			"unique": 1
+		},
+		{
+			"default": "root",
+			"description": "The SSH username used to connect to the server. Default is root",
+			"fieldname": "ssh_user",
+			"fieldtype": "Data",
+			"label": "SSH User",
+			"reqd": 1
+		},
+		{
+			"default": "22",
+			"description": "The port used for SSH connections. Default is 22. Change if your server uses a custom SSH port.",
+			"fieldname": "ssh_port",
+			"fieldtype": "Int",
+			"label": "SSH Port",
+			"non_negative": 1,
+			"reqd": 1
+		},
+		{
+			"default": "Not Verified",
+			"description": "Indicates the current verification status of the server",
+			"fieldname": "verify_status",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Status",
+			"options": "Not Verified\nVerifying\nVerified\nFailed\nNot Prepared\nPreparing\nPrepared",
+			"read_only": 1
+		},
+		{
+			"description": "The timestamp when the server was last verified.",
+			"fieldname": "last_verified_at",
+			"fieldtype": "Datetime",
+			"label": "Last Verified At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "server_details_section",
+			"fieldtype": "Section Break",
+			"label": "Server Configuration"
+		},
+		{
+			"depends_on": "eval:!!doc.server_ip",
+			"fieldname": "host_public_key_section",
+			"fieldtype": "Section Break",
+			"label": "Host Public Key"
+		},
+		{
+			"description": "Displays the public key of the server.",
+			"fieldname": "public_key",
+			"fieldtype": "HTML",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_nzti",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "server_name",
+			"fieldtype": "Data",
+			"label": "Server Name",
+			"placeholder": "My Development Server",
+			"unique": 1
+		},
+		{
+			"fieldname": "traefik_configuration_section",
+			"fieldtype": "Section Break",
+			"label": "Traefik Configuration"
+		},
+		{
+			"default": "traefik.localhost",
+			"fieldname": "traefik_domain",
+			"fieldtype": "Data",
+			"label": "Traefik Domain",
+			"placeholder": "traefik.example.com"
+		},
+		{
+			"fieldname": "traefik_email",
+			"fieldtype": "Data",
+			"label": "Traefik Email",
+			"placeholder": "developer@example.com"
+		},
+		{
+			"fieldname": "column_break_kdcw",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "admin",
+			"fieldname": "traefik_username",
+			"fieldtype": "Data",
+			"label": "Traefik Username",
+			"reqd": 1
+		},
+		{
+			"default": "password",
+			"fieldname": "traefik_password",
+			"fieldtype": "Password",
+			"label": "Traefik Password",
+			"placeholder": "V2POWHDGe500",
+			"reqd": 1
+		},
+		{
+			"fieldname": "preparation_and_dependencies_tab",
+			"fieldtype": "Tab Break",
+			"label": "Dependencies"
+		},
+		{
+			"fieldname": "docker_section",
+			"fieldtype": "Section Break",
+			"label": "Docker"
+		},
+		{
+			"default": "0",
+			"fieldname": "docker_installed",
+			"fieldtype": "Check",
+			"label": "Docker Installed"
+		},
+		{
+			"fieldname": "docker_version",
+			"fieldtype": "Data",
+			"label": "Docker Version"
+		},
+		{
+			"fieldname": "column_break_qdul",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "0",
+			"fieldname": "compose_installed",
+			"fieldtype": "Check",
+			"label": "Docker Compose Installed"
+		},
+		{
+			"fieldname": "compose_version",
+			"fieldtype": "Data",
+			"label": "Docker Compose Version"
+		},
+		{
+			"fieldname": "traefik_section",
+			"fieldtype": "Section Break",
+			"label": "Traefik"
+		},
+		{
+			"default": "0",
+			"fieldname": "traefik_deployed",
+			"fieldtype": "Check",
+			"label": "Traefik Deployed"
+		},
+		{
+			"fieldname": "traefik_version",
+			"fieldtype": "Data",
+			"label": "Traefik Version"
+		},
+		{
+			"fieldname": "section_break_blcq",
+			"fieldtype": "Section Break"
+		},
+		{
+			"fieldname": "last_prepared_at",
+			"fieldtype": "Datetime",
+			"label": "Last Prepared at",
+			"read_only": 1
+		},
+		{
+			"fieldname": "created_by",
+			"fieldtype": "Link",
+			"label": "Created by",
+			"options": "User"
+		}
+	],
+	"grid_page_length": 50,
+	"links": [
+		{
+			"link_doctype": "Ansible Log",
+			"link_fieldname": "server_name"
+		},
+		{
+			"link_doctype": "Frappe Site",
+			"link_fieldname": "server_name"
+		}
+	],
+	"modified": "2025-10-24 15:30:22.913955",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "Server",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Server Manager",
+			"select": 1,
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Nano Press User",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"quick_entry": 1,
+	"row_format": "Dynamic",
+	"show_name_in_global_search": 1,
+	"show_title_field_in_link": 1,
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": [],
+	"title_field": "server_name"
 }
