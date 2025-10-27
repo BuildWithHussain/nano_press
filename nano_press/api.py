@@ -1,3 +1,5 @@
+from asyncio import subprocess
+
 import frappe
 from frappe import _
 
@@ -34,3 +36,48 @@ def ping_server(**kwargs):
 
 	except Exception as e:
 		return {"status": "error", "message": str(e)}
+
+
+@frappe.whitelist(allow_guest=True)
+def check_domain_resolves_to_ip(domain: str, expected_ip: str) -> dict:
+	"""Check if domain resolves to given IP using dig."""
+	try:
+		result = subprocess.run(
+			["dig", "+short", domain],
+			capture_output=True,
+			text=True,
+			timeout=5,
+		)
+
+		if result.returncode != 0:
+			return {
+				"success": False,
+				"resolved_ips": [],
+				"message": f"dig command failed: {result.stderr.strip()}",
+			}
+
+		resolved_ips = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+		if not resolved_ips:
+			return {"success": False, "resolved_ips": [], "message": f"No A/AAAA records found for {domain}"}
+
+		if expected_ip in resolved_ips:
+			return {
+				"success": True,
+				"resolved_ips": resolved_ips,
+				"message": f"{domain} resolves to {expected_ip}",
+			}
+
+		return {
+			"success": False,
+			"resolved_ips": resolved_ips,
+			"message": f"{domain} resolves to {resolved_ips}, not {expected_ip}",
+		}
+
+	except subprocess.TimeoutExpired:
+		frappe.log_error(f"dig command timed out for domain: {domain}")
+		return {"success": False, "resolved_ips": [], "message": "dig command timed out"}
+
+	except Exception as e:
+		frappe.log_error(f"Error occurred while checking domain {domain}: {e}")
+		return {"success": False, "resolved_ips": [], "message": f"Error: {e}"}
