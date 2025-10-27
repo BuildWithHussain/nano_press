@@ -89,8 +89,6 @@
             {% include "templates/components/core/summery.html" %}
         </div>
 
-        <!-- Custom App Modal -->
-        {% include "templates/components/core/custom_app.html" %}
     </div>
 </div>
 {% endblock %}
@@ -149,21 +147,6 @@
                 }
             },
 
-            addCustomApp() {
-                if (this.customAppForm.name && this.customAppForm.githubUrl) {
-                    this.customApps.push({
-                        name: this.customAppForm.name,
-                        githubUrl: this.customAppForm.githubUrl,
-                        token: this.customAppForm.token
-                    });
-                    this.customAppForm = { name: '', githubUrl: '', token: '' };
-                    this.showCustomAppDialog = false;
-                }
-            },
-
-            removeCustomApp(index) {
-                this.customApps.splice(index, 1);
-            },
 
             getSelectedAppsNames() {
                 const appNames = this.selectedApps.map(id => {

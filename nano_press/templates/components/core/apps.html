@@ -1,4 +1,4 @@
-<div x-show="currentStep === 2" class="animate-fade-in" x-data="appsComponent()">
+<div x-show="currentStep === 2" class="animate-fade-in" x-data="appsComponent()" x-init="init()">
     <h2 class="text-xl font-semibold mb-6 text-gray-900">Select Apps</h2>
 
     <div class="mb-6">
@@ -6,7 +6,7 @@
         <div class="flex gap-2">
             <template x-for="version in frappeVersionOptions" :key="version">
                 <button @click="selectFrappeVersion(version)"
-                    :class="frappeVersion === version
+                    :class="localFrappeVersion === version
                         ? 'bg-gray-900 text-white border-gray-900'
                         : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
                     class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm"
@@ -21,7 +21,7 @@
         <label class="block text-sm font-medium mb-2 text-gray-900">Apps</label>
         <div class="grid grid-cols-2 gap-2 mb-4">
             <template x-for="app in availableApps" :key="app.name">
-                <button @click="toggleApp(app.name)" :class="selectedApps.includes(app.name)
+                <button @click="toggleApp(app.name)" :class="localSelectedApps.includes(app.name)
                     ? 'bg-gray-900 text-white border-gray-900'
                     : 'bg-white text-gray-900 border-gray-300'"
                     class="p-3 border rounded-md text-left cursor-pointer transition-all duration-200 hover:border-gray-900">
@@ -32,14 +32,14 @@
         </div>
     </div>
 
-    <button @click="showCustomAppDialog = true"
+    <button @click="localShowCustomAppDialog = true"
         class="w-full p-3 bg-white border border-dashed border-gray-300 rounded-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 text-gray-400 font-medium text-sm hover:border-gray-900 hover:text-gray-900">
         <span class="text-xl">+</span> Add Custom App
     </button>
 
-    <template x-if="customApps.length > 0">
+    <template x-if="localCustomApps.length > 0">
         <div class="mt-4">
-            <template x-for="(app, index) in customApps" :key="index">
+            <template x-for="(app, index) in localCustomApps" :key="index">
                 <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-300 rounded-md mb-2">
                     <span class="text-sm" x-text="app.name"></span>
                     <button @click="removeCustomApp(index)"
@@ -61,45 +61,110 @@
             Continue
         </button>
     </div>
+
+    <!-- Custom App Modal -->
+    <div x-show="localShowCustomAppDialog" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+        @click.self="localShowCustomAppDialog = false">
+        <div class="bg-white rounded-lg p-8 max-w-md w-11/12 mx-4 border border-gray-300" @click.stop>
+            <h3 class="text-lg font-semibold mb-6 text-gray-900">Add Custom App</h3>
+
+            <div class="mb-5">
+                <label class="block text-sm font-medium mb-2 text-gray-900">App Name</label>
+                <input type="text" x-model="localCustomAppForm.name" placeholder="my-custom-app"
+                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+            </div>
+
+            <div class="mb-5">
+                <label class="block text-sm font-medium mb-2 text-gray-900">GitHub URL</label>
+                <input type="text" x-model="localCustomAppForm.githubUrl" placeholder="https://github.com/user/repo"
+                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2 text-gray-900">GitHub Token</label>
+                <input type="password" x-model="localCustomAppForm.token" placeholder="ghp_xxxxxxxxxxxx"
+                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+            </div>
+
+            <div class="flex gap-3">
+                <button @click="localShowCustomAppDialog = false"
+                    class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button @click="addCustomApp()"
+                    class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
+                    Add App
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 <script>
     function appsComponent() {
         return {
-            // No need to JSON.parse — this is already a valid JS array
             availableApps: {{ apps | tojson }},
             frappeVersionOptions: ['version-15', 'nightly'],
-            frappeVersion: '',
-            selectedApps: [],
-            customApps: [],
-            showCustomAppDialog: false,
-            customAppForm: {
+            
+            // Local state
+            localSelectedApps: [],
+            localFrappeVersion: 'version-15',
+            localCustomApps: [],
+            localShowCustomAppDialog: false,
+            localCustomAppForm: {
                 name: '',
                 githubUrl: '',
                 token: ''
             },
+            
+            // Initialize local state from parent
+            init() {
+                if (this.$parent) {
+                    this.localSelectedApps = [...(this.$parent.selectedApps || [])];
+                    this.localFrappeVersion = this.$parent.frappeVersion || 'version-15';
+                    this.localCustomApps = [...(this.$parent.customApps || [])];
+                }
+            },
+            
             addCustomApp() {
-                if (this.customAppForm.name && this.customAppForm.githubUrl) {
-                    this.customApps.push({
-                        name: this.customAppForm.name,
-                        githubUrl: this.customAppForm.githubUrl,
-                        token: this.customAppForm.token
-                    });
-                    this.customAppForm = { name: '', githubUrl: '', token: '' };
-                    this.showCustomAppDialog = false;
+                if (this.localCustomAppForm.name && this.localCustomAppForm.githubUrl) {
+                    const newApp = {
+                        name: this.localCustomAppForm.name,
+                        githubUrl: this.localCustomAppForm.githubUrl,
+                        token: this.localCustomAppForm.token
+                    };
+                    this.localCustomApps.push(newApp);
+                    this.localCustomAppForm = { name: '', githubUrl: '', token: '' };
+                    this.localShowCustomAppDialog = false;
+                    // Sync with parent
+                    if (this.$parent) {
+                        this.$parent.customApps = [...this.localCustomApps];
+                    }
                 }
             },
             removeCustomApp(index) {
-                this.customApps.splice(index, 1);
+                this.localCustomApps.splice(index, 1);
+                // Sync with parent
+                if (this.$parent) {
+                    this.$parent.customApps = [...this.localCustomApps];
+                }
             },
             toggleApp(appName) {
-                if (this.selectedApps.includes(appName)) {
-                    this.selectedApps = this.selectedApps.filter(name => name !== appName);
+                if (this.localSelectedApps.includes(appName)) {
+                    this.localSelectedApps = this.localSelectedApps.filter(name => name !== appName);
                 } else {
-                    this.selectedApps.push(appName);
+                    this.localSelectedApps.push(appName);
+                }
+                // Sync with parent
+                if (this.$parent) {
+                    this.$parent.selectedApps = [...this.localSelectedApps];
                 }
             },
             selectFrappeVersion(version) {
-            this.frappeVersion = version;
+                this.localFrappeVersion = version;
+                // Sync with parent
+                if (this.$parent) {
+                    this.$parent.frappeVersion = version;
+                }
             },
             formatVersionLabel(version) {
                 if (version === 'nightly') {
