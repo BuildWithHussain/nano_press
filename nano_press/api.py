@@ -1,4 +1,4 @@
-from asyncio import subprocess
+import subprocess
 
 import frappe
 from frappe import _

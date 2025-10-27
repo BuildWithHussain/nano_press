@@ -97,7 +97,7 @@
 {{ super() }}
 <script>
     function frappeInstaller() {
-        return {
+        const data = {
             currentStep: 1,
             stepNames: ['Server', 'Apps', 'Domain', 'Deploy'],
             showAdvanced: false,
@@ -121,6 +121,9 @@
             },
 
             domain: '',
+            domainVerified: false,
+            domainStatusMessage: '',
+            isLoading: false,
 
             deploying: false,
             deployComplete: false,
@@ -193,7 +196,11 @@
                     this.currentStep--;
                 }
             }
-        }
+        };
+        
+        // Make the data globally accessible
+        window.frappeInstallerData = data;
+        return data;
     }
 </script>
 {% endblock %}
