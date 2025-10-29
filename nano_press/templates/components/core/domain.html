@@ -1,21 +1,22 @@
-<div x-show="$store.installer.currentStep === 3" class="animate-fade-in" x-data="domainSetup()"
+<div x-show="$store.installer.currentStep === 3" class="animate-fade-in" x-data="domainSetup()" x-init="init()">
   <h2 class="text-xl font-semibold mb-6 text-gray-900">Domain</h2>
 
   <div class="mb-5">
     <label class="block text-sm font-medium mb-2 text-gray-900">Domain (Optional)</label>
     <input
       type="text"
-      x-model="domain"
+      x-model="$store.installer.domain"
       name="domain"
       id="domain-input"
       placeholder="example.com"
       autocomplete="off"
       class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900"
+      @input="updateDomain($event.target.value)"
     />
     <p class="text-xs text-gray-400 mt-1.5">Leave empty to skip domain setup</p>
     
     <!-- Domain Status Message -->
-    <div x-show="domainStatusMessage" class="mt-2 text-sm" :class="domainVerified ? 'text-green-600' : 'text-red-600'">
+    <div x-show="domainStatusMessage" class="mt-2 text-sm" :class="$store.installer.domainVerified ? 'text-green-600' : 'text-red-600'">
       <span x-text="domainStatusMessage"></span>
     </div>
   </div>
@@ -32,10 +33,7 @@
     <button
       @click="nextStep()"
       :disabled="isLoading"
-      class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm disabled:cursor-not-allowed inline-flex justify-center items-center gap-2 text-white"
-      :class="domain && domain.trim()
-        ? 'bg-white-600 hover:bg-white-700 disabled:bg-white-400'
-        : 'bg-gray-900 hover:bg-gray-800'"
+      class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm disabled:cursor-not-allowed inline-flex justify-center items-center gap-2 bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50"
     >
       <!-- Spinner -->
       <svg x-show="isLoading" class="animate-spin h-5 w-5 text-gray-950" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -45,7 +43,7 @@
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
           </path>
       </svg>
-      <span x-text="isLoading ? 'Verifying...' : (domain && domain.trim() ? 'Verify & Continue' : 'Continue')" class="text-gray-600">Continue</span>
+      <span x-text="isLoading ? 'Verifying...' : ($store.installer.domain && $store.installer.domain.trim() && !$store.installer.domainVerified ? 'Verify & Continue' : 'Continue')"></span>
     </button>
   </div>  
 </div>
@@ -53,40 +51,79 @@
 <script>
 function domainSetup() {
     return {
+        isLoading: false,
+        domainStatusMessage: '',
+        
+        // Initialize from store
+        init() {
+            if (this.$store.installer.domainVerified && this.$store.installer.domain) {
+                this.domainStatusMessage = `✅ ${this.$store.installer.domain} is verified`;
+            }
+        },
+        
+        updateDomain(value) {
+            if (this.$store.installer.domainVerified && value !== this.$store.installer.domain) {
+                this.$store.installer.domainVerified = false;
+                this.domainStatusMessage = '';
+            }
+            this.$store.installer.domain = value;
+        },
+        
+        prevStep() {
+            this.$store.installer.currentStep = 2;
+        },
+        
         async nextStep() {
-            if (this.domain && this.domain.trim()) {
+            const domain = this.$store.installer.domain;
+            
+            if (domain && domain.trim()) {
+                // Check if domain is already verified
+                if (this.$store.installer.domainVerified) {
+                    this.domainStatusMessage = `✅ ${domain} is verified`;
+                    this.$store.installer.currentStep = 4;
+                    return;
+                }
+                
                 // Domain verification step
                 this.isLoading = true;
-                this.domainVerified = false;
                 this.domainStatusMessage = '';
 
                 try {
-                    const serverIpInput = document.querySelector('input[placeholder*="192.168"]');
-                    const expectedIp = this.serverDetails?.ip || serverIpInput?.value;
+                    const expectedIp = this.$store.installer.serverDetails?.ip;
                     
                     if (!expectedIp) {
                         this.domainStatusMessage = "⚠️ Please enter a server IP address in the Server step to continue";
-                        toast("Please enter a server IP address to continue", { type: "danger" });
+                        if (typeof toast !== 'undefined') {
+                            toast("Please enter a server IP address to continue", { type: "danger" });
+                        }
+                        this.isLoading = false;
                         return;
                     }
                     
-                    await verify_domain(this.domain, expectedIp);
+                    console.log('🔄 Verifying domain:', domain, 'against IP:', expectedIp);
+                    await verify_domain(domain, expectedIp);
                     
-                    this.domainVerified = true;
-                    this.domainStatusMessage = `✅ ${this.domain} resolves to ${expectedIp}`;
+                    // Mark as verified in store
+                    this.$store.installer.domainVerified = true;
+                    this.domainStatusMessage = `✅ ${domain} resolves to ${expectedIp}`;
+                    
+                    console.log('✅ Domain verification successful');
                     
                     setTimeout(() => {
-                        this.currentStep++;
+                        this.$store.installer.currentStep = 4;
                     }, 1000);
                 } catch (err) {
-                    this.domainVerified = false;
-                    this.domainStatusMessage = "Error verifying domain.";
+                    console.error('❌ Domain verification failed:', err);
+                    this.$store.installer.domainVerified = false;
+                    this.domainStatusMessage = err.message || "Error verifying domain.";
                 } finally {
                     this.isLoading = false;
                 }
             } else {
                 // No domain, just continue
-                this.currentStep++;
+                this.$store.installer.domain = '';
+                this.$store.installer.domainVerified = false;
+                this.$store.installer.currentStep = 4;
             }
         }
     };
