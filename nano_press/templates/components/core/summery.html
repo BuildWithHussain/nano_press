@@ -1,20 +1,76 @@
-<div x-show="currentStep === 4" class="animate-fade-in">
+<div x-show="$store.installer.currentStep === 4" class="animate-fade-in" x-data="summarySetup()">
     <h2 class="text-xl font-semibold mb-6 text-gray-900">Summary</h2>
 
     <div x-show="!deploying && !deployComplete">
+        <!-- Server -->
         <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-4">
             <h3 class="text-sm font-semibold text-gray-900 mb-2">Server</h3>
-            <p class="text-xs text-gray-400 mb-1"><span class="text-gray-400">IP:</span> <span x-text="serverDetails.ip" class="text-gray-900"></span></p>
-            <p class="text-xs text-gray-400 mb-1"><span class="text-gray-400">User:</span> <span x-text="serverDetails.rootUser" class="text-gray-900"></span></p>
-            <p class="text-xs text-gray-400"><span class="text-gray-400">Port:</span> <span x-text="serverDetails.sshPort" class="text-gray-900"></span></p>
+            <p class="text-xs text-gray-400 mb-1">
+                <span class="text-gray-400">IP:</span> 
+                <span x-text="$store.installer.serverDetails.ip" class="text-gray-900"></span>
+                <template x-if="$store.installer.isVerified">
+                    <span class="ml-2 text-green-600">✓ Verified</span>
+                </template>
+            </p>
+            <p class="text-xs text-gray-400 mb-1">
+                <span class="text-gray-400">User:</span> 
+                <span x-text="$store.installer.serverDetails.rootUser" class="text-gray-900"></span>
+            </p>
+            <p class="text-xs text-gray-400">
+                <span class="text-gray-400">Port:</span> 
+                <span x-text="$store.installer.serverDetails.sshPort" class="text-gray-900"></span>
+            </p>
         </div>
 
+        <!-- Apps -->
+        <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-4">
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">Frappe Apps</h3>
+            <p class="text-xs text-gray-400 mb-1">
+                <span class="text-gray-400">Version:</span> 
+                <span x-text="$store.installer.frappeVersion" class="text-gray-900"></span>
+            </p>
+            <p class="text-xs text-gray-400 mb-1">
+                <span class="text-gray-400">Apps:</span> 
+                <span x-show="$store.installer.selectedApps.length > 0" class="text-gray-900">
+                    <template x-for="(app, index) in $store.installer.selectedApps" :key="app">
+                        <span>
+                            <span x-text="app"></span><span x-show="index < $store.installer.selectedApps.length - 1">, </span>
+                        </span>
+                    </template>
+                </span>
+                <span x-show="$store.installer.selectedApps.length === 0" class="text-gray-900 italic">None</span>
+            </p>
+            <template x-if="$store.installer.customApps.length > 0">
+                <p class="text-xs text-gray-400">
+                    <span class="text-gray-400">Custom Apps:</span>
+                    <span class="text-gray-900">
+                        <template x-for="(app, index) in $store.installer.customApps" :key="app.name">
+                            <span>
+                                <span x-text="app.name + (app.branch && app.branch !== 'main' ? ` (${app.branch})` : '')"></span><span x-show="index < $store.installer.customApps.length - 1">, </span>
+                            </span>
+                        </template>
+                    </span>
+                </p>
+            </template>
+        </div>
+
+        <!-- Domain -->
         <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-6">
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Configuration</h3>
-            <p class="text-xs text-gray-400 mb-1"><span class="text-gray-400">Version:</span> <span x-text="frappeVersion" class="text-gray-900"></span></p>
-            <p class="text-xs text-gray-400 mb-1"><span class="text-gray-400">Apps:</span> <span x-text="getSelectedAppsNames()" class="text-gray-900"></span></p>
-            <template x-if="domain">
-                <p class="text-xs text-gray-400"><span class="text-gray-400">Domain:</span> <span x-text="domain" class="text-gray-900"></span></p>
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">Domain</h3>
+            <template x-if="$store.installer.domain && $store.installer.domain.trim()">
+                <p class="text-xs text-gray-400">
+                    <span class="text-gray-400">Domain:</span> 
+                    <span x-text="$store.installer.domain" class="text-gray-900"></span>
+                    <template x-if="$store.installer.domainVerified">
+                        <span class="ml-2 text-green-600">✓ Verified</span>
+                    </template>
+                    <template x-if="!$store.installer.domainVerified">
+                        <span class="ml-2 text-yellow-600">⚠ Not Verified</span>
+                    </template>
+                </p>
+            </template>
+            <template x-if="!$store.installer.domain || !$store.installer.domain.trim()">
+                <p class="text-xs text-gray-400 italic">No domain configured</p>
             </template>
         </div>
 
@@ -37,11 +93,11 @@
 
         <div class="max-w-64 mx-auto">
             <div class="flex items-center gap-3 mb-3" :class="deployStep >= 1 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full flex-shrink-0" :class="deployStep >= 1 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 1 ? 'bg-gray-900' : 'bg-gray-300'"></div>
                 <span class="text-sm">Preparing server</span>
             </div>
             <div class="flex items-center gap-3" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full flex-shrink-0" :class="deployStep >= 2 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 2 ? 'bg-gray-900' : 'bg-gray-300'"></div>
                 <span class="text-sm">Deploying site</span>
             </div>
         </div>
@@ -62,3 +118,77 @@
         </button>
     </div>
 </div>
+
+<script>
+function summarySetup() {
+    return {
+        // Local state for deployment process
+        deploying: false,
+        deployComplete: false,
+        deploymentStatus: 'Initializing deployment...',
+        deployStep: 0,
+        
+        // Navigation
+        prevStep() {
+            this.$store.installer.currentStep = 3;
+        },
+        
+        // Start deployment process
+        async startDeployment() {
+            this.deploying = true;
+            this.deployComplete = false;
+            this.deployStep = 0;
+            
+            try {
+                // Step 1: Prepare server
+                this.deploymentStatus = 'Preparing server...';
+                this.deployStep = 1;
+                
+                // Simulate server preparation
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Step 2: Deploy site
+                this.deploymentStatus = 'Deploying Frappe site...';
+                this.deployStep = 2;
+                
+                // Here you would call the actual deployment API
+                // For now, simulate deployment
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // Deployment complete
+                this.deploying = false;
+                this.deployComplete = true;
+                
+                if (typeof toast !== 'undefined') {
+                    toast('Deployment completed successfully!', { type: 'success' });
+                }
+                
+            } catch (error) {
+                console.error('Deployment failed:', error);
+                this.deploying = false;
+                this.deploymentStatus = 'Deployment failed. Please try again.';
+                
+                if (typeof toast !== 'undefined') {
+                    toast('Deployment failed. Please check your configuration.', { type: 'danger' });
+                }
+            }
+        },
+        
+        // Visit the deployed site
+        visitSite() {
+            const domain = this.$store.installer.domain?.trim();
+            const ip = this.$store.installer.serverDetails?.ip;
+            
+            if (domain && this.$store.installer.domainVerified) {
+                window.open(`https://${domain}`, '_blank');
+            } else if (ip) {
+                window.open(`http://${ip}`, '_blank');
+            } else {
+                if (typeof toast !== 'undefined') {
+                    toast('Unable to determine site URL. Please check your configuration.', { type: 'warning' });
+                }
+            }
+        }
+    };
+}
+</script>
