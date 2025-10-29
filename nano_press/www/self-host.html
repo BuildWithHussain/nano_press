@@ -77,7 +77,7 @@
         </div>
     </div>
 
-    <div x-data="frappeInstaller()">
+    <div x-data="frappeInstaller()"
         <!-- Stepper -->
         {% include "templates/components/core/stepper.html" %}
 
@@ -96,23 +96,30 @@
 {% block script %}
 {{ super() }}
 <script>
-    function frappeInstaller() {
-        const data = {
+    // Create Alpine.store for shared state
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('installer', {
             currentStep: 1,
-            stepNames: ['Server', 'Apps', 'Domain', 'Deploy'],
-            showAdvanced: false,
-
             serverDetails: {
                 ip: '',
                 rootUser: 'root',
                 sshPort: '22'
             },
-
-            generatedSSHKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... frappe@deploy',
-
-            frappeVersion: 'version-15',
+            isVerified: false,
             selectedApps: [],
             customApps: [],
+            frappeVersion: 'Version-15',
+            domain: '',
+            domainVerified: false
+        });
+    });
+
+    function frappeInstaller() {
+        const data = {
+            stepNames: ['Server', 'Apps', 'Domain', 'Deploy'],
+            showAdvanced: false,
+            
+            generatedSSHKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... frappe@deploy',
             showCustomAppDialog: false,
             customAppForm: {
                 name: '',
@@ -185,21 +192,28 @@
                 alert(`Opening site: ${siteUrl}`);
             },
 
+            // Access store properties
+            get currentStep() { return this.$store.installer.currentStep; },
+            get serverDetails() { return this.$store.installer.serverDetails; },
+            get selectedApps() { return this.$store.installer.selectedApps; },
+            get customApps() { return this.$store.installer.customApps; },
+            get frappeVersion() { return this.$store.installer.frappeVersion; },
+            get isVerified() { return this.$store.installer.isVerified; },
+            get domain() { return this.$store.installer.domain; },
+
             nextStep() {
-                if (this.currentStep < 4) {
-                    this.currentStep++;
+                if (this.$store.installer.currentStep < 4) {
+                    this.$store.installer.currentStep++;
                 }
             },
 
             prevStep() {
-                if (this.currentStep > 1) {
-                    this.currentStep--;
+                if (this.$store.installer.currentStep > 1) {
+                    this.$store.installer.currentStep--;
                 }
             }
         };
         
-        // Make the data globally accessible
-        window.frappeInstallerData = data;
         return data;
     }
 </script>

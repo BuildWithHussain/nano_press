@@ -1,4 +1,4 @@
-<div x-show="currentStep === 1" class="animate-fade-in" x-data="serverSetup()">
+<div x-show="$store.installer.currentStep === 1" class="animate-fade-in" x-data="serverSetup()">
     <h2 class="text-xl font-semibold mb-6 text-gray-900">Server Details</h2>
 
     <div class="mb-5">
@@ -101,7 +101,7 @@
             viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
             </path>
         </svg>
         <span x-text="isLoading ? 'Verifying...' : 'Verify & Continue'"></span>
@@ -131,7 +131,10 @@
             },
             async nextStep() {
                 if (this.isVerified) {
-                    this.currentStep = 2;
+                    // Update store with server details
+                    this.$store.installer.serverDetails = { ...this.serverDetails };
+                    this.$store.installer.isVerified = true;
+                    this.$store.installer.currentStep = 2;
                     return;
                 }
 
@@ -151,22 +154,28 @@
                         this.serverDetails.ip,
                         this.serverDetails.rootUser,
                         this.serverDetails.sshPort
-
                     );
 
                     // If server creation succeeded
                     const message = "Server verified and created successfully";
-                    toast(message, { type: "success" });
-
-                    console.log("Created server:", serverData);
+                    if (typeof toast !== 'undefined') {
+                        toast(message, { type: "success" });
+                    }
 
                     this.isVerified = true;
-                    this.currentStep = 2;
+                    
+                    // Update store with server details and move to next step
+                    this.$store.installer.serverDetails = { ...this.serverDetails };
+                    this.$store.installer.isVerified = true;
+                    this.$store.installer.currentStep = 2;
 
                 } catch (err) {
                     const message = err.message || "Unable to verify or create server";
                     this.error = message;
-                    toast(message, { type: "danger" });
+                    
+                    if (typeof toast !== 'undefined') {
+                        toast(message, { type: "danger" });
+                    }
                 } finally {
                     this.isLoading = false;
                 }
@@ -179,7 +188,8 @@
             const payload = {
                 server_ip,
                 ssh_user,
-                ssh_port
+                ssh_port,
+                server_name: 'BENCH-TEST' // #TODO Change this to a proper name
             };
 
             // Create document using frappe_call()

@@ -1,4 +1,4 @@
-<div x-show="currentStep === 3" class="animate-fade-in" x-data="domainSetup()">
+<div x-show="$store.installer.currentStep === 3" class="animate-fade-in" x-data="domainSetup()"
   <h2 class="text-xl font-semibold mb-6 text-gray-900">Domain</h2>
 
   <div class="mb-5">
@@ -34,7 +34,7 @@
       :disabled="isLoading"
       class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm disabled:cursor-not-allowed inline-flex justify-center items-center gap-2 text-white"
       :class="domain && domain.trim()
-        ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400'
+        ? 'bg-white-600 hover:bg-white-700 disabled:bg-white-400'
         : 'bg-gray-900 hover:bg-gray-800'"
     >
       <!-- Spinner -->
