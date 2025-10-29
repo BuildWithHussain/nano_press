@@ -1,7 +1,7 @@
 <div class="stepper">
     <div class="stepper-line"></div>
     <div class="stepper-progress" :style="`width: ${(currentStep - 1) * 33.33}%`"></div>
-    
+
     <template x-for="i in 4" :key="i">
         <div class="stepper-item">
             <div class="stepper-circle" :class="i <= currentStep ? 'active' : ''">
