@@ -21,10 +21,6 @@ add_to_apps_screen = [
 	}
 ]
 
-fixtures = [
-	{"dt": "Module Onboarding", "filters": [["name", "=", "Install Server"]]},
-	{"dt": "Onboarding Step Map", "filters": [["parent", "=", "Install Server"]]},
-]
 
 # Includes in <head>
 # ------------------
