@@ -141,19 +141,38 @@ function summarySetup() {
             
             try {
                 // Step 1: Prepare server
-                this.deploymentStatus = 'Preparing server...';
+                this.deploymentStatus = 'Preparing server (installing Docker, Docker Compose)...';
                 this.deployStep = 1;
                 
-                // Simulate server preparation
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Get server name from store
+                const serverName = this.$store.installer.serverName;
+                if (!serverName) {
+                    throw new Error('Server not found. Please verify your server first.');
+                }
                 
-                // Step 2: Deploy site
+                // Call the prepare_server API
+                const prepareResult = await this.callPrepareServer(serverName, false);
+                console.log('Server preparation result:', prepareResult);
+                
+                if (typeof toast !== 'undefined') {
+                    // Show detailed success message with versions
+                    const successMsg = prepareResult.message || 'Server prepared successfully!';
+                    toast(successMsg, { type: 'success' });
+                }
+                
+                // Wait a moment before moving to next step
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Step 2: Deploy site (simulated for now)
                 this.deploymentStatus = 'Deploying Frappe site...';
                 this.deployStep = 2;
                 
-                // Here you would call the actual deployment API
-                // For now, simulate deployment
+                console.log('Starting site deployment simulation...');
+                
+                // Simulate deployment (3 seconds)
                 await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                console.log('Site deployment simulation complete');
                 
                 // Deployment complete
                 this.deploying = false;
@@ -169,8 +188,40 @@ function summarySetup() {
                 this.deploymentStatus = 'Deployment failed. Please try again.';
                 
                 if (typeof toast !== 'undefined') {
-                    toast('Deployment failed. Please check your configuration.', { type: 'danger' });
+                    const errorMessage = error.message || 'Deployment failed. Please check your configuration.';
+                    toast(errorMessage, { type: 'danger' });
                 }
+            }
+        },
+        
+        // Call the prepare_server API
+        async callPrepareServer(serverName, includeTraefik = false) {
+            const url = '/api/method/nano_press.nano_press.doctype.server.server.prepare_server';
+            
+            try {
+                const payload = {
+                    server_name: serverName,
+                    include_traefik: includeTraefik
+                };
+                
+                const response = await frappe_call(url, payload, "POST");
+                
+                // Debug: log the full response
+                console.log('Full response:', response);
+                
+                if (response?.message?.status === 200) {
+                    return response.message;
+                } else if (response?.message) {
+                    
+                    throw new Error(response.message.message || 'Server preparation failed');
+                } else {
+                    // Log what we got to help debug
+                    console.error('Unexpected response structure:', response);
+                    throw new Error('Server preparation failed - unexpected response structure');
+                }
+            } catch (error) {
+                console.error('Error preparing server:', error);
+                throw error; // Re-throw the original error
             }
         },
         

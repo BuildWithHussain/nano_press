@@ -164,9 +164,10 @@
 
                     this.isVerified = true;
                     
-                    // Update store with server details and move to next step
+                    // Update store with server details and server name
                     this.$store.installer.serverDetails = { ...this.serverDetails };
                     this.$store.installer.isVerified = true;
+                    this.$store.installer.serverName = serverData.name; // Store the server document name
                     this.$store.installer.currentStep = 2;
 
                 } catch (err) {
