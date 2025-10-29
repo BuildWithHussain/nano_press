@@ -1,144 +1,144 @@
 {
- "actions": [],
- "creation": "2025-08-18 22:37:59.512216",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "server_name",
-  "image_name",
-  "frappe_version",
-  "column_break_zpqr",
-  "build_status",
-  "image_tag",
-  "created_by",
-  "section_break_rgqg",
-  "apps_config",
-  "apps_json_base64",
-  "log_section",
-  "build_duration",
-  "built_at"
- ],
- "fields": [
-  {
-   "description": "e.g., \"nano_press-v1.0.0\"",
-   "fieldname": "image_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Image Name",
-   "reqd": 1
-  },
-  {
-   "default": "version-15",
-   "fieldname": "frappe_version",
-   "fieldtype": "Select",
-   "label": "Frappe Version",
-   "options": "version-15\nversion-14"
-  },
-  {
-   "fieldname": "column_break_zpqr",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "build_status",
-   "fieldtype": "Select",
-   "label": "Build Status",
-   "options": "Draft\nBuilding\nBuilt\nFailed"
-  },
-  {
-   "description": "Generated local tag",
-   "fieldname": "image_tag",
-   "fieldtype": "Data",
-   "label": "Image Tag",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_rgqg",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": " Child table for apps configuration",
-   "fieldname": "apps_config",
-   "fieldtype": "Table",
-   "label": "App Config",
-   "options": "App Install Item"
-  },
-  {
-   "fieldname": "log_section",
-   "fieldtype": "Section Break",
-   "label": "Log"
-  },
-  {
-   "description": "Build time in seconds",
-   "fieldname": "build_duration",
-   "fieldtype": "Int",
-   "label": "Build Duration",
-   "non_negative": 1
-  },
-  {
-   "description": "Build completion time",
-   "fieldname": "built_at",
-   "fieldtype": "Datetime",
-   "label": "Build At"
-  },
-  {
-   "fieldname": "server_name",
-   "fieldtype": "Link",
-   "label": "Server",
-   "link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Prepared\"]]",
-   "options": "Server",
-   "reqd": 1
-  },
-  {
-   "fieldname": "apps_json_base64",
-   "fieldtype": "Small Text",
-   "label": "Apps Base64",
-   "read_only": 1
-  },
-  {
-   "fieldname": "created_by",
-   "fieldtype": "Link",
-   "label": "Created by",
-   "options": "User"
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-10-23 23:50:38.572587",
- "modified_by": "Administrator",
- "module": "Nano Press",
- "name": "Custom Image",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Nano Press User",
-   "share": 1,
-   "write": 1
-  }
- ],
- "row_format": "Dynamic",
- "show_title_field_in_link": 1,
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": [],
- "title_field": "image_tag"
+	"actions": [],
+	"creation": "2025-08-18 22:37:59.512216",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"server_name",
+		"image_name",
+		"frappe_version",
+		"column_break_zpqr",
+		"build_status",
+		"image_tag",
+		"created_by",
+		"section_break_rgqg",
+		"apps_config",
+		"apps_json_base64",
+		"log_section",
+		"build_duration",
+		"built_at"
+	],
+	"fields": [
+		{
+			"description": "e.g., \"nano_press-v1.0.0\"",
+			"fieldname": "image_name",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Image Name",
+			"reqd": 1
+		},
+		{
+			"default": "version-15",
+			"fieldname": "frappe_version",
+			"fieldtype": "Select",
+			"label": "Frappe Version",
+			"options": "version-15\nversion-14"
+		},
+		{
+			"fieldname": "column_break_zpqr",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "build_status",
+			"fieldtype": "Select",
+			"label": "Build Status",
+			"options": "Draft\nBuilding\nBuilt\nFailed"
+		},
+		{
+			"description": "Generated local tag",
+			"fieldname": "image_tag",
+			"fieldtype": "Data",
+			"label": "Image Tag",
+			"read_only": 1
+		},
+		{
+			"fieldname": "section_break_rgqg",
+			"fieldtype": "Section Break"
+		},
+		{
+			"description": " Child table for apps configuration",
+			"fieldname": "apps_config",
+			"fieldtype": "Table",
+			"label": "App Config",
+			"options": "App Install Item"
+		},
+		{
+			"fieldname": "log_section",
+			"fieldtype": "Section Break",
+			"label": "Log"
+		},
+		{
+			"description": "Build time in seconds",
+			"fieldname": "build_duration",
+			"fieldtype": "Int",
+			"label": "Build Duration",
+			"non_negative": 1
+		},
+		{
+			"description": "Build completion time",
+			"fieldname": "built_at",
+			"fieldtype": "Datetime",
+			"label": "Build At"
+		},
+		{
+			"fieldname": "server_name",
+			"fieldtype": "Link",
+			"label": "Server",
+			"link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Prepared\"]]",
+			"options": "Server",
+			"reqd": 1
+		},
+		{
+			"fieldname": "apps_json_base64",
+			"fieldtype": "Small Text",
+			"label": "Apps Base64",
+			"read_only": 1
+		},
+		{
+			"fieldname": "created_by",
+			"fieldtype": "Link",
+			"label": "Created by",
+			"options": "User"
+		}
+	],
+	"grid_page_length": 50,
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2025-10-23 23:50:38.572587",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "Custom Image",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Nano Press User",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"row_format": "Dynamic",
+	"show_title_field_in_link": 1,
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": [],
+	"title_field": "image_tag"
 }

@@ -1,31 +1,29 @@
 {
- "actions": [],
- "creation": "2025-08-11 20:57:16.378865",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "app_name"
- ],
- "fields": [
-  {
-   "fieldname": "app_name",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "App Name",
-   "options": "Apps",
-   "reqd": 1
-  }
- ],
- "istable": 1,
- "links": [],
- "modified": "2025-08-18 22:55:30.871814",
- "modified_by": "Administrator",
- 		"module": "Nano Press",
- "name": "App Install Item",
- "owner": "Administrator",
- "permissions": [],
- "row_format": "Dynamic",
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": []
+	"actions": [],
+	"creation": "2025-08-11 20:57:16.378865",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": ["app_name"],
+	"fields": [
+		{
+			"fieldname": "app_name",
+			"fieldtype": "Link",
+			"in_list_view": 1,
+			"label": "App Name",
+			"options": "Apps",
+			"reqd": 1
+		}
+	],
+	"istable": 1,
+	"links": [],
+	"modified": "2025-08-18 22:55:30.871814",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "App Install Item",
+	"owner": "Administrator",
+	"permissions": [],
+	"row_format": "Dynamic",
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": []
 }

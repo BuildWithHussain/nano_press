@@ -1,143 +1,143 @@
 {
- "actions": [],
- "autoname": "format:LOG-{operation}-{#####}",
- "creation": "2025-10-11 13:48:22.133772",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "operation",
-  "server_name",
-  "status",
-  "rc",
-  "triggered_by",
-  "column_break_okfm",
-  "bench_name",
-  "site_name",
-  "executed_on",
-  "log_section",
-  "output",
-  "stdout_tail",
-  "stderr_tail"
- ],
- "fields": [
-  {
-   "fieldname": "operation",
-   "fieldtype": "Select",
-   "label": "Operation Type",
-   "options": "Playbook\nPing\nCommand\nSetup"
-  },
-  {
-   "fieldname": "server_name",
-   "fieldtype": "Link",
-   "label": "Server",
-   "options": "Server"
-  },
-  {
-   "fieldname": "column_break_okfm",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "bench_name",
-   "fieldtype": "Link",
-   "label": "Bench",
-   "options": "Frappe Site"
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Success\nFailed\nUnreachable\nRunning"
-  },
-  {
-   "fieldname": "rc",
-   "fieldtype": "Int",
-   "label": "Return Code"
-  },
-  {
-   "fieldname": "triggered_by",
-   "fieldtype": "Link",
-   "label": "Triggered By",
-   "options": "User"
-  },
-  {
-   "fieldname": "executed_on",
-   "fieldtype": "Datetime",
-   "label": "Run Timestamp"
-  },
-  {
-   "fetch_from": "bench_name.site_url",
-   "fieldname": "site_name",
-   "fieldtype": "Data",
-   "label": "Site"
-  },
-  {
-   "fieldname": "log_section",
-   "fieldtype": "Section Break",
-   "label": "Log"
-  },
-  {
-   "fieldname": "output",
-   "fieldtype": "Long Text",
-   "label": "Output"
-  },
-  {
-   "fieldname": "stdout_tail",
-   "fieldtype": "Long Text",
-   "label": "STDOUT"
-  },
-  {
-   "fieldname": "stderr_tail",
-   "fieldtype": "Long Text",
-   "label": "STDERR"
-  }
- ],
- "grid_page_length": 50,
- "in_create": 1,
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-10-23 23:42:49.354130",
- "modified_by": "Administrator",
- "module": "Nano Press",
- "name": "Ansible Log",
- "naming_rule": "Expression",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Server Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Nano Press User",
-   "share": 1
-  }
- ],
- "row_format": "Dynamic",
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": []
+	"actions": [],
+	"autoname": "format:LOG-{operation}-{#####}",
+	"creation": "2025-10-11 13:48:22.133772",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"operation",
+		"server_name",
+		"status",
+		"rc",
+		"triggered_by",
+		"column_break_okfm",
+		"bench_name",
+		"site_name",
+		"executed_on",
+		"log_section",
+		"output",
+		"stdout_tail",
+		"stderr_tail"
+	],
+	"fields": [
+		{
+			"fieldname": "operation",
+			"fieldtype": "Select",
+			"label": "Operation Type",
+			"options": "Playbook\nPing\nCommand\nSetup"
+		},
+		{
+			"fieldname": "server_name",
+			"fieldtype": "Link",
+			"label": "Server",
+			"options": "Server"
+		},
+		{
+			"fieldname": "column_break_okfm",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "bench_name",
+			"fieldtype": "Link",
+			"label": "Bench",
+			"options": "Frappe Site"
+		},
+		{
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"label": "Status",
+			"options": "Success\nFailed\nUnreachable\nRunning"
+		},
+		{
+			"fieldname": "rc",
+			"fieldtype": "Int",
+			"label": "Return Code"
+		},
+		{
+			"fieldname": "triggered_by",
+			"fieldtype": "Link",
+			"label": "Triggered By",
+			"options": "User"
+		},
+		{
+			"fieldname": "executed_on",
+			"fieldtype": "Datetime",
+			"label": "Run Timestamp"
+		},
+		{
+			"fetch_from": "bench_name.site_url",
+			"fieldname": "site_name",
+			"fieldtype": "Data",
+			"label": "Site"
+		},
+		{
+			"fieldname": "log_section",
+			"fieldtype": "Section Break",
+			"label": "Log"
+		},
+		{
+			"fieldname": "output",
+			"fieldtype": "Long Text",
+			"label": "Output"
+		},
+		{
+			"fieldname": "stdout_tail",
+			"fieldtype": "Long Text",
+			"label": "STDOUT"
+		},
+		{
+			"fieldname": "stderr_tail",
+			"fieldtype": "Long Text",
+			"label": "STDERR"
+		}
+	],
+	"grid_page_length": 50,
+	"in_create": 1,
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2025-10-23 23:42:49.354130",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "Ansible Log",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Server Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Nano Press User",
+			"share": 1
+		}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": []
 }
