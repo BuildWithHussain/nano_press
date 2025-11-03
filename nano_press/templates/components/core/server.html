@@ -1,5 +1,15 @@
 <div x-show="$store.installer.currentStep === 1" class="animate-fade-in" x-data="serverSetup()">
-    <h2 class="text-xl font-semibold mb-6 text-gray-900">Server Details</h2>
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-gray-900">Server Details</h2>
+        <button @click="clearInstallerData()"
+            class="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 hover:underline transition-colors duration-200"
+            title="Clear all saved installer data">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Clear Saved Data</span>
+        </button>
+    </div>
 
     <div class="mb-5">
         <label class="block text-sm font-medium mb-2 text-gray-900">
@@ -8,7 +18,7 @@
 
         <input type="text" x-model="serverDetails.ip" placeholder="192.168.1.100" @input="
             error = '';
-            isVerified = false;
+            $store.installer.isVerified = false;
             const regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
             isValidIP = regex.test(serverDetails.ip);
             if (serverDetails.ip && !isValidIP) {
@@ -17,7 +27,7 @@
         " :class="[
             'w-full px-3 py-2.5 bg-white rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans border focus:ring-1',
             error ? 'border-red-500 focus:border-red-600 focus:ring-red-600' :
-                    (serverDetails.ip ? 'border-green-500 focus:border-green-600 focus:ring-green-600' : 'border-gray-300 focus:border-gray-900')
+                    (serverDetails.ip && isVerified ? 'border-green-500 focus:border-green-600 focus:ring-green-600' : 'border-gray-300 focus:border-gray-900')
         ]">
 
         <template x-if="error">
@@ -83,12 +93,14 @@
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2 text-gray-900">Root User</label>
                 <input type="text" x-model="serverDetails.rootUser" placeholder="root"
+                    @input="$store.installer.isVerified = false"
                     class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
             </div>
 
             <div>
                 <label class="block text-sm font-medium mb-2 text-gray-900">SSH Port</label>
                 <input type="text" x-model="serverDetails.sshPort" placeholder="22"
+                    @input="$store.installer.isVerified = false"
                     class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
             </div>
         </div>
@@ -104,7 +116,7 @@
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
             </path>
         </svg>
-        <span x-text="isLoading ? 'Verifying...' : 'Verify & Continue'"></span>
+        <span x-text="isLoading ? 'Verifying...' : (isVerified ? 'Continue' : 'Verify & Continue')"></span>
     </button>
 
 
@@ -113,15 +125,16 @@
 <script>
     function serverSetup() {
         return {
-            serverDetails: {
-                ip: '',
-                rootUser: 'root',
-                sshPort: '22'
+            // Use getters to access store directly for reactive updates
+            get serverDetails() {
+                return this.$store.installer.serverDetails;
+            },
+            get isVerified() {
+                return this.$store.installer.isVerified;
             },
             copied: false,
             isLoading: false,
             error: '',
-            isVerified: false,
             isValidIP: false,
 
             validateIP(ip) {
@@ -129,11 +142,40 @@
                 const regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
                 return regex.test(ip);
             },
+
+            clearInstallerData() {
+                if (confirm('Are you sure you want to clear all saved installer data? This will reset everything.')) {
+                    // Clear all nano_press localStorage keys
+                    const keysToRemove = [
+                        'nano_press_current_step',
+                        'nano_press_server_details',
+                        'nano_press_is_verified',
+                        'nano_press_server_name',
+                        'nano_press_selected_apps',
+                        'nano_press_custom_apps',
+                        'nano_press_frappe_version',
+                        'nano_press_domain',
+                        'nano_press_domain_verified'
+                    ];
+
+                    keysToRemove.forEach(key => {
+                        localStorage.removeItem(key);
+                    });
+
+                    // Show success message
+                    if (typeof toast !== 'undefined') {
+                        toast('All saved data cleared successfully', { type: 'success' });
+                    }
+
+                    // Reload page to reset state
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+            },
             async nextStep() {
                 if (this.isVerified) {
-                    // Update store with server details
-                    this.$store.installer.serverDetails = { ...this.serverDetails };
-                    this.$store.installer.isVerified = true;
+                    // Already verified, just move to next step
                     this.$store.installer.currentStep = 2;
                     return;
                 }
@@ -162,10 +204,7 @@
                         toast(message, { type: "success" });
                     }
 
-                    this.isVerified = true;
-                    
-                    // Update store with server details and server name
-                    this.$store.installer.serverDetails = { ...this.serverDetails };
+                    // Update store (serverDetails is already updated via binding, just update verification status)
                     this.$store.installer.isVerified = true;
                     this.$store.installer.serverName = serverData.name; // Store the server document name
                     this.$store.installer.currentStep = 2;
@@ -173,7 +212,7 @@
                 } catch (err) {
                     const message = err.message || "Unable to verify or create server";
                     this.error = message;
-                    
+
                     if (typeof toast !== 'undefined') {
                         toast(message, { type: "danger" });
                     }
