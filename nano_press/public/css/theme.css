@@ -17,8 +17,10 @@
     --breakpoint-ipad: 821px;
     --breakpoint-ipad-pro: 1025px;
 
-    --text-4.5xl: 2.5rem /* animation */ --animate-slideDown: slideDown 0.3s
-      linear;
+    --text-4.5xl: 2.5rem;
+
+    /* animation */
+    --animate-slideDown: slideDown 0.3s linear;
     @keyframes slideDown {
       from {
         height: 0;

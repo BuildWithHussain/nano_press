@@ -3,278 +3,39 @@
 {% block page_title %}Ansible Logs{% endblock %}
 
 {% block body %}
-<div class="mx-auto max-w-5xl px-4 py-6">
-    <!-- Header -->
-    <div class="mb-4 flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-bold text-on-surface dark:text-on-surface-dark flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Ansible Logs
-            </h1>
-            <p class="text-xs text-neutral-600 dark:text-neutral-300 mt-0.5">Execution history for {{ user }}</p>
+<div class="mx-auto max-w-2xl px-4 py-16">
+    <div class="text-center">
+        <!-- Icon -->
+        <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                </path>
+            </svg>
         </div>
-        <div class="text-right">
-            <div class="text-xs text-neutral-500 dark:text-neutral-400">Total Logs</div>
-            <div class="text-xl font-bold text-primary dark:text-primary-dark">{{ total_logs }}</div>
-        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl font-bold text-gray-900 mb-3">
+            Ansible Logs
+        </h1>
+
+        <!-- Message -->
+        <p class="text-lg text-gray-600 mb-2">
+            Coming Soon
+        </p>
+        <p class="text-sm text-gray-500 mb-8">
+            This feature is currently under development and will be available soon.
+        </p>
+
+        <!-- Action Button -->
+        <a href="/"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors duration-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
+            </svg>
+            Back to Dashboard
+        </a>
     </div>
-
-    <!-- Log Entries -->
-    <div class="space-y-2">
-        {% if logs %}
-            {% for log in logs %}
-            <div class="group border border-outline dark:border-outline-dark rounded-lg hover:border-primary dark:hover:border-primary-dark transition-colors">
-                <a href="/app/ansible-log/{{ log.name }}" class="block">
-                    <div class="p-3">
-                        <!-- Log Header -->
-                        <div class="flex items-start justify-between gap-3 mb-2">
-                            <div class="flex items-center gap-2 min-w-0 flex-1">
-                                <!-- Status Icon -->
-                                <div class="shrink-0">
-                                    {% if log.status == "Success" %}
-                                        <div class="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        </div>
-                                    {% elif log.status == "Failed" %}
-                                        <div class="w-8 h-8 rounded-full bg-danger/10 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                        </div>
-                                    {% elif log.status == "Running" %}
-                                        <div class="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-warning animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                            </svg>
-                                        </div>
-                                    {% else %}
-                                        <div class="w-8 h-8 rounded-full bg-surface-alt dark:bg-surface-dark-alt flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-on-surface dark:text-on-surface-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                            </svg>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <!-- Log Info -->
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex items-center gap-2 mb-0.5">
-                                        <span class="font-mono text-xs text-primary dark:text-primary-dark font-semibold">{{ log.name }}</span>
-                                        <span class="text-neutral-400 dark:text-neutral-500">•</span>
-                                        <span class="px-1.5 py-0.5 rounded text-xs font-medium bg-surface-alt dark:bg-surface-dark-alt text-on-surface dark:text-on-surface-dark">
-                                            {{ log.operation }}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-neutral-600 dark:text-neutral-300">
-                                        {% if log.server_name %}
-                                        <div class="flex items-center gap-1">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
-                                            </svg>
-                                            <span>{{ log.server_name }}</span>
-                                        </div>
-                                        {% endif %}
-                                        
-                                        {% if log.site_name %}
-                                        <div class="flex items-center gap-1">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-                                            </svg>
-                                            <span>{{ log.site_name }}</span>
-                                        </div>
-                                        {% endif %}
-                                        
-                                        {% if log.rc is not none %}
-                                        <div class="flex items-center gap-1">
-                                            <span class="font-mono text-xs">RC: {{ log.rc }}</span>
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Timestamp and Status -->
-                            <div class="shrink-0 text-right flex flex-col items-end gap-1.5">
-                                <div class="text-xs text-neutral-500 dark:text-neutral-400">
-                                    <div>{{ frappe.utils.format_datetime(log.executed_on, "MMM dd, yyyy") if log.executed_on else '-' }}</div>
-                                    <div class="font-mono text-xs text-neutral-600 dark:text-neutral-300">
-                                        {{ frappe.utils.format_datetime(log.executed_on, "HH:mm:ss") if log.executed_on else '-' }}
-                                    </div>
-                                </div>
-                                
-                                <!-- Status Badge -->
-                                {% if log.status == "Success" %}
-                                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white bg-green-600 border border-green-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-                                        Success
-                                    </span>
-                                {% elif log.status == "Failed" %}
-                                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white bg-red-600 border border-red-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-                                        Failed
-                                    </span>
-                                {% elif log.status == "Running" %}
-                                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-white bg-yellow-600 border border-yellow-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                                        Running
-                                    </span>
-                                {% elif log.status == "Unreachable" %}
-                                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-on-surface dark:text-on-surface-dark bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-on-surface dark:bg-on-surface-dark"></span>
-                                        Unreachable
-                                    </span>
-                                {% else %}
-                                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-on-surface dark:text-on-surface-dark bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-on-surface dark:bg-on-surface-dark"></span>
-                                        {{ log.status }}
-                                    </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            {% endfor %}
-        {% else %}
-            <!-- Empty State -->
-            <div class="text-center py-12 border border-dashed border-outline dark:border-outline-dark rounded-lg">
-                <div class="flex flex-col items-center gap-2">
-                    <div class="w-12 h-12 rounded-full bg-surface-alt dark:bg-surface-dark-alt flex items-center justify-center">
-                        <svg class="w-6 h-6 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-on-surface dark:text-on-surface-dark">No logs found</p>
-                        <p class="text-xs text-neutral-600 dark:text-neutral-300 mt-0.5">Ansible execution logs will appear here</p>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Pagination -->
-    {% if total_pages > 1 %}
-    <div class="mt-6 border-t border-outline dark:border-outline-dark pt-4">
-        <!-- Info - Hidden on mobile -->
-        <div class="hidden sm:block text-sm text-neutral-600 dark:text-neutral-300 mb-3">
-            Showing <span class="font-semibold">{{ ((page - 1) * page_length) + 1 }}</span> to 
-            <span class="font-semibold">{{ min(page * page_length, total_logs) }}</span> of 
-            <span class="font-semibold">{{ total_logs }}</span> logs
-        </div>
-        
-        <!-- Mobile Info -->
-        <div class="sm:hidden text-xs text-center text-neutral-600 dark:text-neutral-300 mb-3">
-            Page {{ page }} of {{ total_pages }} ({{ total_logs }} logs)
-        </div>
-        
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <!-- Previous Button -->
-            <div class="w-full sm:w-auto">
-                {% if has_prev %}
-                    <a href="/log?page={{ page - 1 }}" 
-                       class="w-full sm:w-auto inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium rounded-lg border border-outline dark:border-outline-dark bg-surface dark:bg-surface-dark text-on-surface dark:text-on-surface-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                        Previous
-                    </a>
-                {% else %}
-                    <span class="w-full sm:w-auto inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium rounded-lg border border-outline dark:border-outline-dark bg-surface-alt dark:bg-surface-dark-alt text-neutral-400 dark:text-neutral-500 cursor-not-allowed">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                        Previous
-                    </span>
-                {% endif %}
-            </div>
-
-            <!-- Page Numbers - Responsive -->
-            <div class="flex items-center justify-center gap-1 flex-wrap">
-                {% set start_page = max(1, page - 2) %}
-                {% set end_page = min(total_pages, page + 2) %}
-                
-                <!-- Mobile: Show fewer pages -->
-                <div class="flex items-center gap-1 sm:hidden">
-                    {% set mobile_start = max(1, page - 1) %}
-                    {% set mobile_end = min(total_pages, page + 1) %}
-                    
-                    {% if mobile_start > 1 %}
-                        <a href="/log?page=1" class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-outline dark:border-outline-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt transition-colors">1</a>
-                        {% if mobile_start > 2 %}
-                            <span class="px-1 text-neutral-400 text-xs">...</span>
-                        {% endif %}
-                    {% endif %}
-                    
-                    {% for p in range(mobile_start, mobile_end + 1) %}
-                        {% if p == page %}
-                            <span class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-primary dark:bg-primary-dark text-white border border-primary dark:border-primary-dark">{{ p }}</span>
-                        {% else %}
-                            <a href="/log?page={{ p }}" class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-outline dark:border-outline-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt transition-colors">{{ p }}</a>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if mobile_end < total_pages %}
-                        {% if mobile_end < total_pages - 1 %}
-                            <span class="px-1 text-neutral-400 text-xs">...</span>
-                        {% endif %}
-                        <a href="/log?page={{ total_pages }}" class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-outline dark:border-outline-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt transition-colors">{{ total_pages }}</a>
-                    {% endif %}
-                </div>
-                
-                <!-- Desktop: Show more pages -->
-                <div class="hidden sm:flex items-center gap-1">
-                    {% if start_page > 1 %}
-                        <a href="/log?page=1" class="px-3 py-1.5 text-sm font-medium rounded-lg border border-outline dark:border-outline-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt transition-colors">1</a>
-                        {% if start_page > 2 %}
-                            <span class="px-2 text-neutral-400">...</span>
-                        {% endif %}
-                    {% endif %}
-                    
-                    {% for p in range(start_page, end_page + 1) %}
-                        {% if p == page %}
-                            <span class="px-3 py-1.5 text-sm font-medium rounded-lg bg-primary dark:bg-primary-dark text-white border border-primary dark:border-primary-dark">{{ p }}</span>
-                        {% else %}
-                            <a href="/log?page={{ p }}" class="px-3 py-1.5 text-sm font-medium rounded-lg border border-outline dark:border-outline-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt transition-colors">{{ p }}</a>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if end_page < total_pages %}
-                        {% if end_page < total_pages - 1 %}
-                            <span class="px-2 text-neutral-400">...</span>
-                        {% endif %}
-                        <a href="/log?page={{ total_pages }}" class="px-3 py-1.5 text-sm font-medium rounded-lg border border-outline dark:border-outline-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt transition-colors">{{ total_pages }}</a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Next Button -->
-            <div class="w-full sm:w-auto">
-                {% if has_next %}
-                    <a href="/log?page={{ page + 1 }}" 
-                       class="w-full sm:w-auto inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium rounded-lg border border-outline dark:border-outline-dark bg-surface dark:bg-surface-dark text-on-surface dark:text-on-surface-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt transition-colors">
-                        Next
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </a>
-                {% else %}
-                    <span class="w-full sm:w-auto inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium rounded-lg border border-outline dark:border-outline-dark bg-surface-alt dark:bg-surface-dark-alt text-neutral-400 dark:text-neutral-500 cursor-not-allowed">
-                        Next
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </span>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
-
 {% endblock %}

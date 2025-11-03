@@ -71,8 +71,8 @@ function build_custom_image(frm) {
 
 function show_build_status_indicator(frm) {
 	const status = frm.doc.build_status;
-	let color = 'gray';
-	let message = status;
+	let color;
+	let message;
 
 	switch (status) {
 		case 'Building':

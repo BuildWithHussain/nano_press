@@ -1,243 +1,41 @@
 {% extends "templates/layout.html" %}
 
-{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_title %}My Sites{% endblock %}
 
 {% block body %}
-<div class="py-8">
-    <!-- Header Section -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">My Sites</h1>
-                <p class="mt-2 text-sm text-gray-600">Manage and monitor your Frappe sites</p>
-            </div>
-            <button
-                class="inline-flex items-center px-4 py-2.5 border border-gray-900 text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-all duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                New Site
-            </button>
+<div class="mx-auto max-w-2xl px-4 py-16">
+    <div class="text-center">
+        <!-- Icon -->
+        <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01">
+                </path>
+            </svg>
         </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl font-bold text-gray-900 mb-3">
+            My Sites
+        </h1>
+
+        <!-- Message -->
+        <p class="text-lg text-gray-600 mb-2">
+            Coming Soon
+        </p>
+        <p class="text-sm text-gray-500 mb-8">
+            This feature is currently under development and will be available soon.
+        </p>
+
+        <!-- Action Button -->
+        <a href="/"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors duration-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
+            </svg>
+            Back to Dashboard
+        </a>
     </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div class="bg-white overflow-hidden border border-gray-200 rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="shrink-0">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9">
-                            </path>
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Total Sites</dt>
-                            <dd class="text-2xl font-semibold text-gray-900">{{ sites|length }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white overflow-hidden border border-gray-200 rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="shrink-0">
-                        <svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Active Sites</dt>
-                            <dd class="text-2xl font-semibold text-gray-900">{{ sites|selectattr("status", "equalto",
-                                "Active")|list|length }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white overflow-hidden border border-gray-200 rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="shrink-0">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01">
-                            </path>
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Servers</dt>
-                            <dd class="text-2xl font-semibold text-gray-900">{{
-                                sites|map(attribute='server')|unique|list|length }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white overflow-hidden border border-gray-200 rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="shrink-0">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Total Apps</dt>
-                            <dd class="text-2xl font-semibold text-gray-900">
-                                {% set all_apps = [] %}
-                                {% for site in sites %}
-                                    {% for app in site.apps %}
-                                        {% if app not in all_apps %}
-                                            {% set _ = all_apps.append(app) %}
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endfor %}
-                                {{ all_apps|length }}
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sites List -->
-    <div class="bg-white border border-gray-200 overflow-hidden rounded-lg">
-        <ul class="divide-y divide-gray-200">
-            {% for site in sites %}
-            <li>
-                <div class="px-6 py-5 hover:bg-gray-50 transition-colors duration-150">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center">
-                                <h3 class="text-lg font-semibold text-gray-900 truncate">
-                                    {{ site.name }}
-                                </h3>
-                                {% if site.status == "Active" %}
-                                <span
-                                    class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <svg class="mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
-                                        <circle cx="4" cy="4" r="3" />
-                                    </svg>
-                                    Active
-                                </span>
-                                {% else %}
-                                <span
-                                    class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                    <svg class="mr-1.5 h-2 w-2 text-gray-400" fill="currentColor" viewBox="0 0 8 8">
-                                        <circle cx="4" cy="4" r="3" />
-                                    </svg>
-                                    Inactive
-                                </span>
-                                {% endif %}
-                            </div>
-
-                            <div class="mt-2 flex items-center text-sm text-gray-500">
-                                <svg class="shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01">
-                                    </path>
-                                </svg>
-                                {{ site.server }}
-                                <span class="mx-2">•</span>
-                                <svg class="shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
-                                    </path>
-                                </svg>
-                                {{ site.version }}
-                            </div>
-
-                            <div class="mt-3 flex items-center flex-wrap gap-2">
-                                <span class="text-xs text-gray-500">Apps:</span>
-                                {% for app in site.apps %}
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                                    {{ app }}
-                                </span>
-                                {% endfor %}
-                            </div>
-
-                            <div class="mt-2 flex items-center text-xs text-gray-400">
-                                <svg class="shrink-0 mr-1.5 h-3 w-3 text-gray-400" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                                Created {{ site.created }}
-                                <span class="mx-2">•</span>
-                                Last updated {{ site.last_updated }}
-                            </div>
-                        </div>
-
-                        <div class="ml-6 shrink-0 flex space-x-3">
-                            <button
-                                class="inline-flex items-center px-3 py-2.5 border border-gray-300 text-sm font-medium rounded-md text-gray-900 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-all duration-200">
-                                <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                                    </path>
-                                </svg>
-                                View
-                            </button>
-                            <button
-                                class="inline-flex items-center px-3 py-2.5 border border-gray-900 text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-all duration-200">
-                                <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                                    </path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                Manage
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <!-- Empty State (when no sites) -->
-    {% if not sites %}
-    <div class="text-center py-12 bg-white border border-gray-200 rounded-lg">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9">
-            </path>
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No sites</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating a new site.</p>
-        <div class="mt-6">
-            <button
-                class="inline-flex items-center px-4 py-2.5 border border-gray-900 text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-all duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Create New Site
-            </button>
-        </div>
-    </div>
-    {% endif %}
 </div>
-
 {% endblock %}

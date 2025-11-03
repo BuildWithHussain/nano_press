@@ -231,7 +231,7 @@ function show_preparation_dialog(frm) {
 					console.log(r);
 					if (r?.message) {
 						if (r.message.status === 200) {
-							let message = r.message.message || 'Server prepared successfully';
+							let message;
 
 							// Show detailed success message
 							if (values.include_traefik && r.message.traefik_version) {
@@ -261,7 +261,7 @@ function show_preparation_dialog(frm) {
 						frm.reload_doc();
 					}
 				},
-				error: (r) => {
+				error: () => {
 					frappe.msgprint({
 						title: __('Error'),
 						indicator: 'red',

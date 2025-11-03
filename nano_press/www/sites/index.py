@@ -1,6 +1,3 @@
-import frappe
-
-
 def get_context(context):
 	"""Get context for my sites page"""
 
