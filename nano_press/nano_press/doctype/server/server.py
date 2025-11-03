@@ -41,8 +41,6 @@ class Server(Document):
 	# end: auto-generated types
 
 	def validate(self):
-		if not self.server_name:
-			self.server_name = self.name
 		if not self.traefik_email:
 			self.traefik_email = frappe.session.user
 		self.created_by = frappe.session.user

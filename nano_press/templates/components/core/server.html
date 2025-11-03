@@ -228,8 +228,8 @@
             const payload = {
                 server_ip,
                 ssh_user,
-                ssh_port,
-                server_name: 'BENCH-TEST' // #TODO Change this to a proper name
+                ssh_port
+                // server_name will be auto-generated as BENCH-00001, BENCH-00002, etc.
             };
 
             // Create document using frappe_call()
