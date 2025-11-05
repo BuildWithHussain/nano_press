@@ -106,6 +106,7 @@
 			"fieldtype": "Data",
 			"label": "Server Name",
 			"placeholder": "My Development Server",
+			"read_only": 1,
 			"unique": 1
 		},
 		{

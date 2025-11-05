@@ -44,6 +44,9 @@ class Server(Document):
 		if not self.traefik_email:
 			self.traefik_email = frappe.session.user
 		self.created_by = frappe.session.user
+		# Set server_name to the document name
+		if self.name:
+			self.server_name = self.name
 
 	@staticmethod
 	def _read_local_public_key() -> str | None:
