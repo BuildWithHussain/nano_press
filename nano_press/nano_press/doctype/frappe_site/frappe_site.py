@@ -42,8 +42,15 @@ class FrappeSite(Document):
 
 	def before_insert(self):
 		self._ensure_password()
+
+	def after_insert(self):
+		# Set bench_name and site_url after document name is generated
+		if not self.bench_name:
+			self.bench_name = self.name
 		if not self.site_url:
 			self.set_site_url()
+			self.db_set("bench_name", self.bench_name)
+			self.db_set("site_url", self.site_url)
 
 	def before_save(self):
 		if self.docstatus == 1:
@@ -111,7 +118,10 @@ class FrappeSite(Document):
 
 	def set_site_url(self) -> None:
 		server = frappe.get_doc("Server", self.server_name)
-		self.site_url = f"{self.bench_name}.{server.server_ip}.traefik.me"
+		# Use bench_name if available, otherwise use name (auto-generated)
+		# Convert to lowercase for valid URL format
+		site_prefix = (self.bench_name or self.name or "site").lower()
+		self.site_url = f"{site_prefix}.{server.server_ip}.traefik.me"
 
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:

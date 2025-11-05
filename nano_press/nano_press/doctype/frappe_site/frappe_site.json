@@ -1,6 +1,6 @@
 {
 	"actions": [],
-	"autoname": "field:bench_name",
+	"autoname": "format:BENCH-{####}",
 	"creation": "2025-08-15 15:16:06.808974",
 	"doctype": "DocType",
 	"engine": "InnoDB",
@@ -57,7 +57,8 @@
 			"in_list_view": 1,
 			"label": "Status",
 			"no_copy": 1,
-			"options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped"
+			"options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped",
+			"read_only": 1
 		},
 		{
 			"allow_on_submit": 1,
@@ -148,7 +149,6 @@
 		},
 		{
 			"default": "root",
-			"fetch_from": "server_name.db_username",
 			"fieldname": "db_username",
 			"fieldtype": "Data",
 			"label": "DB Username"
@@ -158,11 +158,9 @@
 			"fieldtype": "Column Break"
 		},
 		{
-			"fetch_from": "server_name.db_password",
 			"fieldname": "db_password",
 			"fieldtype": "Password",
-			"label": "DB Password",
-			"read_only": 1
+			"label": "DB Password"
 		},
 		{
 			"fieldname": "site_url",
@@ -171,7 +169,7 @@
 			"label": "Site Url",
 			"no_copy": 1,
 			"placeholder": "site.example.com",
-			"read_only_depends_on": "eval:doc.is_development==1",
+			"read_only": 1,
 			"unique": 1
 		},
 		{
@@ -180,7 +178,6 @@
 			"label": "Bench Name",
 			"no_copy": 1,
 			"placeholder": "ERPNEXTv1",
-			"reqd": 1,
 			"unique": 1
 		},
 		{
@@ -203,11 +200,11 @@
 			"link_fieldname": "bench_name"
 		}
 	],
-	"modified": "2025-10-23 23:49:29.285779",
+	"modified": "2025-11-05 22:00:24.328048",
 	"modified_by": "Administrator",
 	"module": "Nano Press",
 	"name": "Frappe Site",
-	"naming_rule": "By fieldname",
+	"naming_rule": "Expression",
 	"owner": "Administrator",
 	"permissions": [
 		{
