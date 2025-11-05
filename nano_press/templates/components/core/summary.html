@@ -150,8 +150,8 @@ function summarySetup() {
                     throw new Error('Server not found. Please verify your server first.');
                 }
                 
-                // Call the prepare_server API
-                const prepareResult = await this.callPrepareServer(serverName, false);
+                // Call the prepare_server API with Traefik enabled
+                const prepareResult = await this.callPrepareServer(serverName, true);
                 console.log('Server preparation result:', prepareResult);
                 
                 if (typeof toast !== 'undefined') {

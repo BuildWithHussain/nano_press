@@ -228,7 +228,8 @@
             const payload = {
                 server_ip,
                 ssh_user,
-                ssh_port
+                ssh_port,
+                traefik_email: '{{ user_email }}'
                 // server_name will be auto-generated as BENCH-00001, BENCH-00002, etc.
             };
 
