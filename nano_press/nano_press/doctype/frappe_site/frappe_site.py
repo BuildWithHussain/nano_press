@@ -49,8 +49,9 @@ class FrappeSite(Document):
 			self.bench_name = self.name
 		if not self.site_url:
 			self.set_site_url()
-			self.db_set("bench_name", self.bench_name)
-			self.db_set("site_url", self.site_url)
+			# Use update_modified=False to prevent marking form as dirty
+			self.db_set("bench_name", self.bench_name, update_modified=False)
+			self.db_set("site_url", self.site_url, update_modified=False)
 
 	def before_save(self):
 		if self.docstatus == 1:
