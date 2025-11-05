@@ -96,8 +96,16 @@
                 <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 1 ? 'bg-gray-900' : 'bg-gray-300'"></div>
                 <span class="text-sm">Preparing server</span>
             </div>
-            <div class="flex items-center gap-3" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">
+            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">
                 <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 2 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <span class="text-sm">Creating site structure</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 3 ? 'text-gray-900' : 'text-gray-400'">
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 3 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <span class="text-sm">Preparing deployment</span>
+            </div>
+            <div class="flex items-center gap-3" :class="deployStep >= 4 ? 'text-gray-900' : 'text-gray-400'">
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 4 ? 'bg-gray-900' : 'bg-gray-300'"></div>
                 <span class="text-sm">Deploying site</span>
             </div>
         </div>
@@ -110,10 +118,30 @@
             </svg>
         </div>
         <h3 class="text-xl font-semibold mb-2 text-gray-900">Deployment Complete</h3>
-        <p class="text-gray-400 text-sm mb-6">Your Frappe site is ready</p>
+        <p class="text-gray-400 text-sm mb-2">Your Frappe site has been successfully deployed!</p>
+
+        <!-- Site URL -->
+        <div class="mb-4">
+            <p class="text-sm text-gray-900 font-medium mb-1">Site will be accessible at:</p>
+            <a :href="`https://${$store.installer.siteUrl}`"
+               target="_blank"
+               class="text-sm text-blue-600 hover:text-blue-700 underline break-all"
+               x-text="$store.installer.siteUrl"></a>
+        </div>
+
+        <!-- Deployment notice -->
+        <div class="max-w-lg mx-auto mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md text-left">
+            <p class="text-xs text-gray-700 mb-2">
+                <span class="font-semibold">Please Note:</span> Deployment time may vary depending on the number of applications being installed.
+            </p>
+            <ul class="text-xs text-gray-700 space-y-1 list-disc list-inside">
+                <li>Typically, the first app becomes available within <span class="font-semibold">5 minutes</span></li>
+                <li>If the site remains inaccessible after <span class="font-semibold">10 minutes</span>, you may need to restart the containers</li>
+            </ul>
+        </div>
 
         <button @click="visitSite()"
-                class="inline-flex justify-center items-center rounded-md bg-gray-900 text-white px-4 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors duration-200 max-w-64 mx-auto">
+                class="inline-flex justify-center items-center rounded-md bg-gray-900 text-white px-4 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors duration-200">
             Access Site
         </button>
     </div>
@@ -138,55 +166,86 @@ function summarySetup() {
             this.deploying = true;
             this.deployComplete = false;
             this.deployStep = 0;
-            
+
             try {
                 // Step 1: Prepare server
-                this.deploymentStatus = 'Preparing server (installing Docker, Docker Compose)...';
+                this.deploymentStatus = 'Preparing server (installing Docker, Docker Compose, Traefik)...';
                 this.deployStep = 1;
-                
+
                 // Get server name from store
                 const serverName = this.$store.installer.serverName;
                 if (!serverName) {
                     throw new Error('Server not found. Please verify your server first.');
                 }
-                
+
                 // Call the prepare_server API with Traefik enabled
                 const prepareResult = await this.callPrepareServer(serverName, true);
                 console.log('Server preparation result:', prepareResult);
-                
+
                 if (typeof toast !== 'undefined') {
-                    // Show detailed success message with versions
                     const successMsg = prepareResult.message || 'Server prepared successfully!';
                     toast(successMsg, { type: 'success' });
                 }
-                
+
                 // Wait a moment before moving to next step
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Step 2: Deploy site (simulated for now)
-                this.deploymentStatus = 'Deploying Frappe site...';
+
+                // Step 2: Create Frappe Site document
+                this.deploymentStatus = 'Creating site structure...';
                 this.deployStep = 2;
-                
-                console.log('Starting site deployment simulation...');
-                
-                // Simulate deployment (3 seconds)
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                
-                console.log('Site deployment simulation complete');
-                
+
+                const siteDoc = await this.createFrappeSiteDoc();
+                console.log('Frappe Site created:', siteDoc);
+
+                if (typeof toast !== 'undefined') {
+                    toast('Site structure created successfully!', { type: 'success' });
+                }
+
+                // Wait a moment before moving to next step
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 3: Prepare for deployment (provision bench structure)
+                this.deploymentStatus = 'Preparing deployment (provisioning bench structure)...';
+                this.deployStep = 3;
+
+                const prepareDeploymentResult = await this.callPrepareForDeployment(siteDoc.name);
+                console.log('Prepare for deployment result:', prepareDeploymentResult);
+
+                if (typeof toast !== 'undefined') {
+                    toast('Deployment prepared successfully!', { type: 'success' });
+                }
+
+                // Wait a moment before moving to next step
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 4: Deploy site (bring up containers)
+                this.deploymentStatus = 'Deploying site (starting containers)...';
+                this.deployStep = 4;
+
+                const deployResult = await this.callDeploySite(siteDoc.name);
+                console.log('Deploy site result:', deployResult);
+
+                if (typeof toast !== 'undefined') {
+                    toast('Site deployed successfully!', { type: 'success' });
+                }
+
+                // Store the site name for accessing later
+                this.$store.installer.siteName = siteDoc.name;
+                this.$store.installer.siteUrl = siteDoc.site_url;
+
                 // Deployment complete
                 this.deploying = false;
                 this.deployComplete = true;
-                
+
                 if (typeof toast !== 'undefined') {
                     toast('Deployment completed successfully!', { type: 'success' });
                 }
-                
+
             } catch (error) {
                 console.error('Deployment failed:', error);
                 this.deploying = false;
                 this.deploymentStatus = 'Deployment failed. Please try again.';
-                
+
                 if (typeof toast !== 'undefined') {
                     const errorMessage = error.message || 'Deployment failed. Please check your configuration.';
                     toast(errorMessage, { type: 'danger' });
@@ -224,13 +283,96 @@ function summarySetup() {
                 throw error; // Re-throw the original error
             }
         },
-        
+
+        // Create Frappe Site document
+        async createFrappeSiteDoc() {
+            const url = '/api/resource/Frappe Site';
+
+            try {
+                const payload = {
+                    server_name: this.$store.installer.serverName,
+                    frappe_version: this.$store.installer.frappeVersion,
+                    install_apps: this.$store.installer.selectedApps.map(app => ({ app_name: app }))
+                };
+
+                // Add domain if provided and verified
+                if (this.$store.installer.domain && this.$store.installer.domain.trim()) {
+                    payload.domain = this.$store.installer.domain.trim();
+                }
+
+                const response = await frappe_call(url, payload, "POST");
+
+                if (response?.data?.name) {
+                    return response.data;
+                } else {
+                    throw new Error('Failed to create Frappe Site document');
+                }
+            } catch (error) {
+                console.error('Error creating Frappe Site:', error);
+                throw error;
+            }
+        },
+
+        // Call prepare_for_deployment API
+        async callPrepareForDeployment(siteName) {
+            const url = `/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.prepare_for_deployment`;
+
+            try {
+                const payload = {
+                    site_name: siteName
+                };
+
+                const response = await frappe_call(url, payload, "POST");
+
+                if (response?.message?.status === 200) {
+                    return response.message;
+                } else if (response?.message) {
+                    throw new Error(response.message.message || 'Deployment preparation failed');
+                } else {
+                    console.error('Unexpected response structure:', response);
+                    throw new Error('Deployment preparation failed - unexpected response structure');
+                }
+            } catch (error) {
+                console.error('Error preparing deployment:', error);
+                throw error;
+            }
+        },
+
+        // Call deploy_site API
+        async callDeploySite(siteName) {
+            const url = `/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.deploy_site`;
+
+            try {
+                const payload = {
+                    site_name: siteName
+                };
+
+                const response = await frappe_call(url, payload, "POST");
+
+                if (response?.message?.status === 200) {
+                    return response.message;
+                } else if (response?.message) {
+                    throw new Error(response.message.message || 'Site deployment failed');
+                } else {
+                    console.error('Unexpected response structure:', response);
+                    throw new Error('Site deployment failed - unexpected response structure');
+                }
+            } catch (error) {
+                console.error('Error deploying site:', error);
+                throw error;
+            }
+        },
+
         // Visit the deployed site
         visitSite() {
+            // Use stored site URL if available
+            const siteUrl = this.$store.installer.siteUrl;
             const domain = this.$store.installer.domain?.trim();
             const ip = this.$store.installer.serverDetails?.ip;
-            
-            if (domain && this.$store.installer.domainVerified) {
+
+            if (siteUrl) {
+                window.open(`https://${siteUrl}`, '_blank');
+            } else if (domain && this.$store.installer.domainVerified) {
                 window.open(`https://${domain}`, '_blank');
             } else if (ip) {
                 window.open(`http://${ip}`, '_blank');

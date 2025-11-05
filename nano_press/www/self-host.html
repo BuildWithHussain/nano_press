@@ -111,7 +111,9 @@
             customApps: Alpine.$persist([]).as('nano_press_custom_apps'),
             frappeVersion: Alpine.$persist('Version-15').as('nano_press_frappe_version'),
             domain: Alpine.$persist('').as('nano_press_domain'),
-            domainVerified: Alpine.$persist(false).as('nano_press_domain_verified')
+            domainVerified: Alpine.$persist(false).as('nano_press_domain_verified'),
+            siteName: Alpine.$persist(null).as('nano_press_site_name'),  // Store the Frappe Site document name
+            siteUrl: Alpine.$persist(null).as('nano_press_site_url')  // Store the generated site URL
         });
     });
 

@@ -235,3 +235,17 @@ class FrappeSite(Document):
 			frappe.log_error(frappe.get_traceback(), "restart_site.yml failed")
 			self.db_set("status", "Failed", update_modified=False)
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
+
+
+@frappe.whitelist()
+def prepare_for_deployment(site_name: str) -> dict:
+	"""Wrapper function to call prepare_for_deployment on a Frappe Site document"""
+	doc = frappe.get_doc("Frappe Site", site_name)
+	return doc.prepare_for_deployment()
+
+
+@frappe.whitelist()
+def deploy_site(site_name: str) -> dict:
+	"""Wrapper function to call deploy_site on a Frappe Site document"""
+	doc = frappe.get_doc("Frappe Site", site_name)
+	return doc.deploy_site()
