@@ -295,15 +295,29 @@ function summarySetup() {
                     install_apps: this.$store.installer.selectedApps.map(app => ({ app_name: app }))
                 };
 
-                // Add domain if provided and verified
+                // Add domain as site_url if provided
                 if (this.$store.installer.domain && this.$store.installer.domain.trim()) {
-                    payload.domain = this.$store.installer.domain.trim();
+                    payload.site_url = this.$store.installer.domain.trim();
                 }
 
                 const response = await frappe_call(url, payload, "POST");
 
                 if (response?.data?.name) {
-                    return response.data;
+                    const docName = response.data.name;
+
+                    // Submit the document
+                    const submitUrl = `/api/resource/Frappe Site/${docName}`;
+                    const submitPayload = {
+                        docstatus: 1
+                    };
+
+                    const submitResponse = await frappe_call(submitUrl, submitPayload, "PUT");
+
+                    if (submitResponse?.data) {
+                        return submitResponse.data;
+                    } else {
+                        throw new Error('Failed to submit Frappe Site document');
+                    }
                 } else {
                     throw new Error('Failed to create Frappe Site document');
                 }

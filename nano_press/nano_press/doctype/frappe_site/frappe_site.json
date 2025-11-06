@@ -169,7 +169,6 @@
 			"label": "Site Url",
 			"no_copy": 1,
 			"placeholder": "site.example.com",
-			"read_only": 1,
 			"unique": 1
 		},
 		{

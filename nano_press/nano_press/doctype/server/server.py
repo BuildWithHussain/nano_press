@@ -107,6 +107,29 @@ class Server(Document):
 		Args:
 			include_traefik: Whether to also deploy Traefik (default: False, requires traefik fields to be set)
 		"""
+		# Check if server is already prepared
+		if include_traefik:
+			# When Traefik is requested, check if all three components are installed
+			if self.docker_installed and self.compose_installed and self.traefik_deployed:
+				return {
+					"status": 200,
+					"message": "Server is already prepared with Docker, Docker Compose, and Traefik",
+					"docker_version": self.docker_version or "Unknown",
+					"compose_version": self.compose_version or "Unknown",
+					"traefik_version": self.traefik_version or "Unknown",
+					"skipped": True,
+				}
+		else:
+			# When Traefik is not requested, check if Docker and Compose are installed
+			if self.docker_installed and self.compose_installed:
+				return {
+					"status": 200,
+					"message": "Server is already prepared with Docker and Docker Compose",
+					"docker_version": self.docker_version or "Unknown",
+					"compose_version": self.compose_version or "Unknown",
+					"skipped": True,
+				}
+
 		# Prepare extra vars for the playbook
 		extra_vars = {}
 
