@@ -21,7 +21,7 @@
         <label class="block text-sm font-medium mb-2 text-gray-900">Apps</label>
         <div class="grid grid-cols-2 gap-2 mb-4">
             <template x-for="app in availableApps" :key="app.name">
-                <button @click="toggleApp(app.name)" :class="localSelectedApps.includes(app.name)
+                <button @click="toggleApp(app.name)" :class="localSelectedApps.includes(app.name.toLowerCase())
                     ? 'bg-gray-900 text-white border-gray-900'
                     : 'bg-white text-gray-900 border-gray-300'"
                     class="p-3 border rounded-md text-left cursor-pointer transition-all duration-200 hover:border-gray-900">
@@ -134,7 +134,7 @@
             addCustomApp() {
                 if (this.localCustomAppForm.name && this.localCustomAppForm.githubUrl) {
                     const newApp = {
-                        name: this.localCustomAppForm.name,
+                        name: this.localCustomAppForm.name.toLowerCase(),
                         githubUrl: this.localCustomAppForm.githubUrl,
                         token: this.localCustomAppForm.token,
                         branch: this.localCustomAppForm.branch || 'main'
@@ -152,12 +152,13 @@
                 this.syncToStore();
             },
             toggleApp(appName) {
-                if (this.localSelectedApps.includes(appName)) {
-                    this.localSelectedApps = this.localSelectedApps.filter(name => name !== appName);
+                const lowerCaseAppName = appName.toLowerCase();
+                if (this.localSelectedApps.includes(lowerCaseAppName)) {
+                    this.localSelectedApps = this.localSelectedApps.filter(name => name !== lowerCaseAppName);
                 } else {
-                    this.localSelectedApps.push(appName);
+                    this.localSelectedApps.push(lowerCaseAppName);
                 }
-                
+
                 this.syncToStore();
             },
             
