@@ -98,14 +98,18 @@
             </div>
             <div class="flex items-center gap-3 mb-3" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">
                 <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 2 ? 'bg-gray-900' : 'bg-gray-300'"></div>
-                <span class="text-sm">Creating site structure</span>
+                <span class="text-sm">Setting up your Apps</span>
             </div>
             <div class="flex items-center gap-3 mb-3" :class="deployStep >= 3 ? 'text-gray-900' : 'text-gray-400'">
                 <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 3 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <span class="text-sm">Creating site</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 4 ? 'text-gray-900' : 'text-gray-400'">
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 4 ? 'bg-gray-900' : 'bg-gray-300'"></div>
                 <span class="text-sm">Preparing deployment</span>
             </div>
-            <div class="flex items-center gap-3" :class="deployStep >= 4 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 4 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+            <div class="flex items-center gap-3" :class="deployStep >= 5 ? 'text-gray-900' : 'text-gray-400'">
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 5 ? 'bg-gray-900' : 'bg-gray-300'"></div>
                 <span class="text-sm">Deploying site</span>
             </div>
         </div>
@@ -127,6 +131,21 @@
                target="_blank"
                class="text-sm text-blue-600 hover:text-blue-700 underline break-all"
                x-text="$store.installer.siteUrl"></a>
+        </div>
+
+        <!-- Login Credentials -->
+        <div class="max-w-lg mx-auto mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md text-left">
+            <p class="text-xs font-semibold text-gray-900 mb-3">Login Credentials:</p>
+            <div class="space-y-2">
+                <div>
+                    <p class="text-xs text-gray-600">Username:</p>
+                    <p class="text-sm text-gray-900 font-mono" x-text="siteUsername || 'Administrator'"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-600">Password:</p>
+                    <p class="text-sm text-gray-900 font-mono" x-text="sitePassword || '***'"></p>
+                </div>
+            </div>
         </div>
 
         <!-- Deployment notice -->
@@ -155,7 +174,14 @@ function summarySetup() {
         deployComplete: false,
         deploymentStatus: 'Initializing deployment...',
         deployStep: 0,
-        
+
+        // Build progress tracking
+        buildingImage: false,
+
+        // Site credentials
+        siteUsername: '',
+        sitePassword: '',
+
         // Navigation
         prevStep() {
             this.$store.installer.currentStep = 3;
@@ -190,12 +216,31 @@ function summarySetup() {
                 // Wait a moment before moving to next step
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Step 2: Create Frappe Site document
-                this.deploymentStatus = 'Creating site structure...';
+                // Step 2: Build custom image with selected apps
+                this.deploymentStatus = 'Setting up your Apps...';
                 this.deployStep = 2;
+                this.buildingImage = true;
 
-                const siteDoc = await this.createFrappeSiteDoc();
+                const customImageName = await this.buildCustomImage();
+                console.log('Custom image built:', customImageName);
+
+                if (typeof toast !== 'undefined') {
+                    toast('Custom image built successfully!', { type: 'success' });
+                }
+
+                // Wait a moment before moving to next step
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 3: Create Frappe Site document (with custom image)
+                this.deploymentStatus = 'Creating site structure...';
+                this.deployStep = 3;
+                this.buildingImage = false;
+
+                const siteDoc = await this.createFrappeSiteDoc(customImageName);
                 console.log('Frappe Site created:', siteDoc);
+
+                // Fetch actual credentials (passwords are masked in regular response)
+                await this.fetchSiteCredentials(siteDoc.name);
 
                 if (typeof toast !== 'undefined') {
                     toast('Site structure created successfully!', { type: 'success' });
@@ -204,9 +249,9 @@ function summarySetup() {
                 // Wait a moment before moving to next step
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Step 3: Prepare for deployment (provision bench structure)
+                // Step 4: Prepare for deployment (provision bench structure)
                 this.deploymentStatus = 'Preparing deployment (provisioning bench structure)...';
-                this.deployStep = 3;
+                this.deployStep = 4;
 
                 const prepareDeploymentResult = await this.callPrepareForDeployment(siteDoc.name);
                 console.log('Prepare for deployment result:', prepareDeploymentResult);
@@ -218,9 +263,9 @@ function summarySetup() {
                 // Wait a moment before moving to next step
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Step 4: Deploy site (bring up containers)
+                // Step 5: Deploy site (bring up containers)
                 this.deploymentStatus = 'Deploying site (starting containers)...';
-                this.deployStep = 4;
+                this.deployStep = 5;
 
                 const deployResult = await this.callDeploySite(siteDoc.name);
                 console.log('Deploy site result:', deployResult);
@@ -285,7 +330,7 @@ function summarySetup() {
         },
 
         // Create Frappe Site document
-        async createFrappeSiteDoc() {
+        async createFrappeSiteDoc(customImageName = null) {
             const url = '/api/resource/Frappe Site';
 
             try {
@@ -294,6 +339,12 @@ function summarySetup() {
                     frappe_version: this.$store.installer.frappeVersion,
                     install_apps: this.$store.installer.selectedApps.map(app => ({ app_name: app }))
                 };
+
+                // Add custom image if built
+                if (customImageName) {
+                    payload.is_custom = 1;
+                    payload.custom_image = customImageName;
+                }
 
                 // Add domain as site_url if provided
                 if (this.$store.installer.domain && this.$store.installer.domain.trim()) {
@@ -394,6 +445,92 @@ function summarySetup() {
                 if (typeof toast !== 'undefined') {
                     toast('Unable to determine site URL. Please check your configuration.', { type: 'warning' });
                 }
+            }
+        },
+
+        // Build custom image with selected apps
+        async buildCustomImage() {
+            // Generate image name
+            const timestamp = Date.now();
+            const imageName = `custom-${timestamp}`;
+
+            try {
+                // Call API to create and build custom image
+                const url = '/api/method/nano_press.nano_press.doctype.custom_image.custom_image.create_and_build_custom_image';
+                const payload = {
+                    server_name: this.$store.installer.serverName,
+                    apps: this.$store.installer.selectedApps,
+                    custom_apps: this.$store.installer.customApps,
+                    image_name: imageName,
+                    frappe_version: this.$store.installer.frappeVersion
+                };
+
+                const response = await frappe_call(url, payload, "POST");
+
+                if (response?.message?.custom_image_name) {
+                    const customImageName = response.message.custom_image_name;
+
+                    // Poll for build completion
+                    return await this.pollForBuildCompletion(customImageName);
+                } else if (response?.message?.status === 'error') {
+                    throw new Error(response.message.message || 'Failed to start build');
+                } else {
+                    throw new Error('Unexpected response from build API');
+                }
+            } catch (error) {
+                console.error('Build error:', error);
+                throw error;
+            }
+        },
+
+        // Poll for build completion
+        async pollForBuildCompletion(customImageName) {
+            return new Promise((resolve, reject) => {
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const url = '/api/method/nano_press.nano_press.doctype.custom_image.custom_image.get_build_status';
+                        const payload = {
+                            custom_image_name: customImageName
+                        };
+
+                        const response = await frappe_call(url, payload, "POST");
+
+                        if (response?.message) {
+                            const status = response.message.status;
+
+                            if (status === 'Built') {
+                                clearInterval(pollInterval);
+                                resolve(customImageName);
+                            } else if (status === 'Failed') {
+                                clearInterval(pollInterval);
+                                reject(new Error('Custom image build failed'));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to poll build status:', error);
+                    }
+                }, 5000); // Poll every 5 seconds
+            });
+        },
+
+        // Fetch site credentials
+        async fetchSiteCredentials(siteName) {
+            try {
+                const url = '/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.get_site_credentials';
+                const payload = {
+                    site_name: siteName
+                };
+
+                const response = await frappe_call(url, payload, "POST");
+
+                if (response?.message) {
+                    this.siteUsername = response.message.username || 'Administrator';
+                    this.sitePassword = response.message.password || '';
+                }
+            } catch (error) {
+                console.error('Error fetching credentials:', error);
+                this.siteUsername = 'Administrator';
+                this.sitePassword = 'Check site document for password';
             }
         }
     };

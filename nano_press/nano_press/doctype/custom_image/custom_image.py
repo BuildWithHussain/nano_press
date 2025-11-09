@@ -209,6 +209,7 @@ class CustomImage(Document):
 		except Exception as e:
 			frappe.log_error(str(e), "Image Build Failed")
 			self.db_set("build_status", "Failed")
+			frappe.db.commit()
 			raise
 
 	@frappe.whitelist()
@@ -334,3 +335,127 @@ def preview_apps_json(custom_image_name: str) -> dict[str, Any]:
 		}
 	except Exception as e:
 		return {"success": False, "error": str(e)}
+
+
+@frappe.whitelist()
+def create_and_build_custom_image(server_name, apps, custom_apps, image_name, frappe_version):
+	"""
+	Create a Custom Image document and enqueue build process.
+
+	Args:
+		server_name: Name of the Server doctype
+		apps: List of app names (lowercase scrubbed names)
+		custom_apps: List of custom app dicts
+		image_name: Name for the custom image
+		frappe_version: Frappe version (e.g., "Version-15")
+
+	Returns:
+		dict: {status, message, custom_image_name}
+	"""
+	try:
+		if isinstance(apps, str):
+			apps = json.loads(apps)
+		if isinstance(custom_apps, str):
+			custom_apps = json.loads(custom_apps) if custom_apps else []
+		if custom_apps is None:
+			custom_apps = []
+
+		# Validate server exists and is prepared
+		if not frappe.db.exists("Server", server_name):
+			frappe.throw(_("Server {0} not found").format(server_name))
+
+		server = frappe.get_doc("Server", server_name)
+		if server.verify_status != "Prepared":
+			frappe.throw(_("Server must be in 'Prepared' status before building custom images"))
+
+		# Create Custom Image document
+		custom_image = frappe.get_doc(
+			{
+				"doctype": "Custom Image",
+				"server_name": server_name,
+				"image_name": image_name,
+				"frappe_version": frappe_version.lower(),  # Version-15 -> version-15
+				"build_status": "Draft",
+			}
+		)
+
+		# Add apps to apps_config child table
+		for app_name in apps:
+			# Find the Apps document by scrubbed_name (lowercase)
+			app_filters = [["scrubbed_name", "=", app_name.lower()]]
+			apps_docs = frappe.get_all("Apps", filters=app_filters, fields=["name"])
+
+			if apps_docs:
+				custom_image.append("apps_config", {"app_name": apps_docs[0].name})
+			else:
+				frappe.log_error(f"App with scrubbed_name '{app_name}' not found in Apps doctype")
+
+		# Add custom apps (need to create Apps documents first)
+		for custom_app in custom_apps:
+			app_name = custom_app.get("name", "")
+			if not app_name:
+				continue
+
+			# Check if Apps document exists
+			if not frappe.db.exists("Apps", app_name):
+				# Create new Apps document
+				apps_doc = frappe.get_doc(
+					{
+						"doctype": "Apps",
+						"name": app_name,
+						"scrubbed_name": app_name.lower(),
+						"repo_url": custom_app.get("githubUrl", ""),
+						"branch": custom_app.get("branch", "main"),
+						"personal_access_token": custom_app.get("token", ""),
+						"is_custom": 1,
+						"order": 999,  # Custom apps at the end
+					}
+				)
+				apps_doc.insert(ignore_permissions=True)
+
+			custom_image.append("apps_config", {"app_name": app_name})
+
+		custom_image.insert(ignore_permissions=True)
+
+		# Enqueue build process
+		result = custom_image.enqueue_build_custom_image()
+
+		return {
+			"status": "success",
+			"message": result.get("message", "Build process queued successfully"),
+			"custom_image_name": custom_image.name,
+		}
+
+	except Exception as e:
+		frappe.log_error(f"Error creating custom image: {e}")
+		return {"status": "error", "message": str(e)}
+
+
+@frappe.whitelist()
+def get_build_status(custom_image_name):
+	"""
+	Get build status for a Custom Image.
+
+	Args:
+		custom_image_name: Name of the Custom Image doctype
+
+	Returns:
+		dict: {status, build_duration, built_at, build_log}
+	"""
+	try:
+		if not frappe.db.exists("Custom Image", custom_image_name):
+			frappe.throw(_("Custom Image {0} not found").format(custom_image_name))
+
+		custom_image = frappe.get_doc("Custom Image", custom_image_name)
+
+		return {
+			"status": custom_image.build_status,
+			"build_duration": custom_image.build_duration or 0,
+			"built_at": custom_image.built_at,
+			"build_log": custom_image.build_log if hasattr(custom_image, "build_log") else "",
+			"image_tag": custom_image.image_tag if custom_image.build_status == "Built" else None,
+		}
+
+	except Exception as e:
+		frappe.log_error(f"Error getting build status: {e}")
+		return {"status": "error", "message": str(e)}

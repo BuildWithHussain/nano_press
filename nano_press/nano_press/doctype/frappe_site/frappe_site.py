@@ -105,7 +105,14 @@ class FrappeSite(Document):
 	def get_deployment_vars(self) -> dict:
 		"""Prepare all variables needed for deployment"""
 
-		install_apps = [row.app_name for row in self.get("install_apps") if row.app_name]
+		# Get scrubbed_name from linked Apps documents
+		install_apps = []
+		for row in self.get("install_apps"):
+			if row.app_name:
+				app_doc = frappe.get_doc("Apps", row.app_name)
+				if app_doc.scrubbed_name:
+					install_apps.append(app_doc.scrubbed_name)
+
 		install_apps_csv = ",".join(install_apps) if install_apps else "erpnext"
 
 		docker_image = self.get_docker_image()
@@ -248,6 +255,32 @@ def prepare_for_deployment(site_name: str) -> dict:
 	"""Wrapper function to call prepare_for_deployment on a Frappe Site document"""
 	doc = frappe.get_doc("Frappe Site", site_name)
 	return doc.prepare_for_deployment()
+
+
+@frappe.whitelist()
+def get_site_credentials(site_name: str) -> dict:
+	"""Get the username and password for a Frappe Site.
+
+	Args:
+		site_name: Name of the Frappe Site document
+
+	Returns:
+		dict: {username, password}
+	"""
+	try:
+		if not frappe.db.exists("Frappe Site", site_name):
+			frappe.throw(f"Frappe Site {site_name} not found")
+
+		doc = frappe.get_doc("Frappe Site", site_name)
+
+		return {
+			"username": doc.username or "Administrator",
+			"password": doc.get_password("admin_password") or "",
+		}
+
+	except Exception as e:
+		frappe.log_error(f"Error getting site credentials: {e}")
+		return {"username": "", "password": ""}
 
 
 @frappe.whitelist()

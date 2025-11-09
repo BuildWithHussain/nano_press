@@ -49,7 +49,11 @@ def run_playbook(**kwargs):
 			timeout=int(timeout) if timeout else None,
 		)
 
-		ok = bool(result.get("ok"))
+		# Check if playbook succeeded: ok tasks > 0 AND no failures
+		stats = result.get("stats", {})
+		host_stats = next(iter(stats.values())) if stats else {}
+		failures = host_stats.get("failures", 0)
+		ok = bool(result.get("ok")) and failures == 0
 
 		if server_name:
 			server_docname = server_name
