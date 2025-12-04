@@ -1,0 +1,57 @@
+<div x-show="currentStep === 4" class="fade-in">
+    <h2>Summary</h2>
+
+    <div x-show="!deploying && !deployComplete">
+        <div class="summary-card">
+            <h3>Server</h3>
+            <p><span class="label">IP:</span> <span x-text="serverDetails.ip"></span></p>
+            <p><span class="label">User:</span> <span x-text="serverDetails.rootUser"></span></p>
+            <p><span class="label">Port:</span> <span x-text="serverDetails.sshPort"></span></p>
+        </div>
+
+        <div class="summary-card">
+            <h3>Configuration</h3>
+            <p><span class="label">Version:</span> <span x-text="frappeVersion"></span></p>
+            <p><span class="label">Apps:</span> <span x-text="getSelectedAppsNames()"></span></p>
+            <template x-if="domain">
+                <p><span class="label">Domain:</span> <span x-text="domain"></span></p>
+            </template>
+        </div>
+
+        <div class="btn-group">
+            <button @click="prevStep()" class="btn btn-secondary">Back</button>
+            <button @click="startDeployment()" class="btn btn-primary">Deploy</button>
+        </div>
+    </div>
+
+    <div x-show="deploying" class="deploy-status">
+        <div class="spinner"></div>
+        <h3>Deploying</h3>
+        <p x-text="deploymentStatus"></p>
+
+        <div class="deploy-steps">
+            <div class="deploy-step" :class="deployStep >= 1 ? 'active' : ''">
+                <div class="step-indicator" :class="deployStep >= 1 ? 'complete' : ''"></div>
+                <span>Preparing server</span>
+            </div>
+            <div class="deploy-step" :class="deployStep >= 2 ? 'active' : ''">
+                <div class="step-indicator" :class="deployStep >= 2 ? 'complete' : ''"></div>
+                <span>Deploying site</span>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="deployComplete" class="deploy-status">
+        <div class="success-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <h3 style="font-size: 1.25rem;">Deployment Complete</h3>
+        <p style="margin-bottom: 1.5rem;">Your Frappe site is ready</p>
+
+        <button @click="visitSite()" class="btn btn-primary" style="max-width: 16rem; margin: 0 auto;">
+            Access Site
+        </button>
+    </div>
+</div>

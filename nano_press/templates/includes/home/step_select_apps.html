@@ -1,0 +1,53 @@
+<div x-show="currentStep === 2" class="fade-in">
+    <h2>Select Apps</h2>
+
+    <div>
+        <label>Frappe Version</label>
+        <div class="version-select">
+            <button @click="frappeVersion = 'version-15'"
+                    :class="frappeVersion === 'version-15' ? 'active' : ''"
+                    class="version-btn">
+                Version 15
+            </button>
+            <button @click="frappeVersion = 'nightly'"
+                    :class="frappeVersion === 'nightly' ? 'active' : ''"
+                    class="version-btn">
+                Nightly
+            </button>
+        </div>
+    </div>
+
+    <div>
+        <label>Apps</label>
+        <div class="app-grid">
+            <template x-for="app in availableApps" :key="app.id">
+                <button @click="toggleApp(app.id)"
+                        :class="selectedApps.includes(app.id) ? 'selected' : ''"
+                        class="app-card">
+                    <div class="app-card-title" x-text="app.name"></div>
+                    <div class="app-card-desc" x-text="app.desc"></div>
+                </button>
+            </template>
+        </div>
+    </div>
+
+    <button @click="showCustomAppDialog = true" class="add-custom-btn">
+        <span style="font-size: 1.25rem;">+</span> Add Custom App
+    </button>
+
+    <template x-if="customApps.length > 0">
+        <div class="custom-app-list">
+            <template x-for="(app, index) in customApps" :key="index">
+                <div class="custom-app-item">
+                    <span x-text="app.name"></span>
+                    <button @click="removeCustomApp(index)" class="remove-btn">Remove</button>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <div class="btn-group">
+        <button @click="prevStep()" class="btn btn-secondary">Back</button>
+        <button @click="nextStep()" class="btn btn-primary">Continue</button>
+    </div>
+</div>
