@@ -169,60 +169,51 @@
 <script>
 function summarySetup() {
     return {
-        // Local state for deployment process
         deploying: false,
         deployComplete: false,
         deploymentStatus: 'Initializing deployment...',
         deployStep: 0,
 
-        // Build progress tracking
+        
         buildingImage: false,
 
-        // Site credentials
+        
         siteUsername: '',
         sitePassword: '',
 
-        // Navigation
         prevStep() {
             this.$store.installer.currentStep = 3;
         },
         
-        // Start deployment process
         async startDeployment() {
             this.deploying = true;
             this.deployComplete = false;
             this.deployStep = 0;
 
             try {
-                // Step 1: Prepare server
                 this.deploymentStatus = 'Preparing server (installing Docker, Docker Compose, Traefik)...';
                 this.deployStep = 1;
 
-                // Get server name from store
                 const serverName = this.$store.installer.serverName;
                 if (!serverName) {
                     throw new Error('Server not found. Please verify your server first.');
                 }
 
-                // Call the prepare_server API with Traefik enabled
                 const prepareResult = await this.callPrepareServer(serverName, true);
-                console.log('Server preparation result:', prepareResult);
 
                 if (typeof toast !== 'undefined') {
                     const successMsg = prepareResult.message || 'Server prepared successfully!';
                     toast(successMsg, { type: 'success' });
                 }
 
-                // Wait a moment before moving to next step
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Step 2: Build custom image with selected apps
                 this.deploymentStatus = 'Setting up your Apps...';
                 this.deployStep = 2;
                 this.buildingImage = true;
 
                 const customImageName = await this.buildCustomImage();
-                console.log('Custom image built:', customImageName);
+
 
                 if (typeof toast !== 'undefined') {
                     toast('Custom image built successfully!', { type: 'success' });
@@ -237,7 +228,6 @@ function summarySetup() {
                 this.buildingImage = false;
 
                 const siteDoc = await this.createFrappeSiteDoc(customImageName);
-                console.log('Frappe Site created:', siteDoc);
 
                 // Fetch actual credentials (passwords are masked in regular response)
                 await this.fetchSiteCredentials(siteDoc.name);
@@ -254,7 +244,6 @@ function summarySetup() {
                 this.deployStep = 4;
 
                 const prepareDeploymentResult = await this.callPrepareForDeployment(siteDoc.name);
-                console.log('Prepare for deployment result:', prepareDeploymentResult);
 
                 if (typeof toast !== 'undefined') {
                     toast('Deployment prepared successfully!', { type: 'success' });
@@ -268,7 +257,6 @@ function summarySetup() {
                 this.deployStep = 5;
 
                 const deployResult = await this.callDeploySite(siteDoc.name);
-                console.log('Deploy site result:', deployResult);
 
                 if (typeof toast !== 'undefined') {
                     toast('Site deployed successfully!', { type: 'success' });
@@ -310,8 +298,6 @@ function summarySetup() {
                 
                 const response = await frappe_call(url, payload, "POST");
                 
-                // Debug: log the full response
-                console.log('Full response:', response);
                 
                 if (response?.message?.status === 200) {
                     return response.message;
@@ -319,17 +305,15 @@ function summarySetup() {
                     
                     throw new Error(response.message.message || 'Server preparation failed');
                 } else {
-                    // Log what we got to help debug
                     console.error('Unexpected response structure:', response);
                     throw new Error('Server preparation failed - unexpected response structure');
                 }
             } catch (error) {
                 console.error('Error preparing server:', error);
-                throw error; // Re-throw the original error
+                throw error;
             }
         },
 
-        // Create Frappe Site document
         async createFrappeSiteDoc(customImageName = null) {
             const url = '/api/resource/Frappe Site';
 
@@ -340,13 +324,11 @@ function summarySetup() {
                     install_apps: this.$store.installer.selectedApps.map(app => ({ app_name: app }))
                 };
 
-                // Add custom image if built
                 if (customImageName) {
                     payload.is_custom = 1;
                     payload.custom_image = customImageName;
                 }
 
-                // Add domain as site_url if provided
                 if (this.$store.installer.domain && this.$store.installer.domain.trim()) {
                     payload.site_url = this.$store.installer.domain.trim();
                 }
@@ -356,7 +338,6 @@ function summarySetup() {
                 if (response?.data?.name) {
                     const docName = response.data.name;
 
-                    // Submit the document
                     const submitUrl = `/api/resource/Frappe Site/${docName}`;
                     const submitPayload = {
                         docstatus: 1
@@ -378,7 +359,6 @@ function summarySetup() {
             }
         },
 
-        // Call prepare_for_deployment API
         async callPrepareForDeployment(siteName) {
             const url = `/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.prepare_for_deployment`;
 
@@ -403,7 +383,6 @@ function summarySetup() {
             }
         },
 
-        // Call deploy_site API
         async callDeploySite(siteName) {
             const url = `/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.deploy_site`;
 
@@ -428,9 +407,7 @@ function summarySetup() {
             }
         },
 
-        // Visit the deployed site
         visitSite() {
-            // Use stored site URL if available
             const siteUrl = this.$store.installer.siteUrl;
             const domain = this.$store.installer.domain?.trim();
             const ip = this.$store.installer.serverDetails?.ip;
@@ -448,14 +425,11 @@ function summarySetup() {
             }
         },
 
-        // Build custom image with selected apps
         async buildCustomImage() {
-            // Generate image name
             const timestamp = Date.now();
             const imageName = `custom-${timestamp}`;
 
             try {
-                // Call API to create and build custom image
                 const url = '/api/method/nano_press.nano_press.doctype.custom_image.custom_image.create_and_build_custom_image';
                 const payload = {
                     server_name: this.$store.installer.serverName,
@@ -470,7 +444,7 @@ function summarySetup() {
                 if (response?.message?.custom_image_name) {
                     const customImageName = response.message.custom_image_name;
 
-                    // Poll for build completion
+
                     return await this.pollForBuildCompletion(customImageName);
                 } else if (response?.message?.status === 'error') {
                     throw new Error(response.message.message || 'Failed to start build');
@@ -483,7 +457,6 @@ function summarySetup() {
             }
         },
 
-        // Poll for build completion
         async pollForBuildCompletion(customImageName) {
             return new Promise((resolve, reject) => {
                 const pollInterval = setInterval(async () => {
@@ -509,11 +482,10 @@ function summarySetup() {
                     } catch (error) {
                         console.error('Failed to poll build status:', error);
                     }
-                }, 5000); // Poll every 5 seconds
+                }, 5000);
             });
         },
 
-        // Fetch site credentials
         async fetchSiteCredentials(siteName) {
             try {
                 const url = '/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.get_site_credentials';

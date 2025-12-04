@@ -100,14 +100,12 @@ function domainSetup() {
                         return;
                     }
                     
-                    console.log('🔄 Verifying domain:', domain, 'against IP:', expectedIp);
                     await verify_domain(domain, expectedIp);
                     
                     // Mark as verified in store
                     this.$store.installer.domainVerified = true;
                     this.domainStatusMessage = `✅ ${domain} resolves to ${expectedIp}`;
                     
-                    console.log('✅ Domain verification successful');
                     
                     setTimeout(() => {
                         this.$store.installer.currentStep = 4;

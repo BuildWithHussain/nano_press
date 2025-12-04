@@ -3,7 +3,6 @@
 
 frappe.ui.form.on('Custom Image', {
 	refresh(frm) {
-		// Add Preview Apps JSON button
 		if (frm.doc.apps_config && frm.doc.apps_config.length > 0) {
 			frm.add_custom_button(
 				__('Preview Apps JSON'),
@@ -12,7 +11,6 @@ frappe.ui.form.on('Custom Image', {
 			);
 		}
 
-		// Add Build Image button if not already building
 		if (frm.doc.server_name && frm.doc.build_status !== 'Building') {
 			frm.add_custom_button(
 				__('Build Image'),
@@ -21,10 +19,8 @@ frappe.ui.form.on('Custom Image', {
 			);
 		}
 
-		// Add standalone Refresh button (outside grouped actions)
 		frm.add_custom_button(__('Refresh'), () => frm.reload_doc());
 
-		// Show current build status indicator
 		if (frm.doc.build_status) {
 			show_build_status_indicator(frm);
 		}
@@ -53,7 +49,7 @@ function build_custom_image(frm) {
 							),
 							indicator: 'green',
 						});
-						frm.reload_doc(); // Fetch updated status from backend
+						frm.reload_doc();
 					} else {
 						frappe.msgprint({
 							title: __('Build Failed'),

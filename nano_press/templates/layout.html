@@ -48,12 +48,6 @@
 
     window.query_state = state;
 
-    // Subscribe to changes (URL → state)
-    /*
-    const unsubscribe = querySync.subscribe((params) => {
-        console.log('State changed:', params);
-    });
-    */
 </script>
 <!-- Alpine specific style -->
 <style>
@@ -67,7 +61,7 @@
     {% include "templates/includes/header.html" %}
 
     <main class="relative" x-data="toaster">
-        <div class="max-w-3xl mx-auto px-6 md:px-10 ">
+        <div class="max-w-5xl mx-auto px-6 md:px-10 ">
 
             {% block body %} {% endblock %}
         </div>

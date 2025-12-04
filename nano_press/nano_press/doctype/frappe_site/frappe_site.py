@@ -44,14 +44,11 @@ class FrappeSite(Document):
 		self._ensure_password()
 
 	def after_insert(self):
-		# Set bench_name and site_url after document name is generated
 		if not self.bench_name:
 			self.bench_name = self.name
 
-		# Always save bench_name
 		self.db_set("bench_name", self.bench_name, update_modified=False)
 
-		# Generate and save site_url if not provided
 		if not self.site_url:
 			self.set_site_url()
 			self.db_set("site_url", self.site_url, update_modified=False)
@@ -144,7 +141,6 @@ class FrappeSite(Document):
 		self.db_set("status", "Deploying", update_modified=False)
 
 		try:
-			# Step 1: Prepare repository
 			result1 = run_playbook(
 				server_name=self.server_name,
 				playbook_path="prepare_repo.yml",
@@ -153,7 +149,6 @@ class FrappeSite(Document):
 			if result1.get("status") != "success":
 				raise Exception(f"prepare_repo.yml failed: {result1.get('message', 'Unknown error')}")
 
-			# Step 2: Render pwd.yml with deployment vars
 			result2 = run_playbook(
 				server_name=self.server_name, playbook_path="render_pwd.yml", extra_vars=vars
 			)

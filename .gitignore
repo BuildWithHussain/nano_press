@@ -57,6 +57,8 @@ jspm_packages/
 
 # Cursor rules files
 .cursors/*
+CLAUDE.md
+.claude/
 
 # Static files build output
 nano_press/public/css/tailwind.css

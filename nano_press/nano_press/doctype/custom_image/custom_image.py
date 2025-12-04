@@ -31,29 +31,24 @@ class CustomImage(Document):
 
 		apps_list = []
 
-		# Process each app in the configuration
 		for app_item in self.apps_config:
 			if not app_item.app_name:
 				continue
 
-			# Get the linked Apps document
 			try:
 				app_doc = frappe.get_doc("Apps", app_item.app_name)
 			except frappe.DoesNotExistError:
 				frappe.throw(f"App '{app_item.app_name}' not found in Apps doctype")
 
-			# Validate required fields
 			if not app_doc.repo_url or not app_doc.branch:
 				frappe.throw(
 					f"App '{app_item.app_name}' has incomplete configuration (missing repo_url or branch)"
 				)
 
-			# Build app configuration
 			app_config = {"url": self._build_repo_url(app_doc), "branch": app_doc.branch}
 
 			apps_list.append(app_config)
 
-		# Sort by order if specified
 		sorted_apps = self._sort_apps_by_order(apps_list)
 
 		return json.dumps(sorted_apps, indent=2)
@@ -92,7 +87,6 @@ class CustomImage(Document):
 		"""
 		repo_url = app_doc.repo_url.strip()
 
-		# Handle private repositories with PAT tokens
 		if app_doc.is_private and app_doc.pat_token:
 			# Convert https://github.com/owner/repo.git to https://PAT@github.com/owner/repo.git
 			if repo_url.startswith("https://"):
@@ -103,7 +97,6 @@ class CustomImage(Document):
 					path = url_parts[1]
 					return f"https://{app_doc.pat_token}@{domain}/{path}"
 
-			# For other formats, user should provide correct URL format
 			frappe.msgprint(
 				f"Warning: Private repo URL format might need manual adjustment for {app_doc.app_name}"
 			)
@@ -119,29 +112,23 @@ class CustomImage(Document):
 		Returns:
 			Sorted apps list by order priority
 		"""
-		# Create mapping of app_name to order
 		app_order_map = {}
 		for app_item in self.apps_config:
 			if app_item.app_name:
 				try:
 					app_doc = frappe.get_doc("Apps", app_item.app_name)
-					app_order_map[app_item.app_name] = (
-						app_doc.order or 999
-					)  # Default high order for unspecified
+					app_order_map[app_item.app_name] = app_doc.order or 999
 				except frappe.DoesNotExistError:
 					app_order_map[app_item.app_name] = 999
 
-		# Sort apps_list by the order from Apps doctype
 		app_names = [app_item.app_name for app_item in self.apps_config if app_item.app_name]
 
-		# Create list of (app_config, order) tuples
 		apps_with_order = []
 		for i, app_config in enumerate(apps_list):
 			app_name = app_names[i] if i < len(app_names) else None
 			order = app_order_map.get(app_name, 999)
 			apps_with_order.append((app_config, order))
 
-		# Sort by order and return just the app configs
 		sorted_apps_with_order = sorted(apps_with_order, key=lambda x: x[1])
 		return [app_config for app_config, _ in sorted_apps_with_order]
 
@@ -233,7 +220,6 @@ class CustomImage(Document):
 			message: Notification message
 		"""
 		try:
-			# Send real-time notification to user
 			frappe.publish_realtime(
 				event="custom_image_build_update",
 				message={
@@ -246,7 +232,6 @@ class CustomImage(Document):
 				user=frappe.session.user,
 			)
 
-			# Also send system notification
 			frappe.get_doc(
 				{
 					"doctype": "Notification Log",
@@ -299,7 +284,6 @@ class CustomImage(Document):
 				<p>Please check the build log for more details.</p>
 				"""
 
-			# Send email to document owner
 			frappe.sendmail(
 				recipients=[recipient],
 				subject=subject,
@@ -339,19 +323,6 @@ def preview_apps_json(custom_image_name: str) -> dict[str, Any]:
 
 @frappe.whitelist()
 def create_and_build_custom_image(server_name, apps, custom_apps, image_name, frappe_version):
-	"""
-	Create a Custom Image document and enqueue build process.
-
-	Args:
-		server_name: Name of the Server doctype
-		apps: List of app names (lowercase scrubbed names)
-		custom_apps: List of custom app dicts
-		image_name: Name for the custom image
-		frappe_version: Frappe version (e.g., "Version-15")
-
-	Returns:
-		dict: {status, message, custom_image_name}
-	"""
 	try:
 		if isinstance(apps, str):
 			apps = json.loads(apps)
@@ -360,7 +331,6 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 		if custom_apps is None:
 			custom_apps = []
 
-		# Validate server exists and is prepared
 		if not frappe.db.exists("Server", server_name):
 			frappe.throw(_("Server {0} not found").format(server_name))
 
@@ -368,20 +338,17 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 		if server.verify_status != "Prepared":
 			frappe.throw(_("Server must be in 'Prepared' status before building custom images"))
 
-		# Create Custom Image document
 		custom_image = frappe.get_doc(
 			{
 				"doctype": "Custom Image",
 				"server_name": server_name,
 				"image_name": image_name,
-				"frappe_version": frappe_version.lower(),  # Version-15 -> version-15
+				"frappe_version": frappe_version.lower(),
 				"build_status": "Draft",
 			}
 		)
 
-		# Add apps to apps_config child table
 		for app_name in apps:
-			# Find the Apps document by scrubbed_name (lowercase)
 			app_filters = [["scrubbed_name", "=", app_name.lower()]]
 			apps_docs = frappe.get_all("Apps", filters=app_filters, fields=["name"])
 
@@ -390,15 +357,12 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 			else:
 				frappe.log_error(f"App with scrubbed_name '{app_name}' not found in Apps doctype")
 
-		# Add custom apps (need to create Apps documents first)
 		for custom_app in custom_apps:
 			app_name = custom_app.get("name", "")
 			if not app_name:
 				continue
 
-			# Check if Apps document exists
 			if not frappe.db.exists("Apps", app_name):
-				# Create new Apps document
 				apps_doc = frappe.get_doc(
 					{
 						"doctype": "Apps",
@@ -408,7 +372,7 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 						"branch": custom_app.get("branch", "main"),
 						"personal_access_token": custom_app.get("token", ""),
 						"is_custom": 1,
-						"order": 999,  # Custom apps at the end
+						"order": 999,
 					}
 				)
 				apps_doc.insert(ignore_permissions=True)
@@ -417,7 +381,6 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 
 		custom_image.insert(ignore_permissions=True)
 
-		# Enqueue build process
 		result = custom_image.enqueue_build_custom_image()
 
 		return {
