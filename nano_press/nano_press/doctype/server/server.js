@@ -15,11 +15,13 @@ frappe.ui.form.on('Server', {
 			) {
 				// Only show Prepare when verified or already prepared
 				frm
-					.add_custom_button('Prepare Server', () => {
+					.add_custom_button(__('Prepare Server'), () => {
 						// Check if server is already prepared
 						if (frm.doc.verify_status === 'Prepared') {
 							frappe.confirm(
-								'This server is already prepared. Do you want to prepare it again?',
+								__(
+									'This server is already prepared. Do you want to prepare it again?',
+								),
 								() => {
 									// User confirmed - show options dialog
 									show_preparation_dialog(frm);
@@ -27,7 +29,7 @@ frappe.ui.form.on('Server', {
 								() => {
 									// User cancelled - do nothing
 									frappe.show_alert({
-										message: 'Preparation cancelled',
+										message: __('Preparation cancelled'),
 										indicator: 'orange',
 									});
 								},
@@ -41,7 +43,7 @@ frappe.ui.form.on('Server', {
 			} else {
 				// Not verified yet → show Verify button
 				frm
-					.add_custom_button('Verify Server', () => {
+					.add_custom_button(__('Verify Server'), () => {
 						frm.set_value('verify_status', 'Verifying');
 						frappe.call({
 							method: 'nano_press.utils.ansible_runner.ping_server',
@@ -50,13 +52,13 @@ frappe.ui.form.on('Server', {
 								if (r?.message) {
 									if (r.message.status === 'success') {
 										frappe.show_alert({
-											message: 'Server verified',
+											message: __('Server verified'),
 											indicator: 'green',
 										});
 									} else {
 										frm.set_value('verify_status', 'Failed');
 										frappe.show_alert({
-											message: 'Verification failed',
+											message: __('Verification failed'),
 											indicator: 'red',
 										});
 									}
@@ -93,7 +95,7 @@ frappe.ui.form.on('Server', {
 							document.body.removeChild(ta);
 						}
 						frappe.show_alert({
-							message: 'Public key copied',
+							message: __('Public key copied'),
 							indicator: 'green',
 						});
 					});
@@ -106,7 +108,7 @@ frappe.ui.form.on('Server', {
 // Helper function to show preparation options dialog
 function show_preparation_dialog(frm) {
 	const d = new frappe.ui.Dialog({
-		title: 'Prepare Server',
+		title: __('Prepare Server'),
 		fields: [
 			{
 				label: 'Preparation Options',
@@ -213,8 +215,8 @@ function show_preparation_dialog(frm) {
 			// Show progress message
 			frappe.show_alert({
 				message: values.include_traefik
-					? 'Preparing server with Docker and Traefik...'
-					: 'Preparing server with Docker...',
+					? __('Preparing server with Docker and Traefik...')
+					: __('Preparing server with Docker...'),
 				indicator: 'blue',
 			});
 

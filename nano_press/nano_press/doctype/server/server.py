@@ -136,13 +136,13 @@ class Server(Document):
 		# Add Traefik configuration if requested and available
 		if include_traefik:
 			if not self.traefik_domain:
-				frappe.throw("Traefik domain is required for Traefik deployment")
+				frappe.throw(frappe._("Traefik domain is required for Traefik deployment"))
 			if not self.traefik_email:
-				frappe.throw("Traefik email is required for Traefik deployment")
+				frappe.throw(frappe._("Traefik email is required for Traefik deployment"))
 			if not self.traefik_username:
-				frappe.throw("Traefik username is required for Traefik deployment")
+				frappe.throw(frappe._("Traefik username is required for Traefik deployment"))
 			if not self.traefik_password:
-				frappe.throw("Traefik password is required for Traefik deployment")
+				frappe.throw(frappe._("Traefik password is required for Traefik deployment"))
 
 			extra_vars = {
 				"traefik_domain": self.traefik_domain,

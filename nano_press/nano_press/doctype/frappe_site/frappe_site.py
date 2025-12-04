@@ -44,14 +44,14 @@ class FrappeSite(Document):
 		self._ensure_password()
 
 	def after_insert(self):
-		if not self.bench_name:
-			self.bench_name = self.name
+		# Set bench_name if not provided
+		bench_name = self.bench_name or self.name
+		self.db_set("bench_name", bench_name, update_modified=False)
 
-		self.db_set("bench_name", self.bench_name, update_modified=False)
-
+		# Set site_url if not provided
 		if not self.site_url:
-			self.set_site_url()
-			self.db_set("site_url", self.site_url, update_modified=False)
+			site_url = self._generate_site_url(bench_name)
+			self.db_set("site_url", site_url, update_modified=False)
 
 	def before_save(self):
 		if self.docstatus == 1:
@@ -124,15 +124,18 @@ class FrappeSite(Document):
 			"bench_name": self.bench_name or "",
 		}
 
-	def set_site_url(self) -> None:
-		if not self.bench_name or not self.bench_name.strip():
-			self.bench_name = self.name
+	def _generate_site_url(self, bench_name: str) -> str:
+		"""Generate a traefik.me domain for the site based on bench name and server IP.
 
-		# Only generate traefik.me domain if site_url is not already set
-		if not self.site_url or not self.site_url.strip():
-			server = frappe.get_doc("Server", self.server_name)
-			site_prefix = self.bench_name.lower()
-			self.site_url = f"{site_prefix}.{server.server_ip}.traefik.me"
+		Args:
+			bench_name: The bench name to use for the URL prefix
+
+		Returns:
+			str: Generated site URL in format: {bench_name}.{server_ip}.traefik.me
+		"""
+		server = frappe.get_doc("Server", self.server_name)
+		site_prefix = bench_name.lower()
+		return f"{site_prefix}.{server.server_ip}.traefik.me"
 
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:

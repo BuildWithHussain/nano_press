@@ -105,13 +105,13 @@ function bind_clipboard_handlers(frm) {
 						navigator.clipboard
 							.writeText(val)
 							.then(() =>
-								frappe.show_alert('Admin password copied to clipboard!'),
+								frappe.show_alert(__('Admin password copied to clipboard!')),
 							)
 							.catch((error) =>
-								frappe.show_alert(`Error copying password: ${error}`),
+								frappe.show_alert(__('Error copying password: {0}', [error])),
 							);
 					} else {
-						frappe.show_alert('Could not retrieve admin password.');
+						frappe.show_alert(__('Could not retrieve admin password.'));
 					}
 				},
 			});
@@ -122,9 +122,9 @@ function bind_clipboard_handlers(frm) {
 		.on('click.copy', () => {
 			navigator.clipboard
 				.writeText(frm.doc.username)
-				.then(() => frappe.show_alert('Username copied to clipboard!'))
+				.then(() => frappe.show_alert(__('Username copied to clipboard!')))
 				.catch((error) =>
-					frappe.show_alert(`Error copying username: ${error}`),
+					frappe.show_alert(__('Error copying username: {0}', [error])),
 				);
 		});
 }
