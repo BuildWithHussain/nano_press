@@ -156,6 +156,7 @@ class RemoteImageBuilder:
 					"log_line": log_line,
 					"timestamp": frappe.utils.now_datetime(),
 				},
+				user=frappe.session.user,
 			)
 
 			if hasattr(self, "_line_count"):
