@@ -70,7 +70,7 @@ class FrappeSite(Document):
 			frappe.throw("Please select a Server before deploying.")
 		if not frappe.db.exists("Server", linked_server):
 			frappe.throw(f"Linked Server '{linked_server}' does not exist.")
-		server = frappe.get_doc("Server", linked_server)
+		server = frappe.get_cached_doc("Server", linked_server)
 		if getattr(server, "verify_status", "Not Verified") != "Prepared":
 			frappe.throw("Server is not verified. Please verify the server first.")
 		return server
@@ -84,7 +84,7 @@ class FrappeSite(Document):
 
 	def _sync_apps_from_custom_image(self):
 		self.set("install_apps", [])
-		custom = frappe.get_doc("Custom Image", self.custom_image)
+		custom = frappe.get_cached_doc("Custom Image", self.custom_image)
 		for row in custom.apps_config:
 			self.append("install_apps", {"app_name": row.app_name})
 
@@ -92,7 +92,7 @@ class FrappeSite(Document):
 		"""Resolve the Docker image to use for deployment
 		Returns the appropriate Docker image based on is_custom flag"""
 		if self.is_custom and self.custom_image:
-			custom_img = frappe.get_doc("Custom Image", self.custom_image)
+			custom_img = frappe.get_cached_doc("Custom Image", self.custom_image)
 
 			if custom_img.image_tag:
 				return custom_img.image_tag
@@ -105,7 +105,7 @@ class FrappeSite(Document):
 		install_apps = []
 		for row in self.get("install_apps"):
 			if row.app_name:
-				app_doc = frappe.get_doc("Apps", row.app_name)
+				app_doc = frappe.get_cached_doc("Apps", row.app_name)
 				if app_doc.scrubbed_name:
 					install_apps.append(app_doc.scrubbed_name)
 
@@ -132,7 +132,7 @@ class FrappeSite(Document):
 		Returns:
 			str: Generated site URL in format: {bench_name}.{server_ip}.traefik.me
 		"""
-		server = frappe.get_doc("Server", self.server_name)
+		server = frappe.get_cached_doc("Server", self.server_name)
 		site_prefix = bench_name.lower()
 		return f"{site_prefix}.{server.server_ip}.traefik.me"
 

@@ -24,7 +24,7 @@ class RemoteImageBuilder:
 				frappe.throw("No server linked to Custom Image and no server_name provided")
 			server_name = self.custom_image_doc.server_name
 
-		server_doc = frappe.get_doc("Server", server_name)
+		server_doc = frappe.get_cached_doc("Server", server_name)
 		self._validate_server(server_doc)
 
 		apps_json_base64 = self.custom_image_doc.generate_apps_json_base64()

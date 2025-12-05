@@ -36,7 +36,7 @@ class CustomImage(Document):
 				continue
 
 			try:
-				app_doc = frappe.get_doc("Apps", app_item.app_name)
+				app_doc = frappe.get_cached_doc("Apps", app_item.app_name)
 			except frappe.DoesNotExistError:
 				frappe.throw(f"App '{app_item.app_name}' not found in Apps doctype")
 
@@ -115,7 +115,7 @@ class CustomImage(Document):
 		for app_item in self.apps_config:
 			if app_item.app_name:
 				try:
-					app_doc = frappe.get_doc("Apps", app_item.app_name)
+					app_doc = frappe.get_cached_doc("Apps", app_item.app_name)
 					app_order_map[app_item.app_name] = app_doc.order or 999
 				except frappe.DoesNotExistError:
 					app_order_map[app_item.app_name] = 999
@@ -310,7 +310,7 @@ def preview_apps_json(custom_image_name: str) -> dict[str, Any]:
 		Dict with apps_json content and base64 version
 	"""
 	try:
-		custom_image = frappe.get_doc("Custom Image", custom_image_name)
+		custom_image = frappe.get_cached_doc("Custom Image", custom_image_name)
 		apps_json = custom_image.generate_apps_json()
 		apps_json_base64 = custom_image.generate_apps_json_base64()
 
