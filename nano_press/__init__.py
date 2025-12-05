@@ -18,6 +18,7 @@ def add_user_role(doc, event=None):
 	doc.add_roles("Nano Press User")
 
 
+# TODO This is actually a vurnable api endpoint for getting admin password ! need to add some core validations
 @frappe.whitelist()
 def get_admin_password(site_name):
 	site = frappe.get_doc("Frappe Site", site_name)

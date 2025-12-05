@@ -69,7 +69,6 @@ def log_ansible_result(
 		doc.stderr_tail = result_json.get("stderr_tail") or result_json.get("data", {}).get("stderr_tail")
 
 		summary = None
-		# e.g. summary under result_json["data"]["summary"] or result_json["summary"] or raw_json["stats"]
 		if result_json.get("data", {}).get("summary"):
 			summary = result_json["data"]["summary"]
 		elif result_json.get("summary"):

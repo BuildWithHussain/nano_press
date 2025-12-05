@@ -44,7 +44,6 @@ class Server(Document):
 		if not self.traefik_email:
 			self.traefik_email = frappe.session.user
 		self.created_by = frappe.session.user
-		# Set server_name to the document name
 		if self.name:
 			self.server_name = self.name
 
@@ -72,7 +71,6 @@ class Server(Document):
 							return data
 			except Exception:
 				continue
-		# Try deriving from private keys using ssh-keygen
 		private_candidates = [
 			os.path.expanduser(p)
 			for p in [
@@ -107,9 +105,7 @@ class Server(Document):
 		Args:
 			include_traefik: Whether to also deploy Traefik (default: False, requires traefik fields to be set)
 		"""
-		# Check if server is already prepared
 		if include_traefik:
-			# When Traefik is requested, check if all three components are installed
 			if self.docker_installed and self.compose_installed and self.traefik_deployed:
 				return {
 					"status": 200,
@@ -120,7 +116,6 @@ class Server(Document):
 					"skipped": True,
 				}
 		else:
-			# When Traefik is not requested, check if Docker and Compose are installed
 			if self.docker_installed and self.compose_installed:
 				return {
 					"status": 200,
@@ -130,10 +125,8 @@ class Server(Document):
 					"skipped": True,
 				}
 
-		# Prepare extra vars for the playbook
 		extra_vars = {}
 
-		# Add Traefik configuration if requested and available
 		if include_traefik:
 			if not self.traefik_domain:
 				frappe.throw(frappe._("Traefik domain is required for Traefik deployment"))
@@ -151,7 +144,6 @@ class Server(Document):
 				"traefik_password": self.get_password("traefik_password"),
 			}
 
-		# Run the unified preparation playbook
 		result = run_playbook(
 			host=self.server_ip,
 			playbook_path="prepare_server.yml",
@@ -165,7 +157,6 @@ class Server(Document):
 				data.get("message") or data.get("stderr_tail") or data.get("stderr") or "Unknown error"
 			)
 
-			# Log the full response for debugging
 			log_ref = f" (Check log: {result.get('log_id')})" if result.get("log_id") else ""
 			frappe.log_error(
 				title="Server Preparation Failed",
@@ -179,12 +170,10 @@ class Server(Document):
 		if data.get("stderr"):
 			frappe.log_error(f"Server preparation stderr: {data.get('stderr')}", "Server Preparation Warning")
 
-		# Extract versions from Ansible playbook results
 		docker_version = "Unknown"
 		compose_version = "Unknown"
 		traefik_version = None
 
-		# Parse through plays and tasks to find registered variables
 		raw_json = data.get("raw_json", {})
 		plays = raw_json.get("plays", [])
 
@@ -195,7 +184,6 @@ class Server(Document):
 				task_name = task_info.get("name", "")
 				hosts_data = task.get("hosts", {})
 
-				# Get the first host's data (assuming single host execution)
 				for _host, host_result in hosts_data.items():
 					if task_name == "Get Docker version":
 						docker_version = host_result.get("stdout", "").strip() or "Unknown"
@@ -204,18 +192,18 @@ class Server(Document):
 					elif task_name == "Get Traefik version":
 						traefik_version = host_result.get("stdout", "").strip() or "v2.11"
 
-		# Update server fields for Docker
-		self.db_set("docker_installed", True)
-		self.db_set("docker_version", docker_version)
-		self.db_set("compose_installed", True)
-		self.db_set("compose_version", compose_version)
-		self.db_set("verify_status", "Prepared")
-		self.db_set("last_prepared_at", frappe.utils.now_datetime())
+		self.docker_installed = True
+		self.docker_version = docker_version
+		self.compose_installed = True
+		self.compose_version = compose_version
+		self.verify_status = "Prepared"
+		self.last_prepared_at = frappe.utils.now_datetime()
 
-		# Update Traefik fields if it was deployed
 		if include_traefik and traefik_version:
-			self.db_set("traefik_deployed", True)
-			self.db_set("traefik_version", traefik_version)
+			self.traefik_deployed = True
+			self.traefik_version = traefik_version
+
+		self.save()
 
 		response = {
 			"status": 200,

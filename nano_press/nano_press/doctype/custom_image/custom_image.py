@@ -90,7 +90,6 @@ class CustomImage(Document):
 		if app_doc.is_private and app_doc.pat_token:
 			# Convert https://github.com/owner/repo.git to https://PAT@github.com/owner/repo.git
 			if repo_url.startswith("https://"):
-				# Extract domain and path
 				url_parts = repo_url.replace("https://", "").split("/", 1)
 				if len(url_parts) == 2:
 					domain = url_parts[0]
@@ -170,7 +169,8 @@ class CustomImage(Document):
 
 	def build_custom_image(self):
 		try:
-			self.db_set("build_status", "Building")
+			self.build_status = "Building"
+			self.save()
 			frappe.db.commit()
 
 			vars = self.get_deployment_vars()
@@ -179,23 +179,26 @@ class CustomImage(Document):
 			)
 
 			if result.get("status") != "success":
-				self.db_set("build_status", "Failed")
+				self.build_status = "Failed"
+				self.save()
 				self._send_build_notification("error", result.get("message", "Unknown error"))
 				self._send_email_notification("error")
 				frappe.log_error(result.get("message"), _("Custom Image Build Failed"))
 				raise Exception(f"Build failed: {result.get('message', 'Unknown error')}")
 
-			self.db_set("build_status", "Built")
-			self._send_build_notification("success", "Image built successfully")
-			self._send_email_notification("success")
+			self.build_status = "Built"
 			self.built_at = frappe.utils.now_datetime()
 			self.build_duration = (self.built_at - self.creation).total_seconds()
 			self.save()
+			self._send_build_notification("success", "Image built successfully")
+			self._send_email_notification("success")
 			frappe.db.commit()
 
 		except Exception as e:
 			frappe.log_error(str(e), "Image Build Failed")
-			self.db_set("build_status", "Failed")
+			self.reload()
+			self.build_status = "Failed"
+			self.save()
 			frappe.db.commit()
 			raise
 

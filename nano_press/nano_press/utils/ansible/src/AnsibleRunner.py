@@ -34,11 +34,6 @@ class AnsibleError(Exception):
 
 
 class AnsibleOps:
-	"""
-	Production-grade class for executing Ansible playbooks and ad-hoc commands.
-	Returns machine-parseable JSON every time.
-	"""
-
 	def __init__(
 		self,
 		*,
@@ -61,20 +56,14 @@ class AnsibleOps:
 		self.base_env.setdefault("ANSIBLE_LOAD_CALLBACK_PLUGINS", "True")
 		self.default_timeout = default_timeout
 
-	# ---------------------
-	# Core methods
-	# ---------------------
-
 	def run_playbook(
 		self,
 		*,
-		# EITHER provide host/user/port OR provide server_ip/server_name to resolve from Doctype
 		host: str | None = None,
 		user: str | None = None,
 		port: int | None = None,
 		server_ip: str | None = None,
 		server_name: str | None = None,
-		# Playbook can be absolute path or short name like 'prepare.yml'
 		playbook_path: str,
 		private_key: str | None = None,
 		extra_vars: Mapping[str, Any] | None = None,
@@ -82,9 +71,6 @@ class AnsibleOps:
 		become_user: str | None = None,
 		timeout: int | None = None,
 	) -> dict[str, Any]:
-		"""Run an Ansible playbook and return a structured JSON response."""
-
-		# Resolve connection from Server doctype if host not explicitly given
 		if not host:
 			host, resolved_user, resolved_port, resolved_key = self._get_server_conn(
 				server_ip=server_ip, server_name=server_name
@@ -93,11 +79,9 @@ class AnsibleOps:
 			port = port or resolved_port
 			private_key = private_key or resolved_key
 
-		# Safety checks
 		if not host or not user or port is None:
 			frappe.throw("Insufficient connection details: host/user/port are required.")
 
-		# Resolve playbook path if short name was passed
 		playbook_abs = self._resolve_playbook_path(playbook_path)
 
 		with self._temp_inventory(host, user, int(port)) as inv, self._temp_vars(extra_vars) as vars_file:
@@ -137,7 +121,6 @@ class AnsibleOps:
 	def run_ping(
 		self,
 		*,
-		# EITHER provide host/user/port OR provide server_ip/server_name to resolve from Doctype
 		host: str | None = None,
 		user: str | None = None,
 		port: int | None = None,
@@ -274,7 +257,6 @@ class AnsibleOps:
 			frappe.throw("Pass either server_ip or server_name to resolve connection details.")
 
 		filters = {"server_ip": server_ip} if server_ip else {"server_name": server_name}
-		# Try common fieldnames; adjust if your doctype differs.
 		row = frappe.db.get_value(
 			"Server",
 			filters,
@@ -288,7 +270,6 @@ class AnsibleOps:
 		user = row.get("ssh_user") or "frappe"
 		port = int(row.get("ssh_port") or 22)
 
-		# Prefer explicit ssh_private_key_path, fallback to private_key_path if present
 		private_key = None
 		if prefer_field_private_key:
 			private_key = row.get("ssh_private_key_path") or row.get("private_key_path")
@@ -300,11 +281,9 @@ class AnsibleOps:
 		Accepts either an absolute path or a short name like 'prepare' or 'prepare.yml'.
 		Returns an absolute, existing path under the app's playbooks base if needed.
 		"""
-		# Absolute path: use as-is
 		if os.path.isabs(playbook) and os.path.isfile(playbook):
 			return playbook
 
-		# Append .yml if missing an extension
 		candidate = playbook if os.path.splitext(playbook)[1] else f"{playbook}.yml"
 
 		base = self._playbooks_base()
@@ -312,5 +291,4 @@ class AnsibleOps:
 		if os.path.isfile(full):
 			return full
 
-		# Last-chance helpful error
 		raise FileNotFoundError(f"Playbook not found: {playbook} (looked in {base})")

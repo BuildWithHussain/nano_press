@@ -44,14 +44,14 @@ class FrappeSite(Document):
 		self._ensure_password()
 
 	def after_insert(self):
-		# Set bench_name if not provided
 		bench_name = self.bench_name or self.name
-		self.db_set("bench_name", bench_name, update_modified=False)
+		self.bench_name = bench_name
 
-		# Set site_url if not provided
 		if not self.site_url:
-			site_url = self._generate_site_url(bench_name)
-			self.db_set("site_url", site_url, update_modified=False)
+			self.site_url = self._generate_site_url(bench_name)
+
+		self.flags.ignore_validate = True
+		self.save(ignore_permissions=True)
 
 	def before_save(self):
 		if self.docstatus == 1:
@@ -102,7 +102,6 @@ class FrappeSite(Document):
 	def get_deployment_vars(self) -> dict:
 		"""Prepare all variables needed for deployment"""
 
-		# Get scrubbed_name from linked Apps documents
 		install_apps = []
 		for row in self.get("install_apps"):
 			if row.app_name:
@@ -141,7 +140,8 @@ class FrappeSite(Document):
 	def prepare_for_deployment(self) -> dict:
 		self.validate_server()
 		vars = self.get_deployment_vars()
-		self.db_set("status", "Deploying", update_modified=False)
+		self.status = "Deploying"
+		self.save()
 
 		try:
 			result1 = run_playbook(
@@ -158,13 +158,16 @@ class FrappeSite(Document):
 			if result2.get("status") != "success":
 				raise Exception(f"render_pwd.yml failed: {result2.get('message', 'Unknown error')}")
 
-			self.db_set("status", "Ready To Deploy", update_modified=False)
-			self.db_set("last_deployed_at", frappe.utils.now_datetime(), update_modified=False)
+			self.status = "Ready To Deploy"
+			self.last_deployed_at = frappe.utils.now_datetime()
+			self.save()
 			return {"status": 200, "message": "Deployment prepared successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "prepare_for_deployment failed")
-			self.db_set("status", "Failed", update_modified=False)
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
@@ -179,12 +182,15 @@ class FrappeSite(Document):
 			if result.get("status") != "success":
 				raise Exception(f"compose_up.yml failed: {result.get('message', 'Unknown error')}")
 
-			self.db_set("status", "Deployed", update_modified=False)
+			self.status = "Deployed"
+			self.save()
 			return {"status": 200, "message": "Deployment completed successfully"}
 
 		except Exception as exc:
-			frappe.log_error(frappe.get_traceback(), "prepare_for_deployment failed")
-			self.db_set("status", "Failed", update_modified=False)
+			frappe.log_error(frappe.get_traceback(), "deploy_site failed")
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
@@ -197,14 +203,17 @@ class FrappeSite(Document):
 				extra_vars={"bench_name": self.bench_name},
 			)
 			if result.get("status") != "success":
-				raise Exception(f"compose_up.yml failed: {result.get('message', 'Unknown error')}")
-			self.db_set("status", "Stopped", update_modified=False)
+				raise Exception(f"stop_all_containers.yml failed: {result.get('message', 'Unknown error')}")
 
+			self.status = "Stopped"
+			self.save()
 			return {"status": 200, "message": "All containers stopped successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "stop_all_containers failed")
-			self.db_set("status", "Failed", update_modified=False)
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
@@ -218,13 +227,16 @@ class FrappeSite(Document):
 			)
 			if result.get("status") != "success":
 				raise Exception(f"destroy_site.yml failed: {result.get('message', 'Unknown error')}")
-			self.db_set("status", "Stopped", update_modified=False)
 
+			self.status = "Stopped"
+			self.save()
 			return {"status": 200, "message": "Site Destroyed successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "destroy_site.yml failed")
-			self.db_set("status", "Failed", update_modified=False)
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
@@ -238,13 +250,16 @@ class FrappeSite(Document):
 			)
 			if result.get("status") != "success":
 				raise Exception(f"restart_site.yml failed: {result.get('message', 'Unknown error')}")
-			self.db_set("status", "Stopped", update_modified=False)
 
+			self.status = "Deployed"
+			self.save()
 			return {"status": 200, "message": "Site Restarted successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "restart_site.yml failed")
-			self.db_set("status", "Failed", update_modified=False)
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 
