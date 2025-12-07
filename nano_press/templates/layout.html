@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{_("Nano Press")}}</title>
 
-    <!-- meta -->
-	<meta name="author" content="Nano Press">
+    <meta name="author" content="Nano Press">
 	{% if metatags %}
 		{% for name, content in metatags.items() %}
 			<meta name="{{ name }}" content="{{ content }}">
@@ -20,7 +19,6 @@
     <link rel="stylesheet" href="/assets/nano_press/css/tailwind.css">
 
 
-    <!-- https://alpinejs.dev/start-here -->
     <script src="/assets/nano_press/js/vendor/alpinejs/plugins/persist.js"></script>
     <script src="/assets/nano_press/js/vendor/alpinejs/plugins/collapse.js"></script>
 
@@ -38,41 +36,38 @@
 
 <script src="/assets/nano_press/js/utils/synced-query-params.js"></script>
 <script >
-    // Initialize with options
     const querySync = new QuerySync({
         defaultValues: { page: 1 }
     });
 
-    // Access the proxy state object
     const { state } = querySync;
 
     window.query_state = state;
 
 </script>
-<!-- Alpine specific style -->
 <style>
-    /* Alpine specific style */
     [x-cloak] {
         display: none !important;
     }
 </style>
 
 <body x-data dir="auto">
-    {% include "templates/includes/header.html" %}
+    {% include "templates/includes/sidebar.html" %}
 
-    <main class="relative" x-data="toaster">
-        <div class="max-w-5xl mx-auto px-6 md:px-10 ">
+                <div class="overflow-y-auto" x-data="toaster">
+                    <div class="max-w-5xl mx-auto px-6 md:px-10 py-8">
+                        {% block body %} {% endblock %}
+                    </div>
+                    <div>
+                        {% block uncontained_body %}{% endblock %}
+                    </div>
+                    {% include "templates/includes/toast-teleport.html" %}
 
-            {% block body %} {% endblock %}
+                    {% include "templates/includes/footer.html" %}
+                </div>
+            </div>
         </div>
-        <div>
-            {% block uncontained_body %}{% endblock %}
-
-        </div>
-        {% include "templates/includes/toast-teleport.html" %}
-    </main>
-
-    {% include "templates/includes/footer.html" %}
+    </div>
 </body>
 {% block script %} {% endblock %}
 </html>

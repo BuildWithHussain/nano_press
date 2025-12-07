@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block page_title %}Nano Press{% endblock %}</title>
+
+    <meta name="author" content="Nano Press">
+	{% if metatags %}
+		{% for name, content in metatags.items() %}
+			<meta name="{{ name }}" content="{{ content }}">
+		{% endfor %}
+	{% else %}
+		<meta name="description" content="Nano Press - The quick way to deploy Frappe Apps">
+	{% endif %}
+
+    <link rel="stylesheet" href="/assets/nano_press/css/tailwind.css">
+
+    <script defer src="/assets/nano_press/js/vendor/alpinejs/core.js"></script>
+    {% block head %} {% endblock %}
+</head>
+
+<style>
+    [x-cloak] {
+        display: none !important;
+    }
+</style>
+
+<body x-data dir="auto">
+    <main>
+        {% block body %} {% endblock %}
+    </main>
+
+    {% include "templates/includes/footer.html" %}
+</body>
+{% block script %} {% endblock %}
+</html>
