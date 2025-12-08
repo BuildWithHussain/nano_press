@@ -22,6 +22,16 @@ add_to_apps_screen = [
 ]
 
 
+doc_events = {"User": {"after_insert": "nano_press.add_user_role"}}
+
+fixtures = [
+	{"dt": "Role", "filters": {"name": ("in", ("Nano Press User",))}},
+	{
+		"dt": "Custom DocPerm",
+		"filters": {"parent": ("in", ("Frappe Site", "Server", "Apps", "Custom Image", "Ansible Log"))},
+	},
+]
+
 # Includes in <head>
 # ------------------
 
@@ -78,10 +88,7 @@ add_to_apps_screen = [
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "nano_press.utils.jinja_methods",
-# 	"filters": "nano_press.utils.jinja_filters"
-# }
+# jinja = {"methods": "nano_press.api.get_public_ssh_key"}
 
 # Installation
 # ------------

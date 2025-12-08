@@ -1,0 +1,285 @@
+<div x-show="$store.installer.currentStep === 1" class="animate-fade-in" x-data="serverSetup()">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-gray-900">Server Details</h2>
+        <button @click="clearInstallerData()"
+            class="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 hover:underline transition-colors duration-200"
+            title="Clear all saved installer data">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Clear Saved Data</span>
+        </button>
+    </div>
+
+    <div class="mb-5">
+        <label class="block text-sm font-medium mb-2 text-gray-900">
+            IP Address <span class="text-red-500">*</span>
+        </label>
+
+        <input type="text" x-model="serverDetails.ip" placeholder="192.168.1.100" @input="
+            error = '';
+            $store.installer.isVerified = false;
+            const regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+            isValidIP = regex.test(serverDetails.ip);
+            if (serverDetails.ip && !isValidIP) {
+                error = 'Invalid IP address format';
+            }
+        " :class="[
+            'w-full px-3 py-2.5 bg-white rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans border focus:ring-1',
+            error ? 'border-red-500 focus:border-red-600 focus:ring-red-600' :
+                    (serverDetails.ip && isVerified ? 'border-green-500 focus:border-green-600 focus:ring-green-600' : 'border-gray-300 focus:border-gray-900')
+        ]">
+
+        <template x-if="error">
+            <p class="text-red-500 text-xs mt-1" x-text="error"></p>
+        </template>
+    </div>
+
+
+    <div class="mb-5" x-data="{
+    copyText: `{{ public_key }}`,
+    copyNotification: false,
+    copyToClipboard() {
+        navigator.clipboard.writeText(this.copyText);
+        this.copyNotification = true;
+        let that = this;
+        setTimeout(() => {
+            that.copyNotification = false;
+        }, 3000);
+    }
+}">
+        <label class="block text-sm font-medium mb-2 text-gray-900">SSH Public Key</label>
+        <div class="relative">
+            <textarea readonly rows="3"
+                class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-mono resize-none pr-16"
+                x-text="copyText"></textarea>
+
+            <button @click="copyToClipboard()"
+                class="absolute right-2 top-2 flex items-center justify-center px-3 py-1.5 text-xs bg-white border rounded-md cursor-pointer border-neutral-200/60 hover:bg-neutral-100 active:bg-white focus:bg-white focus:outline-none text-neutral-500 hover:text-neutral-600 group">
+                <span x-show="!copyNotification">Copy</span>
+                <svg x-show="!copyNotification" class="w-4 h-4 ml-1.5 stroke-current" xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+                </svg>
+
+                <span x-show="copyNotification" class="tracking-tight text-green-500" x-cloak>Copied!</span>
+                <svg x-show="copyNotification" class="w-4 h-4 ml-1.5 text-green-500 stroke-current"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" x-cloak>
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75" />
+                </svg>
+            </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-1.5">
+            Copy this key and add it to your server.
+            <a href="https://askubuntu.com/questions/46424/how-do-i-add-ssh-keys-to-authorized-keys-file"
+                target="_blank" class="text-gray-900 underline">Learn how</a>
+        </p>
+    </div>
+
+
+    <div class="mt-4 border border-gray-300 rounded-md overflow-hidden">
+        <div class="px-4 py-3 bg-gray-50 cursor-pointer flex items-center justify-between text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors duration-200"
+            @click="showAdvanced = !showAdvanced">
+            <span>Advanced Settings</span>
+            <svg class="transition-transform duration-300" :class="showAdvanced ? 'rotate-180' : ''" width="16"
+                height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+            </svg>
+        </div>
+        <div x-show="showAdvanced" x-transition class="p-4 bg-white">
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2 text-gray-900">Root User</label>
+                <input type="text" x-model="serverDetails.rootUser" placeholder="root"
+                    @input="$store.installer.isVerified = false"
+                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2 text-gray-900">SSH Port</label>
+                <input type="text" x-model="serverDetails.sshPort" placeholder="22"
+                    @input="$store.installer.isVerified = false"
+                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+            </div>
+        </div>
+    </div>
+
+    <button @click="nextStep()"
+        class="w-full md:w-auto inline-flex justify-center items-center gap-2 rounded-md bg-gray-900 text-white px-4 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors duration-200 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="isLoading">
+        <svg x-show="isLoading" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+        </svg>
+        <span x-text="isLoading ? 'Verifying...' : (isVerified ? 'Continue' : 'Verify & Continue')"></span>
+    </button>
+
+
+</div>
+
+<script>
+    function serverSetup() {
+        return {
+            // Use getters to access store directly for reactive updates
+            get serverDetails() {
+                return this.$store.installer.serverDetails;
+            },
+            get isVerified() {
+                return this.$store.installer.isVerified;
+            },
+            copied: false,
+            isLoading: false,
+            error: '',
+            isValidIP: false,
+
+            validateIP(ip) {
+                // Basic IPv4 validation regex
+                const regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+                return regex.test(ip);
+            },
+
+            clearInstallerData() {
+                if (confirm('Are you sure you want to clear all saved installer data? This will reset everything.')) {
+                    // Clear all nano_press localStorage keys
+                    const keysToRemove = [
+                        'nano_press_current_step',
+                        'nano_press_server_details',
+                        'nano_press_is_verified',
+                        'nano_press_server_name',
+                        'nano_press_selected_apps',
+                        'nano_press_custom_apps',
+                        'nano_press_frappe_version',
+                        'nano_press_domain',
+                        'nano_press_domain_verified',
+                        'nano_press_site_name',
+                        'nano_press_site_url'
+                    ];
+
+                    keysToRemove.forEach(key => {
+                        localStorage.removeItem(key);
+                    });
+
+                    // Show success message
+                    if (typeof toast !== 'undefined') {
+                        toast('All saved data cleared successfully', { type: 'success' });
+                    }
+
+                    // Reload page to reset state
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+            },
+            async nextStep() {
+                if (this.isVerified) {
+                    // Already verified, just move to next step
+                    this.$store.installer.currentStep = 2;
+                    return;
+                }
+
+                this.error = '';
+                this.isLoading = true;
+
+                // Validate IP format first
+                if (!this.validateIP(this.serverDetails.ip)) {
+                    this.error = 'Invalid IP address. Please check and try again.';
+                    this.isLoading = false;
+                    return;
+                }
+
+                try {
+                    // Call the combined function: ping + create server
+                    const serverData = await verify_and_create_server(
+                        this.serverDetails.ip,
+                        this.serverDetails.rootUser,
+                        this.serverDetails.sshPort
+                    );
+
+                    // If server creation succeeded
+                    const message = "Server verified and created successfully";
+                    if (typeof toast !== 'undefined') {
+                        toast(message, { type: "success" });
+                    }
+
+                    // Update store (serverDetails is already updated via binding, just update verification status)
+                    this.$store.installer.isVerified = true;
+                    this.$store.installer.serverName = serverData.name; // Store the server document name
+                    this.$store.installer.currentStep = 2;
+
+                } catch (err) {
+                    const message = err.message || "Unable to verify or create server";
+                    this.error = message;
+
+                    if (typeof toast !== 'undefined') {
+                        toast(message, { type: "danger" });
+                    }
+                } finally {
+                    this.isLoading = false;
+                }
+            }
+        }
+    }
+    async function create_server_doc(server_ip, ssh_user, ssh_port) {
+        const url = '/api/resource/Server';
+        try {
+            const payload = {
+                server_ip,
+                ssh_user,
+                ssh_port,
+                traefik_email: '{{ user_email }}'
+                // server_name will be auto-generated as BENCH-00001, BENCH-00002, etc.
+            };
+
+            // Create document using frappe_call()
+            const response = await frappe_call(url, payload, "POST");
+
+            // Check if the response looks good
+            if (response?.data?.name) {
+                const message = ("Server record created successfully");
+                toast(message, { type: "success" });
+                return response.data;
+            } else {
+                throw new Error("Failed to create server record.");
+            }
+        } catch (err) {
+            const message = err.message || ("Error creating server record");
+            toast(message, { type: "danger" });
+            throw err; // rethrow if you want the caller to handle it
+        }
+    }
+    async function ping_server(server_ip, ssh_user = "root", ssh_port = 22) {
+        const url = '/api/v2/method/nano_press.api.ping_server';
+        try {
+            const payload = {
+                host: server_ip,
+                user: ssh_user,
+                port: ssh_port
+            };
+
+            const response = await frappe_call(url, payload, "POST");
+
+            if (!response?.data?.ok) {
+                throw new Error(response?.data?.message || "Server is unreachable.");
+            }
+
+            const message = ("Server connection verified successfully");
+            toast(message, { type: "success" });
+
+            return response.data;
+        } catch (err) {
+            const message = err.message || ("Failed to verify server connection");
+            toast(message, { type: "danger" });
+            throw err;
+        }
+    }
+    async function verify_and_create_server(server_ip, ssh_user = "root", ssh_port = 22) {
+        await ping_server(server_ip, ssh_user, ssh_port);
+        return await create_server_doc(server_ip, ssh_user, ssh_port);
+    }
+
+</script>

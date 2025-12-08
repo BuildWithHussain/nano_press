@@ -29,7 +29,6 @@ def run_playbook(**kwargs):
 		host = kwargs.get("host") or kwargs.get("server_ip")
 		server_name = kwargs.get("server_name")
 		playbook_arg = kwargs.get("playbook_path")
-		# require playbook_path and at least one of host/server_name
 		if not playbook_arg or not (host or server_name):
 			frappe.throw("Missing required fields: playbook_path and one of host or server_name")
 
@@ -40,16 +39,19 @@ def run_playbook(**kwargs):
 
 		runner = AnsibleOps()
 		result = runner.run_playbook(
-			server_ip=host,  # either or both are fine; class resolves
+			server_ip=host,
 			server_name=server_name,
-			playbook_path=playbook_arg,  # supports short names via _resolve_playbook_path
+			playbook_path=playbook_arg,
 			extra_vars=extra_vars,
 			become=become,
 			become_user=become_user,
 			timeout=int(timeout) if timeout else None,
 		)
 
-		ok = bool(result.get("ok"))
+		stats = result.get("stats", {})
+		host_stats = next(iter(stats.values())) if stats else {}
+		failures = host_stats.get("failures", 0)
+		ok = bool(result.get("ok")) and failures == 0
 
 		if server_name:
 			server_docname = server_name

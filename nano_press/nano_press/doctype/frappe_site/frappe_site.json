@@ -1,219 +1,245 @@
 {
- "actions": [],
- "autoname": "field:bench_name",
- "creation": "2025-08-15 15:16:06.808974",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "site_configuration_section",
-  "server_name",
-  "bench_name",
-  "site_url",
-  "status",
-  "is_custom",
-  "ssl_enabled",
-  "column_break_dkti",
-  "docker_image",
-  "custom_image",
-  "username",
-  "admin_password",
-  "section_break_hzks",
-  "install_apps",
-  "database_configuration_section",
-  "db_username",
-  "column_break_qyhi",
-  "db_password",
-  "section_break_fsva",
-  "last_deployed_at",
-  "amended_from"
- ],
- "fields": [
-  {
-   "fieldname": "server_name",
-   "fieldtype": "Link",
-   "label": "Server",
-   "link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Prepared\"]]",
-   "options": "Server",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_dkti",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "erpnext",
-   "fieldname": "install_apps",
-   "fieldtype": "Table",
-   "label": "Install Apps",
-   "options": "App Install Item"
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "Not Deployed",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Status",
-   "no_copy": 1,
-   "options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "last_deployed_at",
-   "fieldtype": "Datetime",
-   "label": "Last Deployed At",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_fsva",
-   "fieldtype": "Section Break"
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "1",
-   "fieldname": "ssl_enabled",
-   "fieldtype": "Check",
-   "label": "Enable SSL"
-  },
-  {
-   "allow_on_submit": 1,
-   "description": "Leave it blank to generate random password",
-   "fieldname": "admin_password",
-   "fieldtype": "Password",
-   "in_preview": 1,
-   "label": "Admin Password",
-   "no_copy": 1,
-   "not_nullable": 1,
-   "placeholder": "s0QlAPg8udcOvij",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.is_custom=='1'",
-   "fieldname": "section_break_hzks",
-   "fieldtype": "Section Break",
-   "label": "Apps to Install"
-  },
-  {
-   "depends_on": "eval:doc.is_custom=='1'",
-   "fieldname": "custom_image",
-   "fieldtype": "Link",
-   "label": "Custom Image",
-   "link_filters": "[[\"Custom Image\",\"build_status\",\"=\",\"Built\"]]",
-   "mandatory_depends_on": "eval:doc.is_custom=='1'",
-   "options": "Custom Image"
-  },
-  {
-   "default": "0",
-   "fieldname": "is_custom",
-   "fieldtype": "Check",
-   "label": "Is Custom"
-  },
-  {
-   "default": "frappe/erpnext:v15.76.0",
-   "depends_on": "eval:doc.is_custom=='0'",
-   "description": "Default docker image is used frappe/erpnext:v15.76.0",
-   "fieldname": "docker_image",
-   "fieldtype": "Data",
-   "label": "Docker Image",
-   "mandatory_depends_on": "eval:doc.is_custom=='0'"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Frappe Site",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "site_configuration_section",
-   "fieldtype": "Section Break",
-   "label": "Site Configuration"
-  },
-  {
-   "default": "Administrator",
-   "fieldname": "username",
-   "fieldtype": "Data",
-   "label": "Username"
-  },
-  {
-   "fieldname": "database_configuration_section",
-   "fieldtype": "Section Break",
-   "label": "Database Configuration"
-  },
-  {
-   "default": "root",
-   "fieldname": "db_username",
-   "fieldtype": "Data",
-   "label": "DB Username"
-  },
-  {
-   "fieldname": "column_break_qyhi",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "db_password",
-   "fieldtype": "Password",
-   "label": "DB Password",
-   "read_only": 1
-  },
-  {
-   "fieldname": "site_url",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Site Url",
-   "no_copy": 1,
-   "placeholder": "site.example.com",
-   "read_only_depends_on": "eval:doc.is_development==1",
-   "unique": 1
-  },
-  {
-   "fieldname": "bench_name",
-   "fieldtype": "Data",
-   "label": "Bench Name",
-   "no_copy": 1,
-   "placeholder": "ERPNEXTv1",
-   "reqd": 1,
-   "unique": 1
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "is_submittable": 1,
- "links": [
-  {
-   "link_doctype": "Ansible Log",
-   "link_fieldname": "bench_name"
-  }
- ],
- "modified": "2025-10-18 15:10:19.298805",
- "modified_by": "Administrator",
- "module": "Nano Press",
- "name": "Frappe Site",
- "naming_rule": "By fieldname",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  }
- ],
- "row_format": "Dynamic",
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": [],
- "title_field": "bench_name",
- "track_changes": 1,
- "track_seen": 1
+	"actions": [],
+	"autoname": "format:BENCH-{####}",
+	"creation": "2025-08-15 15:16:06.808974",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"site_configuration_section",
+		"server_name",
+		"bench_name",
+		"site_url",
+		"status",
+		"is_custom",
+		"ssl_enabled",
+		"column_break_dkti",
+		"docker_image",
+		"custom_image",
+		"username",
+		"admin_password",
+		"section_break_hzks",
+		"install_apps",
+		"database_configuration_section",
+		"db_username",
+		"column_break_qyhi",
+		"db_password",
+		"section_break_fsva",
+		"last_deployed_at",
+		"amended_from",
+		"column_break_jrub",
+		"created_by"
+	],
+	"fields": [
+		{
+			"fieldname": "server_name",
+			"fieldtype": "Link",
+			"label": "Server",
+			"link_filters": "[[\"Server\",\"verify_status\",\"=\",\"Prepared\"]]",
+			"options": "Server",
+			"reqd": 1
+		},
+		{
+			"fieldname": "column_break_dkti",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "erpnext",
+			"fieldname": "install_apps",
+			"fieldtype": "Table",
+			"label": "Install Apps",
+			"options": "App Install Item"
+		},
+		{
+			"allow_on_submit": 1,
+			"default": "Not Deployed",
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Status",
+			"no_copy": 1,
+			"options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped",
+			"read_only": 1
+		},
+		{
+			"allow_on_submit": 1,
+			"fieldname": "last_deployed_at",
+			"fieldtype": "Datetime",
+			"label": "Last Deployed At",
+			"no_copy": 1,
+			"read_only": 1
+		},
+		{
+			"fieldname": "section_break_fsva",
+			"fieldtype": "Section Break"
+		},
+		{
+			"allow_on_submit": 1,
+			"default": "1",
+			"fieldname": "ssl_enabled",
+			"fieldtype": "Check",
+			"label": "Enable SSL"
+		},
+		{
+			"allow_on_submit": 1,
+			"description": "Leave it blank to generate random password",
+			"fieldname": "admin_password",
+			"fieldtype": "Password",
+			"in_preview": 1,
+			"label": "Admin Password",
+			"no_copy": 1,
+			"not_nullable": 1,
+			"placeholder": "s0QlAPg8udcOvij",
+			"read_only": 1
+		},
+		{
+			"depends_on": "eval:doc.is_custom=='1'",
+			"fieldname": "section_break_hzks",
+			"fieldtype": "Section Break",
+			"label": "Apps to Install"
+		},
+		{
+			"depends_on": "eval:doc.is_custom=='1'",
+			"fieldname": "custom_image",
+			"fieldtype": "Link",
+			"label": "Custom Image",
+			"link_filters": "[[\"Custom Image\",\"build_status\",\"=\",\"Built\"]]",
+			"mandatory_depends_on": "eval:doc.is_custom=='1'",
+			"options": "Custom Image"
+		},
+		{
+			"default": "0",
+			"fieldname": "is_custom",
+			"fieldtype": "Check",
+			"label": "Is Custom"
+		},
+		{
+			"default": "frappe/erpnext:v15.76.0",
+			"depends_on": "eval:doc.is_custom=='0'",
+			"description": "Default docker image is used frappe/erpnext:v15.76.0",
+			"fieldname": "docker_image",
+			"fieldtype": "Data",
+			"label": "Docker Image",
+			"mandatory_depends_on": "eval:doc.is_custom=='0'"
+		},
+		{
+			"fieldname": "amended_from",
+			"fieldtype": "Link",
+			"label": "Amended From",
+			"no_copy": 1,
+			"options": "Frappe Site",
+			"print_hide": 1,
+			"read_only": 1,
+			"search_index": 1
+		},
+		{
+			"fieldname": "site_configuration_section",
+			"fieldtype": "Section Break",
+			"label": "Site Configuration"
+		},
+		{
+			"default": "Administrator",
+			"fieldname": "username",
+			"fieldtype": "Data",
+			"label": "Username"
+		},
+		{
+			"fieldname": "database_configuration_section",
+			"fieldtype": "Section Break",
+			"label": "Database Configuration"
+		},
+		{
+			"default": "root",
+			"fieldname": "db_username",
+			"fieldtype": "Data",
+			"label": "DB Username"
+		},
+		{
+			"fieldname": "column_break_qyhi",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "db_password",
+			"fieldtype": "Password",
+			"label": "DB Password"
+		},
+		{
+			"fieldname": "site_url",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Site Url",
+			"no_copy": 1,
+			"placeholder": "site.example.com",
+			"unique": 1
+		},
+		{
+			"fieldname": "bench_name",
+			"fieldtype": "Data",
+			"label": "Bench Name",
+			"no_copy": 1,
+			"placeholder": "ERPNEXTv1",
+			"unique": 1
+		},
+		{
+			"fieldname": "created_by",
+			"fieldtype": "Link",
+			"label": "Created by",
+			"options": "User"
+		},
+		{
+			"fieldname": "column_break_jrub",
+			"fieldtype": "Column Break"
+		}
+	],
+	"grid_page_length": 50,
+	"index_web_pages_for_search": 1,
+	"is_submittable": 1,
+	"links": [
+		{
+			"link_doctype": "Ansible Log",
+			"link_fieldname": "bench_name"
+		}
+	],
+	"modified": "2025-11-05 23:04:45.350674",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "Frappe Site",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"cancel": 1,
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"if_owner": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Nano Press User",
+			"select": 1,
+			"share": 1,
+			"submit": 1,
+			"write": 1
+		}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": [],
+	"title_field": "bench_name",
+	"track_changes": 1,
+	"track_seen": 1
 }

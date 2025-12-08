@@ -48,14 +48,10 @@ def log_ansible_result(
 		doc.rc = int(result_json.get("rc", 1))
 		doc.executed_on = frappe.utils.now_datetime()
 		doc.triggered_by = getattr(frappe.session, "user", None)
-
-		# Extract command string
 		cmd_val = None
-		# Top-level "cmd"
 		if result_json.get("cmd"):
 			cmd_val = result_json["cmd"]
 		else:
-			# Try inside raw_json → plays → tasks → hosts
 			raw = result_json.get("raw_json", {})
 			for play in raw.get("plays", []):
 				for task in play.get("tasks", []):
@@ -72,9 +68,7 @@ def log_ansible_result(
 		doc.stdout_tail = result_json.get("stdout_tail") or result_json.get("data", {}).get("stdout_tail")
 		doc.stderr_tail = result_json.get("stderr_tail") or result_json.get("data", {}).get("stderr_tail")
 
-		# Optional: store summary or stats
 		summary = None
-		# e.g. summary under result_json["data"]["summary"] or result_json["summary"] or raw_json["stats"]
 		if result_json.get("data", {}).get("summary"):
 			summary = result_json["data"]["summary"]
 		elif result_json.get("summary"):
@@ -83,7 +77,6 @@ def log_ansible_result(
 			summary = result_json["raw_json"]["stats"]
 
 		if summary is not None:
-			# store as JSON string
 			doc.output = frappe.as_json(summary)
 
 		doc.insert(ignore_permissions=True)

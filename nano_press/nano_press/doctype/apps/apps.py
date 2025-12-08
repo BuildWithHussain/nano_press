@@ -6,4 +6,5 @@ from frappe.model.document import Document
 
 
 class Apps(Document):
-	pass
+	def before_insert(self):
+		self.scrubbed_name = self.app_name.replace(" ", "_").lower()

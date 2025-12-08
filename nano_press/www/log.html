@@ -1,0 +1,41 @@
+{% extends "templates/layout.html" %}
+
+{% block page_title %}Ansible Logs{% endblock %}
+
+{% block body %}
+<div class="mx-auto max-w-2xl px-4 py-16">
+    <div class="text-center">
+        <!-- Icon -->
+        <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                </path>
+            </svg>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl font-bold text-gray-900 mb-3">
+            Ansible Logs
+        </h1>
+
+        <!-- Message -->
+        <p class="text-lg text-gray-600 mb-2">
+            Coming Soon
+        </p>
+        <p class="text-sm text-gray-500 mb-8">
+            This feature is currently under development and will be available soon.
+        </p>
+
+        <!-- Action Button -->
+        <a href="/"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors duration-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
+            </svg>
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
