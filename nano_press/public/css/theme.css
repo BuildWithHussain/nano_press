@@ -9,7 +9,32 @@
 
     /* Colors */
 
-  
+    /* Penguin UI Design Tokens */
+    --color-primary: oklch(45.56% 0.237 264.05);
+    --color-primary-dark: oklch(70% 0.2 264.05);
+
+    /* Surface colors */
+    --color-surface: oklch(100% 0 0);
+    --color-surface-alt: oklch(98% 0 0);
+    --color-surface-dark: oklch(23% 0.011 285.82);
+    --color-surface-dark-alt: oklch(20% 0.011 285.82);
+
+    /* Text colors */
+    --color-on-surface: oklch(40% 0.019 285.88);
+    --color-on-surface-strong: oklch(20% 0.019 285.88);
+    --color-on-surface-dark: oklch(90% 0.005 285.82);
+    --color-on-surface-dark-strong: oklch(100% 0 0);
+    --color-on-primary: oklch(100% 0 0);
+    --color-on-primary-dark: oklch(20% 0.019 285.88);
+
+    /* Border colors */
+    --color-outline: oklch(85% 0.005 285.82);
+    --color-outline-dark: oklch(30% 0.011 285.82);
+
+    /* Border radius */
+    --radius: 0.5rem;
+
+
     /* font size */
     --text-xxs: 10px;
     --text-3xs: 8px;
