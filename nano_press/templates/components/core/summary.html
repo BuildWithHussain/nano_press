@@ -2,75 +2,67 @@
     <h2 class="text-xl font-semibold mb-6 text-gray-900">Summary</h2>
 
     <div x-show="!deploying && !deployComplete">
-        <!-- Server -->
-        <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-4">
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Server</h3>
-            <p class="text-xs text-gray-400 mb-1">
-                <span class="text-gray-400">IP:</span> 
-                <span x-text="$store.installer.serverDetails.ip" class="text-gray-900"></span>
-                <template x-if="$store.installer.isVerified">
-                    <span class="ml-2 text-green-600">✓ Verified</span>
+        <!-- Card 1: Verified -->
+        <div class="bg-white border border-gray-300 rounded-md p-6 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4">Verified</h3>
+
+            <!-- IP Address -->
+            <div class="mb-3">
+                <p class="text-xs text-gray-400 mb-1">Server IP</p>
+                <p class="text-sm text-gray-900" x-text="$store.installer.serverDetails.ip"></p>
+            </div>
+
+            <!-- Domain (conditional) -->
+            <div>
+                <p class="text-xs text-gray-400 mb-1">Domain</p>
+                <template x-if="$store.installer.domain && $store.installer.domain.trim()">
+                    <p class="text-sm text-gray-900" x-text="$store.installer.domain"></p>
                 </template>
-            </p>
-            <p class="text-xs text-gray-400 mb-1">
-                <span class="text-gray-400">User:</span> 
-                <span x-text="$store.installer.serverDetails.rootUser" class="text-gray-900"></span>
-            </p>
-            <p class="text-xs text-gray-400">
-                <span class="text-gray-400">Port:</span> 
-                <span x-text="$store.installer.serverDetails.sshPort" class="text-gray-900"></span>
-            </p>
+                <template x-if="!$store.installer.domain || !$store.installer.domain.trim()">
+                    <p class="text-sm text-gray-500 italic">Not configured</p>
+                </template>
+            </div>
         </div>
 
-        <!-- Apps -->
-        <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-4">
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Frappe Apps</h3>
-            <p class="text-xs text-gray-400 mb-1">
-                <span class="text-gray-400">Version:</span> 
-                <span x-text="$store.installer.frappeVersion" class="text-gray-900"></span>
-            </p>
-            <p class="text-xs text-gray-400 mb-1">
-                <span class="text-gray-400">Apps:</span> 
-                <span x-show="$store.installer.selectedApps.length > 0" class="text-gray-900">
-                    <template x-for="(app, index) in $store.installer.selectedApps" :key="app">
-                        <span>
-                            <span x-text="app"></span><span x-show="index < $store.installer.selectedApps.length - 1">, </span>
-                        </span>
-                    </template>
-                </span>
-                <span x-show="$store.installer.selectedApps.length === 0" class="text-gray-900 italic">None</span>
-            </p>
-            <template x-if="$store.installer.customApps.length > 0">
-                <p class="text-xs text-gray-400">
-                    <span class="text-gray-400">Custom Apps:</span>
-                    <span class="text-gray-900">
-                        <template x-for="(app, index) in $store.installer.customApps" :key="app.name">
+        <!-- Card 2: Environment Details -->
+        <div class="bg-white border border-gray-300 rounded-md p-6 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4">Environment Details</h3>
+
+            <!-- Frappe Version -->
+            <div class="mb-3">
+                <p class="text-xs text-gray-400 mb-1">Frappe Version</p>
+                <p class="text-sm text-gray-900" x-text="$store.installer.frappeVersion"></p>
+            </div>
+
+            <!-- Frappe Apps -->
+            <div class="mb-3">
+                <p class="text-xs text-gray-400 mb-1">Frappe Apps</p>
+                <template x-if="$store.installer.selectedApps.length > 0">
+                    <p class="text-sm text-gray-900">
+                        <template x-for="(app, index) in $store.installer.selectedApps" :key="app">
                             <span>
-                                <span x-text="app.name + (app.branch && app.branch !== 'main' ? ` (${app.branch})` : '')"></span><span x-show="index < $store.installer.customApps.length - 1">, </span>
+                                <span x-text="app"></span><span x-show="index < $store.installer.selectedApps.length - 1">, </span>
                             </span>
                         </template>
-                    </span>
-                </p>
-            </template>
-        </div>
+                    </p>
+                </template>
+                <template x-if="$store.installer.selectedApps.length === 0">
+                    <p class="text-sm text-gray-500 italic">None</p>
+                </template>
+            </div>
 
-        <!-- Domain -->
-        <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-6">
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Domain</h3>
-            <template x-if="$store.installer.domain && $store.installer.domain.trim()">
-                <p class="text-xs text-gray-400">
-                    <span class="text-gray-400">Domain:</span> 
-                    <span x-text="$store.installer.domain" class="text-gray-900"></span>
-                    <template x-if="$store.installer.domainVerified">
-                        <span class="ml-2 text-green-600">✓ Verified</span>
-                    </template>
-                    <template x-if="!$store.installer.domainVerified">
-                        <span class="ml-2 text-yellow-600">⚠ Not Verified</span>
-                    </template>
-                </p>
-            </template>
-            <template x-if="!$store.installer.domain || !$store.installer.domain.trim()">
-                <p class="text-xs text-gray-400 italic">No domain configured</p>
+            <!-- Custom Apps -->
+            <template x-if="$store.installer.customApps.length > 0">
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Custom Apps</p>
+                    <p class="text-sm text-gray-900">
+                        <template x-for="(app, index) in $store.installer.customApps" :key="app.name">
+                            <span>
+                                <span x-text="app.name + (app.branch ? ` (${app.branch})` : '')"></span><span x-show="index < $store.installer.customApps.length - 1">, </span>
+                            </span>
+                        </template>
+                    </p>
+                </div>
             </template>
         </div>
 
@@ -93,23 +85,23 @@
 
         <div class="max-w-64 mx-auto">
             <div class="flex items-center gap-3 mb-3" :class="deployStep >= 1 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 1 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep > 1 ? 'bg-green-500' : (deployStep === 1 ? 'bg-yellow-500' : 'bg-gray-300')"></div>
                 <span class="text-sm">Preparing server</span>
             </div>
             <div class="flex items-center gap-3 mb-3" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 2 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep > 2 ? 'bg-green-500' : (deployStep === 2 ? 'bg-yellow-500' : 'bg-gray-300')"></div>
                 <span class="text-sm">Setting up your Apps</span>
             </div>
             <div class="flex items-center gap-3 mb-3" :class="deployStep >= 3 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 3 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep > 3 ? 'bg-green-500' : (deployStep === 3 ? 'bg-yellow-500' : 'bg-gray-300')"></div>
                 <span class="text-sm">Creating site</span>
             </div>
             <div class="flex items-center gap-3 mb-3" :class="deployStep >= 4 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 4 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep > 4 ? 'bg-green-500' : (deployStep === 4 ? 'bg-yellow-500' : 'bg-gray-300')"></div>
                 <span class="text-sm">Preparing deployment</span>
             </div>
             <div class="flex items-center gap-3" :class="deployStep >= 5 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 5 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep === 5 ? 'bg-green-500' : 'bg-gray-300'"></div>
                 <span class="text-sm">Deploying site</span>
             </div>
         </div>
