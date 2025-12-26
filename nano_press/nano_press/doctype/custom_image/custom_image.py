@@ -373,7 +373,7 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 						"repo_url": custom_app.get("githubUrl", ""),
 						"branch": custom_app.get("branch", "main"),
 						"pat_token": custom_app.get("token", ""),
-						"is_public": 0,
+						"is_custom": 1,
 						"enabled": 1,
 						"frappe": 0,
 						"order": 999,
