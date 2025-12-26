@@ -19,36 +19,54 @@
 
     <div class="mb-6">
         <label class="block text-sm font-medium mb-2 text-gray-900">Apps</label>
+
+        <!-- SECTION 1: Frappe Apps -->
+        <h3 class="text-sm font-semibold mb-3 text-gray-900">Frappe Apps</h3>
         <div class="grid grid-cols-2 gap-2 mb-4">
-            <template x-for="app in availableApps" :key="app.name">
-                <button @click="toggleApp(app.name)" :class="localSelectedApps.includes(app.name.toLowerCase())
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-900 border-gray-300'"
+            <template x-for="app in frappeApps" :key="app.name">
+                <button @click="toggleApp(app.name)"
+                    :class="localSelectedApps.includes(app.name.toLowerCase())
+                        ? 'bg-gradient-to-br from-green-400 to-green-600 border-green-500'
+                        : 'bg-white border-gray-300'"
+                    class="p-3 border rounded-md text-left cursor-pointer transition-all duration-200 hover:border-green-500">
+                    <div class="font-medium mb-1 text-sm"
+                        :class="localSelectedApps.includes(app.name.toLowerCase()) ? 'text-white' : 'text-gray-900'"
+                        x-text="app.name"></div>
+                    <div class="text-xs"
+                        :class="localSelectedApps.includes(app.name.toLowerCase()) ? 'text-green-100' : 'text-gray-400'"
+                        x-text="app.branch"></div>
+                </button>
+            </template>
+        </div>
+
+        <!-- SECTION 2: Custom Apps -->
+        <h3 class="text-sm font-semibold mb-3 mt-6 text-gray-900">Custom Apps</h3>
+
+        <!-- Database custom apps (frappe === 0) -->
+        <div class="grid grid-cols-2 gap-2 mb-4" x-show="customApps.length > 0">
+            <template x-for="app in customApps" :key="app.name">
+                <button @click="toggleApp(app.name)"
+                    :class="localSelectedApps.includes(app.name.toLowerCase())
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-900 border-gray-300'"
                     class="p-3 border rounded-md text-left cursor-pointer transition-all duration-200 hover:border-gray-900">
                     <div class="font-medium mb-1 text-sm" x-text="app.name"></div>
                     <div class="text-xs text-gray-400" x-text="app.branch"></div>
                 </button>
             </template>
         </div>
-    </div>
 
-    <button @click="localShowCustomAppDialog = true"
-        class="w-full p-3 bg-white border border-dashed border-gray-300 rounded-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 text-gray-400 font-medium text-sm hover:border-gray-900 hover:text-gray-900">
-        <span class="text-xl">+</span> Add Custom App
-    </button>
-
+    <!-- User-added custom apps list (using same grid layout) -->
     <template x-if="localCustomApps.length > 0">
-        <div class="mt-4">
+        <div class="grid grid-cols-2 gap-2 mb-4">
             <template x-for="(app, index) in localCustomApps" :key="index">
-                <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-300 rounded-md mb-2">
-                    <div>
-                        <div class="font-medium mb-1 text-sm" x-text="app.name"></div>
-                        <div class="text-xs text-gray-400" x-text="app.branch || 'main'"></div>
-                    </div>
+                <div class="relative p-3 bg-gray-50 border border-gray-300 rounded-md">
+                    <div class="font-medium mb-1 text-sm" x-text="app.name"></div>
+                    <div class="text-xs text-gray-400" x-text="app.branch || 'main'"></div>
                     <button @click="removeCustomApp(index)"
-                        class="cursor-pointer p-1"
+                        class="absolute top-1/2 -translate-y-1/2 right-2 cursor-pointer p-1"
                         title="Remove app">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-red-500">
                             <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
                         </svg>
                     </button>
@@ -56,6 +74,13 @@
             </template>
         </div>
     </template>
+
+    <!-- "Add Custom App" Button -->
+    <button @click="localShowCustomAppDialog = true"
+        class="w-full p-3 bg-white border border-dashed border-gray-300 rounded-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 text-gray-400 font-medium text-sm hover:border-gray-900 hover:text-gray-900">
+        <span class="text-xl">+</span> Add Custom App
+    </button>
+</div>
 
   <div class="flex gap-3 mt-6">
     <button @click="prevStep()"
@@ -163,6 +188,15 @@
         return {
             availableApps: {{ apps | tojson }},
             frappeVersionOptions: ['Version-15', 'Nightly'],
+
+            // Computed properties for filtering
+            get frappeApps() {
+                return this.availableApps.filter(app => app.frappe === 1);
+            },
+
+            get customApps() {
+                return this.availableApps.filter(app => app.frappe === 0);
+            },
 
             // Local state
             localSelectedApps: [],

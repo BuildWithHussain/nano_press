@@ -89,7 +89,8 @@
 			}
 
 			if (this.appType === 'private' && !this.customAppForm.token) {
-				this.formErrors.token = 'GitHub Token is required for private repositories.';
+				this.formErrors.token =
+					'GitHub Token is required for private repositories.';
 				hasError = true;
 			}
 
@@ -108,7 +109,12 @@
 				token: this.appType === 'private' ? this.customAppForm.token : '',
 				branch: this.customAppForm.branch || 'main',
 			});
-			this.customAppForm = { name: '', githubUrl: '', token: '', branch: 'main' };
+			this.customAppForm = {
+				name: '',
+				githubUrl: '',
+				token: '',
+				branch: 'main',
+			};
 			this.appType = 'public'; // Reset to public after adding
 			this.showCustomAppDialog = false;
 		},

@@ -12,6 +12,8 @@ def get_context(context):
 
 def get_apps():
 	apps = frappe.db.get_list(
-		"Apps", filters={"is_public": 1, "enabled": 1}, fields=["name", "branch", "repo_url", "scrubbed_name"]
+		"Apps",
+		filters={"is_public": 1, "enabled": 1},
+		fields=["name", "branch", "repo_url", "scrubbed_name", "frappe"],
 	)
 	return apps

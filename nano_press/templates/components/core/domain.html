@@ -56,8 +56,12 @@ function domainSetup() {
         
         // Initialize from store
         init() {
-            if (this.$store.installer.domainVerified && this.$store.installer.domain) {
-                this.domainStatusMessage = `✅ ${this.$store.installer.domain} is verified`;
+            if (this.$store.installer.domain && this.$store.installer.domain.trim()) {
+                if (this.$store.installer.domainVerified) {
+                    this.domainStatusMessage = `✅ ${this.$store.installer.domain} is verified`;
+                } else {
+                    this.domainStatusMessage = '⚠️ Domain not verified. Click "Verify & Continue" to verify.';
+                }
             }
         },
         
@@ -75,22 +79,15 @@ function domainSetup() {
         
         async nextStep() {
             const domain = this.$store.installer.domain;
-            
+
             if (domain && domain.trim()) {
-                // Check if domain is already verified
-                if (this.$store.installer.domainVerified) {
-                    this.domainStatusMessage = `✅ ${domain} is verified`;
-                    this.$store.installer.currentStep = 4;
-                    return;
-                }
-                
-                // Domain verification step
+                // Always verify domain - don't skip even if previously verified
                 this.isLoading = true;
                 this.domainStatusMessage = '';
 
                 try {
                     const expectedIp = this.$store.installer.serverDetails?.ip;
-                    
+
                     if (!expectedIp) {
                         this.domainStatusMessage = "⚠️ Please enter a server IP address in the Server step to continue";
                         if (typeof toast !== 'undefined') {
@@ -99,14 +96,14 @@ function domainSetup() {
                         this.isLoading = false;
                         return;
                     }
-                    
+
                     await verify_domain(domain, expectedIp);
-                    
+
                     // Mark as verified in store
                     this.$store.installer.domainVerified = true;
                     this.domainStatusMessage = `✅ ${domain} resolves to ${expectedIp}`;
-                    
-                    
+
+
                     setTimeout(() => {
                         this.$store.installer.currentStep = 4;
                     }, 1000);
