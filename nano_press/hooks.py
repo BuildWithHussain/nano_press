@@ -151,13 +151,13 @@ home_page = "index"
 # Scheduled Tasks
 # ---------------
 
-scheduler_events = {
-	"cron": {
-		"*/5 * * * *": [
-			"nano_press.utils.ansible_runner.ping_server",
-		],
-	}
-}
+# scheduler_events = {
+# 	"cron": {
+# 		"*/5 * * * *": [
+# 			"nano_press.utils.ansible_runner.ping_server",
+# 		],
+# 	}
+# }
 
 
 # Testing
