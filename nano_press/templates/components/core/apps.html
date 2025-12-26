@@ -72,28 +72,77 @@
         <div class="bg-white rounded-lg p-8 max-w-md w-11/12 mx-4 border border-gray-300" @click.stop>
             <h3 class="text-lg font-semibold mb-6 text-gray-900">Add Custom App</h3>
 
-            <div class="mb-5">
-                <label class="block text-sm font-medium mb-2 text-gray-900">App Name</label>
-                <input type="text" x-model="localCustomAppForm.name" placeholder="my-custom-app"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
-            </div>
-
-            <div class="mb-5">
-                <label class="block text-sm font-medium mb-2 text-gray-900">GitHub URL</label>
-                <input type="text" x-model="localCustomAppForm.githubUrl" placeholder="https://github.com/user/repo"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
-            </div>
-
+            <!-- Tabs -->
             <div class="mb-6">
-                <label class="block text-sm font-medium mb-2 text-gray-900">GitHub Token</label>
-                <input type="password" x-model="localCustomAppForm.token" placeholder="ghp_xxxxxxxxxxxx"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
-            </div>
+                <div role="tablist" aria-label="app type" class="flex gap-2 mb-6">
+                    <button type="button" role="tab"
+                        @click="appType = 'public'"
+                        :aria-selected="appType === 'public'"
+                        :class="appType === 'public'
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                        class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm">
+                        Public
+                    </button>
+                    <button type="button" role="tab"
+                        @click="appType = 'private'"
+                        :aria-selected="appType === 'private'"
+                        :class="appType === 'private'
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                        class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm">
+                        Private
+                    </button>
+                </div>
 
-            <div class="mb-5">
-                <label class="block text-sm font-medium mb-2 text-gray-900">Branch</label>
-                <input type="text" x-model="localCustomAppForm.branch" placeholder="main"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                <!-- App Name -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium mb-2 text-gray-900">
+                        App Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" x-model="localCustomAppForm.name" placeholder="my-custom-app"
+                        @input="clearError('name')"
+                        :class="formErrors.name ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-3 py-2.5 bg-white border rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                    <p x-show="formErrors.name" x-text="formErrors.name" class="mt-1 text-xs text-red-500"></p>
+                </div>
+
+                <!-- GitHub URL -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium mb-2 text-gray-900">
+                        GitHub URL <span class="text-red-500">*</span>
+                    </label>
+                    <input type="url" x-model="localCustomAppForm.githubUrl" placeholder="https://github.com/user/repo"
+                        @input="clearError('githubUrl')"
+                        :class="formErrors.githubUrl ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-3 py-2.5 bg-white border rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                    <p x-show="formErrors.githubUrl" x-text="formErrors.githubUrl" class="mt-1 text-xs text-red-500"></p>
+                    <p x-show="!formErrors.githubUrl" class="mt-1 text-xs text-gray-500">Must start with https://</p>
+                </div>
+
+                <!-- GitHub Token (only for private) -->
+                <div x-show="appType === 'private'" class="mb-5">
+                    <label class="block text-sm font-medium mb-2 text-gray-900">
+                        GitHub Token <span class="text-red-500">*</span>
+                    </label>
+                    <input type="password" x-model="localCustomAppForm.token" placeholder="ghp_xxxxxxxxxxxx"
+                        @input="clearError('token')"
+                        :class="formErrors.token ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-3 py-2.5 bg-white border rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                    <p x-show="formErrors.token" x-text="formErrors.token" class="mt-1 text-xs text-red-500"></p>
+                </div>
+
+                <!-- Branch -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium mb-2 text-gray-900">
+                        Branch <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" x-model="localCustomAppForm.branch" placeholder="main"
+                        @input="clearError('branch')"
+                        :class="formErrors.branch ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-3 py-2.5 bg-white border rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                    <p x-show="formErrors.branch" x-text="formErrors.branch" class="mt-1 text-xs text-red-500"></p>
+                </div>
             </div>
 
             <div class="flex gap-3">
@@ -114,12 +163,19 @@
         return {
             availableApps: {{ apps | tojson }},
             frappeVersionOptions: ['Version-15', 'Nightly'],
-            
+
             // Local state
             localSelectedApps: [],
             localFrappeVersion: 'Version-15',
             localCustomApps: [],
             localShowCustomAppDialog: false,
+            appType: 'public', // Track whether app is public or private
+            formErrors: {
+                name: '',
+                githubUrl: '',
+                token: '',
+                branch: ''
+            },
             localCustomAppForm: {
                 name: '',
                 githubUrl: '',
@@ -134,20 +190,56 @@
                 this.localCustomApps = [...this.$store.installer.customApps];
             },
             
+            clearError(field) {
+                this.formErrors[field] = '';
+            },
+
             addCustomApp() {
-                if (this.localCustomAppForm.name && this.localCustomAppForm.githubUrl) {
-                    const newApp = {
-                        name: this.localCustomAppForm.name.toLowerCase(),
-                        githubUrl: this.localCustomAppForm.githubUrl,
-                        token: this.localCustomAppForm.token,
-                        branch: this.localCustomAppForm.branch || 'main'
-                    };
-                    this.localCustomApps.push(newApp);
-                    this.localCustomAppForm = { name: '', githubUrl: '', token: '', branch: 'main' };
-                    this.localShowCustomAppDialog = false;
-                    // Sync with store
-                    this.syncToStore();
+                // Clear all errors
+                this.formErrors = { name: '', githubUrl: '', token: '', branch: '' };
+
+                let hasError = false;
+
+                // Validate all required fields
+                if (!this.localCustomAppForm.name) {
+                    this.formErrors.name = 'App name is required.';
+                    hasError = true;
                 }
+
+                if (!this.localCustomAppForm.githubUrl) {
+                    this.formErrors.githubUrl = 'GitHub URL is required.';
+                    hasError = true;
+                } else if (!this.localCustomAppForm.githubUrl.startsWith('https://')) {
+                    this.formErrors.githubUrl = 'GitHub URL must start with https://';
+                    hasError = true;
+                }
+
+                if (this.appType === 'private' && !this.localCustomAppForm.token) {
+                    this.formErrors.token = 'GitHub Token is required for private repositories.';
+                    hasError = true;
+                }
+
+                if (!this.localCustomAppForm.branch) {
+                    this.formErrors.branch = 'Branch is required.';
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    return;
+                }
+
+                const newApp = {
+                    name: this.localCustomAppForm.name.toLowerCase(),
+                    githubUrl: this.localCustomAppForm.githubUrl,
+                    token: this.appType === 'private' ? this.localCustomAppForm.token : '',
+                    branch: this.localCustomAppForm.branch || 'main'
+                };
+                this.localCustomApps.push(newApp);
+                this.localCustomAppForm = { name: '', githubUrl: '', token: '', branch: 'main' };
+                this.appType = 'public'; // Reset to public after adding
+                this.localShowCustomAppDialog = false;
+                // Sync with store
+                this.syncToStore();
             },
             removeCustomApp(index) {
                 this.localCustomApps.splice(index, 1);

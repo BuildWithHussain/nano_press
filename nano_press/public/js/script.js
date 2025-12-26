@@ -23,10 +23,18 @@
 		selectedApps: [],
 		customApps: [],
 		showCustomAppDialog: false,
+		appType: 'public', // Track whether app is public or private
+		formErrors: {
+			name: '',
+			githubUrl: '',
+			token: '',
+			branch: '',
+		},
 		customAppForm: {
 			name: '',
 			githubUrl: '',
 			token: '',
+			branch: 'main',
 		},
 
 		domain: '',
@@ -56,16 +64,53 @@
 			}
 		},
 
+		clearError(field) {
+			this.formErrors[field] = '';
+		},
+
 		addCustomApp() {
-			if (this.customAppForm.name && this.customAppForm.githubUrl) {
-				this.customApps.push({
-					name: this.customAppForm.name,
-					githubUrl: this.customAppForm.githubUrl,
-					token: this.customAppForm.token,
-				});
-				this.customAppForm = { name: '', githubUrl: '', token: '' };
-				this.showCustomAppDialog = false;
+			// Clear all errors
+			this.formErrors = { name: '', githubUrl: '', token: '', branch: '' };
+
+			let hasError = false;
+
+			// Validate all required fields
+			if (!this.customAppForm.name) {
+				this.formErrors.name = 'App name is required.';
+				hasError = true;
 			}
+
+			if (!this.customAppForm.githubUrl) {
+				this.formErrors.githubUrl = 'GitHub URL is required.';
+				hasError = true;
+			} else if (!this.customAppForm.githubUrl.startsWith('https://')) {
+				this.formErrors.githubUrl = 'GitHub URL must start with https://';
+				hasError = true;
+			}
+
+			if (this.appType === 'private' && !this.customAppForm.token) {
+				this.formErrors.token = 'GitHub Token is required for private repositories.';
+				hasError = true;
+			}
+
+			if (!this.customAppForm.branch) {
+				this.formErrors.branch = 'Branch is required.';
+				hasError = true;
+			}
+
+			if (hasError) {
+				return;
+			}
+
+			this.customApps.push({
+				name: this.customAppForm.name,
+				githubUrl: this.customAppForm.githubUrl,
+				token: this.appType === 'private' ? this.customAppForm.token : '',
+				branch: this.customAppForm.branch || 'main',
+			});
+			this.customAppForm = { name: '', githubUrl: '', token: '', branch: 'main' };
+			this.appType = 'public'; // Reset to public after adding
+			this.showCustomAppDialog = false;
 		},
 
 		removeCustomApp(index) {

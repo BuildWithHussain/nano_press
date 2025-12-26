@@ -4,19 +4,59 @@
     <div class="modal" @click.stop>
         <h3>Add Custom App</h3>
 
-        <div class="form-group">
-            <label>App Name</label>
-            <input type="text" x-model="customAppForm.name" placeholder="my-custom-app">
+        <!-- Tabs -->
+        <div role="tablist" aria-label="app type" class="flex gap-2 mb-6">
+            <button type="button" role="tab"
+                @click="appType = 'public'"
+                :aria-selected="appType === 'public'"
+                :class="appType === 'public'
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm">
+                Public
+            </button>
+            <button type="button" role="tab"
+                @click="appType = 'private'"
+                :aria-selected="appType === 'private'"
+                :class="appType === 'private'
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm">
+                Private
+            </button>
         </div>
 
         <div class="form-group">
-            <label>GitHub URL</label>
-            <input type="text" x-model="customAppForm.githubUrl" placeholder="https://github.com/user/repo">
+            <label>App Name <span class="text-red-500">*</span></label>
+            <input type="text" x-model="customAppForm.name" placeholder="my-custom-app"
+                @input="clearError('name')"
+                :class="formErrors.name ? 'border-red-500' : ''">
+            <p x-show="formErrors.name" x-text="formErrors.name" class="text-xs text-red-500 mt-1"></p>
         </div>
 
         <div class="form-group">
-            <label>GitHub Token</label>
-            <input type="password" x-model="customAppForm.token" placeholder="ghp_xxxxxxxxxxxx">
+            <label>GitHub URL <span class="text-red-500">*</span></label>
+            <input type="url" x-model="customAppForm.githubUrl" placeholder="https://github.com/user/repo"
+                @input="clearError('githubUrl')"
+                :class="formErrors.githubUrl ? 'border-red-500' : ''">
+            <p x-show="formErrors.githubUrl" x-text="formErrors.githubUrl" class="text-xs text-red-500 mt-1"></p>
+            <p x-show="!formErrors.githubUrl" class="text-xs text-gray-500 mt-1">Must start with https://</p>
+        </div>
+
+        <div x-show="appType === 'private'" class="form-group">
+            <label>GitHub Token <span class="text-red-500">*</span></label>
+            <input type="password" x-model="customAppForm.token" placeholder="ghp_xxxxxxxxxxxx"
+                @input="clearError('token')"
+                :class="formErrors.token ? 'border-red-500' : ''">
+            <p x-show="formErrors.token" x-text="formErrors.token" class="text-xs text-red-500 mt-1"></p>
+        </div>
+
+        <div class="form-group">
+            <label>Branch <span class="text-red-500">*</span></label>
+            <input type="text" x-model="customAppForm.branch" placeholder="main"
+                @input="clearError('branch')"
+                :class="formErrors.branch ? 'border-red-500' : ''">
+            <p x-show="formErrors.branch" x-text="formErrors.branch" class="text-xs text-red-500 mt-1"></p>
         </div>
 
         <div class="btn-group">
