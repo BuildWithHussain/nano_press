@@ -29,12 +29,16 @@
       failed_when: docker_info.rc != 0
       changed_when: false
 
-    - name: Clone or update frappe_docker repo
+    - name: Remove frappe_docker directory to ensure clean clone
+      ansible.builtin.file:
+        path: "{{ frappe_docker_dir }}"
+        state: absent
+
+    - name: Clone frappe_docker repo (fresh)
       ansible.builtin.git:
         repo: "https://github.com/frappe/frappe_docker"
         dest: "{{ frappe_docker_dir }}"
-        update: yes
-        force: yes
+        clone: yes
         accept_hostkey: yes
 
     - name: Ensure apps_json_base64 is provided

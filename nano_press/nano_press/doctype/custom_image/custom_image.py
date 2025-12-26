@@ -85,9 +85,9 @@ class CustomImage(Document):
 		Returns:
 			Repository URL formatted for git clone
 		"""
-		repo_url = app_doc.repo_url.strip()
+		repo_url = app_doc.repo_url.strip() if app_doc.repo_url else ""
 
-		if app_doc.is_private and app_doc.pat_token:
+		if not app_doc.is_public and app_doc.pat_token:
 			# Convert https://github.com/owner/repo.git to https://PAT@github.com/owner/repo.git
 			if repo_url.startswith("https://"):
 				url_parts = repo_url.replace("https://", "").split("/", 1)
@@ -369,12 +369,13 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 				apps_doc = frappe.get_doc(
 					{
 						"doctype": "Apps",
-						"name": app_name,
-						"scrubbed_name": app_name.lower(),
+						"app_name": app_name,
 						"repo_url": custom_app.get("githubUrl", ""),
 						"branch": custom_app.get("branch", "main"),
-						"personal_access_token": custom_app.get("token", ""),
-						"is_custom": 1,
+						"pat_token": custom_app.get("token", ""),
+						"is_public": 0,
+						"enabled": 1,
+						"frappe": 0,
 						"order": 999,
 					}
 				)
