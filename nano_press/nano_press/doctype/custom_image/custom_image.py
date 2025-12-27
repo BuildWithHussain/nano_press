@@ -346,7 +346,7 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 				"doctype": "Custom Image",
 				"server_name": server_name,
 				"image_name": image_name,
-				"frappe_version": frappe_version.lower(),
+				"frappe_version": frappe_version,
 				"build_status": "Draft",
 			}
 		)

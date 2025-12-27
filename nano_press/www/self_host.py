@@ -8,6 +8,7 @@ def get_context(context):
 	context.apps = get_apps()
 	context.user_email = frappe.session.user
 	context.user_servers = get_user_servers()
+	context.frappe_versions = get_frappe_versions()
 	return context
 
 
@@ -21,9 +22,16 @@ def get_user_servers():
 
 
 def get_apps():
-	apps = frappe.db.get_list(
+	return frappe.db.get_list(
 		"Apps",
 		filters={"is_public": 1, "enabled": 1},
-		fields=["name", "branch", "repo_url", "scrubbed_name", "frappe"],
+		fields=["name", "branch", "repo_url", "scrubbed_name", "frappe", "app_logo"],
 	)
-	return apps
+
+
+def get_frappe_versions():
+	return frappe.db.get_all(
+		"App Version",
+		fields=["version", "scrubbed_version"],
+		order_by="creation asc",
+	)

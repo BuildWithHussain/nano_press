@@ -22,7 +22,6 @@
 {% block script %}
 {{ super() }}
 <script>
-    // Create Alpine.store for shared state with persistence
     document.addEventListener('alpine:init', () => {
         Alpine.store('installer', {
             currentStep: Alpine.$persist(1).as('nano_press_current_step'),
@@ -32,14 +31,14 @@
                 sshPort: '22'
             }).as('nano_press_server_details'),
             isVerified: Alpine.$persist(false).as('nano_press_is_verified'),
-            serverName: Alpine.$persist(null).as('nano_press_server_name'),  // Store the server document name
+            serverName: Alpine.$persist(null).as('nano_press_server_name'),
             selectedApps: Alpine.$persist([]).as('nano_press_selected_apps'),
             customApps: Alpine.$persist([]).as('nano_press_custom_apps'),
-            frappeVersion: Alpine.$persist('Version-15').as('nano_press_frappe_version'),
+            frappeVersion: Alpine.$persist('version-15').as('nano_press_frappe_version'),
             domain: Alpine.$persist('').as('nano_press_domain'),
             domainVerified: Alpine.$persist(false).as('nano_press_domain_verified'),
-            siteName: Alpine.$persist(null).as('nano_press_site_name'),  // Store the Frappe Site document name
-            siteUrl: Alpine.$persist(null).as('nano_press_site_url')  // Store the generated site URL
+            siteName: Alpine.$persist(null).as('nano_press_site_name'),
+            siteUrl: Alpine.$persist(null).as('nano_press_site_url')
         });
     });
 
