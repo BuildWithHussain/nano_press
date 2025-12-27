@@ -3,7 +3,6 @@
 
 import base64
 import json
-from typing import Any
 
 import frappe
 from frappe import _
@@ -14,214 +13,121 @@ from nano_press.utils.ansible_runner import run_playbook
 
 class CustomImage(Document):
 	def before_save(self):
-		self.apps_json_base64 = self.generate_apps_json_base64()
-		self.set_image_tag()
+		self.apps_json_base64 = self._generate_apps_json_base64()
+		self._set_image_tag()
 
-	def generate_apps_json(self) -> str:
-		"""Generate apps.json content from this Custom Image's apps configuration.
+	def _set_image_tag(self):
+		clean_name = self.image_name.lower().replace(" ", "-")
+		self.image_tag = f"{clean_name}:latest"
 
-		Returns:
-			JSON string in frappe_docker apps.json format
-
-		Raises:
-			frappe.ValidationError: If invalid app configuration found
-		"""
+	def _generate_apps_json(self):
 		if not self.apps_config:
-			frappe.throw("No apps configured for this Custom Image")
+			frappe.throw(_("No apps configured for this Custom Image"))
 
 		apps_list = []
-
 		for app_item in self.apps_config:
 			if not app_item.app_name:
 				continue
 
-			try:
-				app_doc = frappe.get_cached_doc("Apps", app_item.app_name)
-			except frappe.DoesNotExistError:
-				frappe.throw(f"App '{app_item.app_name}' not found in Apps doctype")
-
+			app_doc = frappe.get_cached_doc("Apps", app_item.app_name)
 			if not app_doc.repo_url or not app_doc.branch:
 				frappe.throw(
-					f"App '{app_item.app_name}' has incomplete configuration (missing repo_url or branch)"
+					_("App '{0}' has incomplete configuration (missing repo_url or branch)").format(
+						app_item.app_name
+					)
 				)
 
-			app_config = {"url": self._build_repo_url(app_doc), "branch": app_doc.branch}
+			apps_list.append(
+				{
+					"url": self._build_repo_url(app_doc),
+					"branch": app_doc.branch,
+				}
+			)
 
-			apps_list.append(app_config)
+		return json.dumps(self._sort_apps_by_order(apps_list), indent=2)
 
-		sorted_apps = self._sort_apps_by_order(apps_list)
-
-		return json.dumps(sorted_apps, indent=2)
-
-	def set_image_tag(self) -> str:
-		"""Generate image tag using just the image name."""
-		clean_name = self.image_name.lower().replace(" ", "-")
-		self.image_tag = f"{clean_name}:latest"
-
-	def generate_apps_json_base64(self) -> str:
-		"""Generate base64 encoded apps.json for docker build args.
-
-		Returns:
-			Base64 encoded JSON string ready for APPS_JSON_BASE64 env var
-		"""
-		apps_json = self.generate_apps_json()
+	def _generate_apps_json_base64(self):
+		apps_json = self._generate_apps_json()
 		return base64.b64encode(apps_json.encode("utf-8")).decode("utf-8")
 
-	def get_deployment_vars(self) -> dict:
-		"""Prepare all variables needed for Image Build"""
+	def _build_repo_url(self, app_doc):
+		repo_url = (app_doc.repo_url or "").strip()
 
-		return {
-			"image_name": self.image_name,
-			"frappe_version": self.frappe_version,
-			"apps_json_base64": self.generate_apps_json_base64(),
-		}
-
-	def _build_repo_url(self, app_doc) -> str:
-		"""Build repository URL with PAT token if private repo.
-
-		Args:
-			app_doc: Apps document
-
-		Returns:
-			Repository URL formatted for git clone
-		"""
-		repo_url = app_doc.repo_url.strip() if app_doc.repo_url else ""
-
-		if not app_doc.is_public and app_doc.pat_token:
-			# Convert https://github.com/owner/repo.git to https://PAT@github.com/owner/repo.git
-			if repo_url.startswith("https://"):
-				url_parts = repo_url.replace("https://", "").split("/", 1)
-				if len(url_parts) == 2:
-					domain = url_parts[0]
-					path = url_parts[1]
-					return f"https://{app_doc.pat_token}@{domain}/{path}"
-
-			frappe.msgprint(
-				f"Warning: Private repo URL format might need manual adjustment for {app_doc.app_name}"
-			)
+		if not app_doc.is_public and app_doc.pat_token and repo_url.startswith("https://"):
+			url_parts = repo_url.replace("https://", "").split("/", 1)
+			if len(url_parts) == 2:
+				return f"https://{app_doc.pat_token}@{url_parts[0]}/{url_parts[1]}"
 
 		return repo_url
 
-	def _sort_apps_by_order(self, apps_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
-		"""Sort apps by order field from Apps doctype.
+	def _sort_apps_by_order(self, apps_list):
+		app_names = [item.app_name for item in self.apps_config if item.app_name]
+		app_orders = {name: frappe.db.get_value("Apps", name, "order") or 999 for name in app_names}
 
-		Args:
-			apps_list: Generated apps configuration list
+		apps_with_order = [
+			(app, app_orders.get(app_names[i], 999)) for i, app in enumerate(apps_list) if i < len(app_names)
+		]
+		return [app for app, _ in sorted(apps_with_order, key=lambda x: x[1])]
 
-		Returns:
-			Sorted apps list by order priority
-		"""
-		app_order_map = {}
-		for app_item in self.apps_config:
-			if app_item.app_name:
-				try:
-					app_doc = frappe.get_cached_doc("Apps", app_item.app_name)
-					app_order_map[app_item.app_name] = app_doc.order or 999
-				except frappe.DoesNotExistError:
-					app_order_map[app_item.app_name] = 999
-
-		app_names = [app_item.app_name for app_item in self.apps_config if app_item.app_name]
-
-		apps_with_order = []
-		for i, app_config in enumerate(apps_list):
-			app_name = app_names[i] if i < len(app_names) else None
-			order = app_order_map.get(app_name, 999)
-			apps_with_order.append((app_config, order))
-
-		sorted_apps_with_order = sorted(apps_with_order, key=lambda x: x[1])
-		return [app_config for app_config, _ in sorted_apps_with_order]
-
-	@frappe.whitelist()
-	def preview_apps_json_for_form(self) -> dict[str, Any]:
-		"""Generate apps.json preview for display in the form.
-
-		Returns:
-			Dict with formatted apps.json and metadata for UI display
-		"""
-		try:
-			apps_json = self.generate_apps_json()
-			apps_json_base64 = self.generate_apps_json_base64()
-			parsed_apps = json.loads(apps_json)
-
-			return {
-				"success": True,
-				"apps_json": apps_json,
-				"apps_json_base64": apps_json_base64,
-				"app_count": len(parsed_apps),
-				"apps_summary": [
-					{
-						"name": app.get("url", "").split("/")[-1].replace(".git", ""),
-						"url": app.get("url", ""),
-						"branch": app.get("branch", ""),
-					}
-					for app in parsed_apps
-				],
-			}
-		except Exception as e:
-			return {
-				"success": False,
-				"error": str(e),
-				"apps_json": "",
-				"apps_json_base64": "",
-				"app_count": 0,
-				"apps_summary": [],
-			}
+	def _get_deployment_vars(self):
+		return {
+			"image_name": self.image_name,
+			"frappe_version": self.frappe_version,
+			"apps_json_base64": self._generate_apps_json_base64(),
+		}
 
 	def build_custom_image(self):
-		try:
-			self.build_status = "Building"
-			self.save()
-			frappe.db.commit()
+		start_time = frappe.utils.now_datetime()
+		self._update_status("Building")
 
-			vars = self.get_deployment_vars()
+		try:
 			result = run_playbook(
-				server_name=self.server_name, playbook_path="build_custom_image.yml", extra_vars=vars
+				server_name=self.server_name,
+				playbook_path="build_custom_image.yml",
+				extra_vars=self._get_deployment_vars(),
 			)
 
 			if result.get("status") != "success":
-				self.build_status = "Failed"
-				self.save()
-				self._send_build_notification("error", result.get("message", "Unknown error"))
-				self._send_email_notification("error")
-				frappe.log_error(result.get("message"), _("Custom Image Build Failed"))
-				raise Exception(f"Build failed: {result.get('message', 'Unknown error')}")
+				self._on_build_failure(result.get("message", "Unknown error"))
+				return
 
-			self.build_status = "Built"
-			self.built_at = frappe.utils.now_datetime()
-			self.build_duration = (self.built_at - self.creation).total_seconds()
-			self.save()
-			self._send_build_notification("success", "Image built successfully")
-			self._send_email_notification("success")
-			frappe.db.commit()
+			self._on_build_success(start_time)
 
-		except Exception as e:
-			frappe.log_error(str(e), "Image Build Failed")
-			self.reload()
-			self.build_status = "Failed"
-			self.save()
-			frappe.db.commit()
+		except Exception:
+			frappe.db.rollback()
+			self._update_status("Failed")
+			frappe.log_error(title=_("Custom Image Build Failed"))
 			raise
 
-	@frappe.whitelist()
-	def enqueue_build_custom_image(self):
-		"""Enqueue the build process for this Custom Image."""
-		frappe.enqueue_doc(
+	def _update_status(self, status):
+		frappe.db.set_value("Custom Image", self.name, "build_status", status, update_modified=False)
+		frappe.db.commit()
+
+	def _on_build_success(self, start_time):
+		end_time = frappe.utils.now_datetime()
+		duration = int((end_time - start_time).total_seconds())
+		frappe.db.set_value(
 			"Custom Image",
 			self.name,
-			"build_custom_image",
-			queue="long",
-			timeout=60 * 20,
-			enqueue_after_commit=True,
+			{
+				"build_status": "Built",
+				"built_at": end_time,
+				"build_duration": duration,
+			},
 		)
-		return {"status": "queued", "message": f"Build process for {self.name} has been queued."}
+		self.reload()
+		self._notify("success", _("Image built successfully"))
 
-	def _send_build_notification(self, status: str, message: str):
-		"""Send real-time notification about build status.
+	def _on_build_failure(self, error_message):
+		self._update_status("Failed")
+		self._notify("error", error_message)
+		frappe.log_error(message=error_message, title=_("Custom Image Build Failed"))
 
-		Args:
-			status: 'success' or 'error'
-			message: Notification message
-		"""
+	def _notify(self, status, message):
+		self._send_realtime_notification(status, message)
+		self._send_email_notification(status)
+
+	def _send_realtime_notification(self, status, message):
 		try:
 			frappe.publish_realtime(
 				event="custom_image_build_update",
@@ -229,61 +135,45 @@ class CustomImage(Document):
 					"custom_image": self.name,
 					"status": status,
 					"message": message,
-					"build_status": self.build_status,
-					"timestamp": frappe.utils.now_datetime(),
 				},
-				user=frappe.session.user,
+				user=self.owner,
 			)
 
 			frappe.get_doc(
 				{
 					"doctype": "Notification Log",
-					"subject": f"Custom Image Build: {self.image_name}",
+					"subject": _("Custom Image Build: {0}").format(self.image_name),
 					"email_content": message,
-					"for_user": frappe.session.user,
+					"for_user": self.owner,
 					"type": "Alert",
 					"document_type": "Custom Image",
 					"document_name": self.name,
 				}
 			).insert(ignore_permissions=True)
+		except Exception:
+			frappe.log_error(title=_("Build Notification Failed"))
 
-		except Exception as e:
-			frappe.log_error(f"Failed to send build notification: {e!s}", "Build Notification")
-
-	def _send_email_notification(self, status: str):
-		"""Send email notification directly using Frappe's email system.
-
-		Args:
-			status: 'success' or 'error'
-		"""
+	def _send_email_notification(self, status):
 		try:
-			recipient = frappe.db.get_value("User", self.owner, "email") or frappe.session.user
+			recipient = frappe.db.get_value("User", self.owner, "email")
 			if not recipient or "@" not in recipient:
-				frappe.log_error(f"Invalid email for user {self.owner}", "Email Notification")
 				return
-			if status == "success":
-				subject = f"🚀 Custom Image Build Successful - {self.image_name}"
-				message = f"""
-				<h2>🚀 Custom Image Build Successful</h2>
-				<p>Your custom Docker image <strong>{self.image_name}</strong> has been built successfully!</p>
 
-				<p><strong>Image Tag:</strong> <code>{self.image_tag}</code></p>
-				<p><strong>Build Duration:</strong> {self.build_duration} seconds</p>
+			if status == "success":
+				subject = _("Custom Image Build Successful - {0}").format(self.image_name)
+				message = f"""
+				<p>Your custom Docker image <strong>{self.image_name}</strong> has been built successfully.</p>
+				<p><strong>Image Tag:</strong> {self.image_tag}</p>
 				<p><strong>Server:</strong> {self.server_name}</p>
 				<p><strong>Frappe Version:</strong> {self.frappe_version}</p>
-
-				<p>Your custom image is now ready to use in deployments!</p>
+				<p><strong>Build Duration:</strong> {self.build_duration or 0} seconds</p>
 				"""
 			else:
-				subject = f"❌ Custom Image Build Failed - {self.image_name}"
+				subject = _("Custom Image Build Failed - {0}").format(self.image_name)
 				message = f"""
-				<h2>⚠️ Custom Image Build Failed</h2>
-				<p>Unfortunately, your custom Docker image build encountered an error.</p>
-
+				<p>Your custom Docker image build encountered an error.</p>
 				<p><strong>Image Name:</strong> {self.image_name}</p>
 				<p><strong>Server:</strong> {self.server_name}</p>
-				<p><strong>Build Duration:</strong> {self.build_duration} seconds</p>
-
 				<p>Please check the build log for more details.</p>
 				"""
 
@@ -294,135 +184,96 @@ class CustomImage(Document):
 				reference_doctype="Custom Image",
 				reference_name=self.name,
 			)
+		except Exception:
+			frappe.log_error(title=_("Email Notification Failed"))
 
+	@frappe.whitelist()
+	def enqueue_build_custom_image(self):
+		frappe.enqueue_doc(
+			"Custom Image",
+			self.name,
+			"build_custom_image",
+			queue="long",
+			timeout=1200,
+			enqueue_after_commit=True,
+		)
+		return {"status": "queued", "message": _("Build process has been queued")}
+
+	@frappe.whitelist()
+	def preview_apps_json_for_form(self):
+		try:
+			apps_json = self._generate_apps_json()
+			return {
+				"success": True,
+				"apps_json": apps_json,
+				"apps_json_base64": base64.b64encode(apps_json.encode()).decode(),
+				"app_count": len(json.loads(apps_json)),
+			}
 		except Exception as e:
-			frappe.log_error(f"Failed to send email notification: {e!s}", "Email Notification")
-
-
-@frappe.whitelist()
-def preview_apps_json(custom_image_name: str) -> dict[str, Any]:
-	"""API endpoint to preview generated apps.json for a Custom Image.
-
-	Args:
-		custom_image_name: Name of the Custom Image document
-
-	Returns:
-		Dict with apps_json content and base64 version
-	"""
-	try:
-		custom_image = frappe.get_cached_doc("Custom Image", custom_image_name)
-		apps_json = custom_image.generate_apps_json()
-		apps_json_base64 = custom_image.generate_apps_json_base64()
-
-		return {
-			"success": True,
-			"apps_json": apps_json,
-			"apps_json_base64": apps_json_base64,
-			"app_count": len(json.loads(apps_json)),
-		}
-	except Exception as e:
-		return {"success": False, "error": str(e)}
+			return {"success": False, "error": str(e)}
 
 
 @frappe.whitelist()
 def create_and_build_custom_image(server_name, apps, custom_apps, image_name, frappe_version):
-	try:
-		if isinstance(apps, str):
-			apps = json.loads(apps)
-		if isinstance(custom_apps, str):
-			custom_apps = json.loads(custom_apps) if custom_apps else []
-		if custom_apps is None:
-			custom_apps = []
+	apps = frappe.parse_json(apps) if isinstance(apps, str) else apps
+	custom_apps = frappe.parse_json(custom_apps) if isinstance(custom_apps, str) else (custom_apps or [])
 
-		if not frappe.db.exists("Server", server_name):
-			frappe.throw(_("Server {0} not found").format(server_name))
+	server = frappe.get_doc("Server", server_name)
+	if server.verify_status != "Prepared":
+		frappe.throw(_("Server must be in 'Prepared' status before building custom images"))
 
-		server = frappe.get_doc("Server", server_name)
-		if server.verify_status != "Prepared":
-			frappe.throw(_("Server must be in 'Prepared' status before building custom images"))
-
-		custom_image = frappe.get_doc(
-			{
-				"doctype": "Custom Image",
-				"server_name": server_name,
-				"image_name": image_name,
-				"frappe_version": frappe_version,
-				"build_status": "Draft",
-			}
-		)
-
-		for app_name in apps:
-			app_filters = [["scrubbed_name", "=", app_name.lower()]]
-			apps_docs = frappe.get_all("Apps", filters=app_filters, fields=["name"])
-
-			if apps_docs:
-				custom_image.append("apps_config", {"app_name": apps_docs[0].name})
-			else:
-				frappe.log_error(f"App with scrubbed_name '{app_name}' not found in Apps doctype")
-
-		for custom_app in custom_apps:
-			app_name = custom_app.get("name", "")
-			if not app_name:
-				continue
-
-			if not frappe.db.exists("Apps", app_name):
-				apps_doc = frappe.get_doc(
-					{
-						"doctype": "Apps",
-						"app_name": app_name,
-						"repo_url": custom_app.get("githubUrl", ""),
-						"branch": custom_app.get("branch", "main"),
-						"pat_token": custom_app.get("token", ""),
-						"is_custom": 1,
-						"enabled": 1,
-						"frappe": 0,
-						"order": 999,
-					}
-				)
-				apps_doc.insert(ignore_permissions=True)
-
-			custom_image.append("apps_config", {"app_name": app_name})
-
-		custom_image.insert(ignore_permissions=True)
-
-		result = custom_image.enqueue_build_custom_image()
-
-		return {
-			"status": "success",
-			"message": result.get("message", "Build process queued successfully"),
-			"custom_image_name": custom_image.name,
+	custom_image = frappe.new_doc("Custom Image")
+	custom_image.update(
+		{
+			"server_name": server_name,
+			"image_name": image_name,
+			"frappe_version": frappe_version,
+			"build_status": "Draft",
 		}
+	)
 
-	except Exception as e:
-		frappe.log_error(f"Error creating custom image: {e}")
-		return {"status": "error", "message": str(e)}
+	for app_name in apps:
+		app_doc_name = frappe.db.get_value("Apps", {"scrubbed_name": app_name.lower()}, "name")
+		if app_doc_name:
+			custom_image.append("apps_config", {"app_name": app_doc_name})
+
+	for custom_app in custom_apps:
+		app_name = custom_app.get("name")
+		if not app_name:
+			continue
+
+		if not frappe.db.exists("Apps", app_name):
+			frappe.get_doc(
+				{
+					"doctype": "Apps",
+					"app_name": app_name,
+					"repo_url": custom_app.get("githubUrl", ""),
+					"branch": custom_app.get("branch", "main"),
+					"pat_token": custom_app.get("token", ""),
+					"is_custom": 1,
+					"enabled": 1,
+					"order": 999,
+				}
+			).insert(ignore_permissions=True)
+
+		custom_image.append("apps_config", {"app_name": app_name})
+
+	custom_image.insert(ignore_permissions=True)
+	result = custom_image.enqueue_build_custom_image()
+
+	return {
+		"status": "success",
+		"message": result.get("message"),
+		"custom_image_name": custom_image.name,
+	}
 
 
 @frappe.whitelist()
 def get_build_status(custom_image_name):
-	"""
-	Get build status for a Custom Image.
-
-	Args:
-		custom_image_name: Name of the Custom Image doctype
-
-	Returns:
-		dict: {status, build_duration, built_at, build_log}
-	"""
-	try:
-		if not frappe.db.exists("Custom Image", custom_image_name):
-			frappe.throw(_("Custom Image {0} not found").format(custom_image_name))
-
-		custom_image = frappe.get_doc("Custom Image", custom_image_name)
-
-		return {
-			"status": custom_image.build_status,
-			"build_duration": custom_image.build_duration or 0,
-			"built_at": custom_image.built_at,
-			"build_log": custom_image.build_log if hasattr(custom_image, "build_log") else "",
-			"image_tag": custom_image.image_tag if custom_image.build_status == "Built" else None,
-		}
-
-	except Exception as e:
-		frappe.log_error(f"Error getting build status: {e}")
-		return {"status": "error", "message": str(e)}
+	doc = frappe.get_doc("Custom Image", custom_image_name)
+	return {
+		"status": doc.build_status,
+		"build_duration": doc.build_duration or 0,
+		"built_at": doc.built_at,
+		"image_tag": doc.image_tag if doc.build_status == "Built" else None,
+	}
