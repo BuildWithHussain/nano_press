@@ -18,7 +18,7 @@
             <select @change="onServerSelect($event.target.value)"
                 style="-webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none;"
                 class="w-full px-3 py-2.5 pr-10 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm focus:border-gray-900 cursor-pointer">
-                <option value="">-- Enter new IP address --</option>
+                <option value="">-- Select a server --</option>
                 {% for server in user_servers %}
                 <option value="{{ server.name }}">{{ server.name }} - {{ server.server_ip }} ({{ server.verify_status or 'Pending' }})</option>
                 {% endfor %}
