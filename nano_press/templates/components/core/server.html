@@ -11,6 +11,27 @@
         </button>
     </div>
 
+    {% if user_servers %}
+    <div class="mb-5">
+        <label class="block text-sm font-medium mb-2 text-gray-900">Select Existing Server</label>
+        <div class="relative">
+            <select @change="onServerSelect($event.target.value)"
+                style="-webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none;"
+                class="w-full px-3 py-2.5 pr-10 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm focus:border-gray-900 cursor-pointer">
+                <option value="">-- Enter new IP address --</option>
+                {% for server in user_servers %}
+                <option value="{{ server.name }}">{{ server.name }} - {{ server.server_ip }} ({{ server.verify_status or 'Pending' }})</option>
+                {% endfor %}
+            </select>
+            <div class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="mb-5">
         <label class="block text-sm font-medium mb-2 text-gray-900">
             IP Address <span class="text-red-500">*</span>
@@ -18,6 +39,7 @@
 
         <input type="text" x-model="serverDetails.ip" placeholder="192.168.1.100" @input="
             error = '';
+            selectedServerName = '';
             $store.installer.isVerified = false;
             const regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
             isValidIP = regex.test(serverDetails.ip);
@@ -119,13 +141,11 @@
         <span x-text="isLoading ? 'Verifying...' : (isVerified ? 'Continue' : 'Verify & Continue')"></span>
     </button>
 
-
 </div>
 
 <script>
     function serverSetup() {
         return {
-            // Use getters to access store directly for reactive updates
             get serverDetails() {
                 return this.$store.installer.serverDetails;
             },
@@ -136,16 +156,43 @@
             isLoading: false,
             error: '',
             isValidIP: false,
+            showAdvanced: false,
+            selectedServerName: '',
+
+            userServers: {{ user_servers | tojson }},
+
+            onServerSelect(serverName) {
+                if (!serverName) {
+                    this.selectedServerName = '';
+                    return;
+                }
+
+                const server = this.userServers.find(s => s.name === serverName);
+                if (server) {
+                    this.selectedServerName = serverName;
+                    this.$store.installer.serverDetails.ip = server.server_ip;
+                    this.$store.installer.serverDetails.rootUser = server.ssh_user;
+                    this.$store.installer.serverDetails.sshPort = String(server.ssh_port);
+                    this.$store.installer.serverName = server.name;
+
+                    if (['Prepared', 'Verified'].includes(server.verify_status)) {
+                        this.$store.installer.isVerified = true;
+                        if (typeof toast !== 'undefined') {
+                            toast('Server selected: ' + server.server_ip, { type: 'success' });
+                        }
+                    } else {
+                        this.$store.installer.isVerified = false;
+                    }
+                }
+            },
 
             validateIP(ip) {
-                // Basic IPv4 validation regex
                 const regex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
                 return regex.test(ip);
             },
 
             clearInstallerData() {
                 if (confirm('Are you sure you want to clear all saved installer data? This will reset everything.')) {
-                    // Clear all nano_press localStorage keys
                     const keysToRemove = [
                         'nano_press_current_step',
                         'nano_press_server_details',
@@ -164,20 +211,18 @@
                         localStorage.removeItem(key);
                     });
 
-                    // Show success message
                     if (typeof toast !== 'undefined') {
                         toast('All saved data cleared successfully', { type: 'success' });
                     }
 
-                    // Reload page to reset state
                     setTimeout(() => {
                         window.location.reload();
                     }, 500);
                 }
             },
+
             async nextStep() {
                 if (this.isVerified) {
-                    // Already verified, just move to next step
                     this.$store.installer.currentStep = 2;
                     return;
                 }
@@ -185,7 +230,6 @@
                 this.error = '';
                 this.isLoading = true;
 
-                // Validate IP format first
                 if (!this.validateIP(this.serverDetails.ip)) {
                     this.error = 'Invalid IP address. Please check and try again.';
                     this.isLoading = false;
@@ -193,22 +237,19 @@
                 }
 
                 try {
-                    // Call the combined function: ping + create server
                     const serverData = await verify_and_create_server(
                         this.serverDetails.ip,
                         this.serverDetails.rootUser,
                         this.serverDetails.sshPort
                     );
 
-                    // If server creation succeeded
                     const message = "Server verified and created successfully";
                     if (typeof toast !== 'undefined') {
                         toast(message, { type: "success" });
                     }
 
-                    // Update store (serverDetails is already updated via binding, just update verification status)
                     this.$store.installer.isVerified = true;
-                    this.$store.installer.serverName = serverData.name; // Store the server document name
+                    this.$store.installer.serverName = serverData.name;
                     this.$store.installer.currentStep = 2;
 
                 } catch (err) {
@@ -224,6 +265,7 @@
             }
         }
     }
+
     async function create_server_doc(server_ip, ssh_user, ssh_port) {
         const url = '/api/resource/Server';
         try {
@@ -232,13 +274,10 @@
                 ssh_user,
                 ssh_port,
                 traefik_email: '{{ user_email }}'
-                // server_name will be auto-generated as BENCH-00001, BENCH-00002, etc.
             };
 
-            // Create document using frappe_call()
             const response = await frappe_call(url, payload, "POST");
 
-            // Check if the response looks good
             if (response?.data?.name) {
                 const message = ("Server record created successfully");
                 toast(message, { type: "success" });
@@ -249,9 +288,10 @@
         } catch (err) {
             const message = err.message || ("Error creating server record");
             toast(message, { type: "danger" });
-            throw err; // rethrow if you want the caller to handle it
+            throw err;
         }
     }
+
     async function ping_server(server_ip, ssh_user = "root", ssh_port = 22) {
         const url = '/api/v2/method/nano_press.api.ping_server';
         try {
@@ -277,9 +317,9 @@
             throw err;
         }
     }
+
     async function verify_and_create_server(server_ip, ssh_user = "root", ssh_port = 22) {
         await ping_server(server_ip, ssh_user, ssh_port);
         return await create_server_doc(server_ip, ssh_user, ssh_port);
     }
-
 </script>
