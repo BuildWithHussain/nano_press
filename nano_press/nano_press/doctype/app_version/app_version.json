@@ -1,51 +1,48 @@
 {
- "actions": [],
- "autoname": "",
- "creation": "2025-12-27 00:00:00",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "version",
-  "scrubbed_version"
- ],
- "fields": [
-  {
-   "fieldname": "version",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Version",
-   "reqd": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "scrubbed_version",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Scrubbed Version"
-  }
- ],
- "links": [],
- "modified": "2025-12-27 16:34:33.317253",
- "modified_by": "Administrator",
- "module": "Nano Press",
- "name": "App Version",
- "naming_rule": "By script",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "read": 1,
-   "role": "System Manager",
-   "write": 1
-  },
-  {
-   "read": 1,
-   "role": "Nano Press User"
-  }
- ],
- "row_format": "Dynamic",
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": []
+	"actions": [],
+	"autoname": "",
+	"creation": "2025-12-27 00:00:00",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": ["version", "scrubbed_version"],
+	"fields": [
+		{
+			"fieldname": "version",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Version",
+			"reqd": 1,
+			"unique": 1
+		},
+		{
+			"fieldname": "scrubbed_version",
+			"fieldtype": "Data",
+			"hidden": 1,
+			"label": "Scrubbed Version"
+		}
+	],
+	"links": [],
+	"modified": "2025-12-27 16:34:33.317253",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "App Version",
+	"naming_rule": "By script",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"read": 1,
+			"role": "System Manager",
+			"write": 1
+		},
+		{
+			"read": 1,
+			"role": "Nano Press User"
+		}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": []
 }
