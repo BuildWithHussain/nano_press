@@ -81,3 +81,78 @@ def check_domain_resolves_to_ip(domain: str, expected_ip: str) -> dict:
 	except Exception as e:
 		frappe.log_error(f"Error occurred while checking domain {domain}: {e}")
 		return {"success": False, "resolved_ips": [], "message": f"Error: {e}"}
+
+
+@frappe.whitelist()
+def register_custom_app(
+	app_name: str, github_url: str, branch: str, token: str | None = None, order: int | None = None
+) -> dict:
+	try:
+		if not app_name or not github_url or not branch:
+			frappe.throw(_("app_name, github_url, and branch are required"))
+
+		app_name_normalized = app_name.lower().strip()
+
+		if frappe.db.exists("Apps", app_name_normalized):
+			app_doc = frappe.get_doc("Apps", app_name_normalized)
+			app_doc.repo_url = github_url
+			app_doc.branch = branch
+			if token:
+				app_doc.pat_token = token
+			if order is not None:
+				app_doc.order = order
+			app_doc.save(ignore_permissions=True)
+		else:
+			app_doc = frappe.get_doc(
+				{
+					"doctype": "Apps",
+					"app_name": app_name_normalized,
+					"repo_url": github_url,
+					"branch": branch,
+					"pat_token": token or "",
+					"is_custom": 1,
+					"enabled": 1,
+					"order": order if order is not None else 999,
+				}
+			)
+			app_doc.insert(ignore_permissions=True)
+
+		frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+
+		return {
+			"success": True,
+			"app_reference_id": app_doc.name,
+			"message": _("Custom app registered securely"),
+		}
+
+	except Exception as e:
+		frappe.log_error(f"Error registering custom app: {e}")
+		frappe.db.rollback()
+		return {"success": False, "message": str(e)}
+
+
+@frappe.whitelist()
+def delete_custom_app(app_name: str) -> dict:
+	try:
+		if not app_name:
+			frappe.throw(_("app_name is required"))
+
+		app_name_normalized = app_name.lower().strip()
+
+		if not frappe.db.exists("Apps", app_name_normalized):
+			return {"success": True, "message": _("App not found or already deleted")}
+
+		app_doc = frappe.get_doc("Apps", app_name_normalized)
+
+		if not app_doc.is_custom:
+			frappe.throw(_("Cannot delete non-custom apps"))
+
+		frappe.delete_doc("Apps", app_name_normalized, ignore_permissions=True)
+		frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+
+		return {"success": True, "message": _("Custom app deleted successfully")}
+
+	except Exception as e:
+		frappe.log_error(f"Error deleting custom app: {e}")
+		frappe.db.rollback()
+		return {"success": False, "message": str(e)}

@@ -173,6 +173,16 @@
                             required
                             class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
                     </div>
+
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium mb-2 text-gray-900">
+                            Installation Order (Optional)
+                        </label>
+                        <input type="number" x-model.number="localCustomAppForm.order" placeholder="999"
+                            min="0"
+                            class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                        <p class="mt-1 text-xs text-gray-500">Lower numbers install first. Leave empty for default (999)</p>
+                    </div>
                 </div>
 
                 <div class="flex gap-3">
@@ -212,7 +222,8 @@
                 name: '',
                 githubUrl: '',
                 token: '',
-                branch: 'main'
+                branch: 'main',
+                order: null
             },
 
             init() {
@@ -221,20 +232,75 @@
                 this.localCustomApps = [...this.$store.installer.customApps];
             },
 
-            addCustomApp() {
-                const newApp = {
+            async addCustomApp() {
+                const appData = {
                     name: this.localCustomAppForm.name.toLowerCase(),
                     githubUrl: this.localCustomAppForm.githubUrl,
-                    token: this.appType === 'private' ? this.localCustomAppForm.token : '',
                     branch: this.localCustomAppForm.branch || 'main'
                 };
-                this.localCustomApps.push(newApp);
-                this.localCustomAppForm = { name: '', githubUrl: '', token: '', branch: 'main' };
+
+                if (this.appType === 'private' || this.localCustomAppForm.order !== null) {
+                    try {
+                        const url = '/api/method/nano_press.api.register_custom_app';
+                        const payload = {
+                            app_name: appData.name,
+                            github_url: appData.githubUrl,
+                            branch: appData.branch,
+                            token: this.appType === 'private' ? this.localCustomAppForm.token : null,
+                            order: this.localCustomAppForm.order
+                        };
+
+                        const response = await frappe_call(url, payload, "POST");
+
+                        if (!response?.message?.success) {
+                            throw new Error(response?.message?.message || "Failed to register custom app");
+                        }
+
+                        appData.app_reference_id = response.message.app_reference_id;
+
+                        if (typeof toast !== 'undefined') {
+                            toast("Custom app registered securely", { type: "success" });
+                        }
+                    } catch (err) {
+                        if (typeof toast !== 'undefined') {
+                            toast(err.message || "Failed to register custom app", { type: "danger" });
+                        }
+                        return;
+                    }
+                }
+
+                this.localCustomApps.push(appData);
+
+                this.localCustomAppForm = { name: '', githubUrl: '', token: '', branch: 'main', order: null };
                 this.appType = 'public';
                 this.localShowCustomAppDialog = false;
+
                 this.syncToStore();
             },
-            removeCustomApp(index) {
+            async removeCustomApp(index) {
+                const app = this.localCustomApps[index];
+
+                if (app && app.app_reference_id) {
+                    try {
+                        const url = '/api/method/nano_press.api.delete_custom_app';
+                        const payload = { app_name: app.name };
+
+                        const response = await frappe_call(url, payload, "POST");
+
+                        if (!response?.message?.success) {
+                            throw new Error(response?.message?.message || "Failed to delete custom app");
+                        }
+
+                        if (typeof toast !== 'undefined') {
+                            toast("Custom app deleted", { type: "success" });
+                        }
+                    } catch (err) {
+                        if (typeof toast !== 'undefined') {
+                            toast(err.message || "Failed to delete custom app from backend", { type: "warning" });
+                        }
+                    }
+                }
+
                 this.localCustomApps.splice(index, 1);
                 this.syncToStore();
             },

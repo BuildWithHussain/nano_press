@@ -54,11 +54,11 @@
 			"non_negative": 1
 		},
 		{
-			"depends_on": "eval: doc.is_public == 0",
+			"depends_on": "eval: doc.is_custom == 1",
+			"description": "Required for private repositories. If provided, the app will be marked as private.",
 			"fieldname": "pat_token",
-			"fieldtype": "Data",
-			"label": "PAT Token",
-			"mandatory_depends_on": "eval: doc.is_private == 1"
+			"fieldtype": "Password",
+			"label": "PAT Token"
 		},
 		{
 			"fieldname": "scrubbed_name",

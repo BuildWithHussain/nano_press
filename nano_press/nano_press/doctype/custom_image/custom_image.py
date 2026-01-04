@@ -101,7 +101,7 @@ class CustomImage(Document):
 
 	def _update_status(self, status):
 		frappe.db.set_value("Custom Image", self.name, "build_status", status, update_modified=False)
-		frappe.db.commit()
+		frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
 
 	def _on_build_success(self, start_time):
 		end_time = frappe.utils.now_datetime()
@@ -249,8 +249,8 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 					"app_name": app_name,
 					"repo_url": custom_app.get("githubUrl", ""),
 					"branch": custom_app.get("branch", "main"),
-					"pat_token": custom_app.get("token", ""),
 					"is_custom": 1,
+					"is_public": 1,
 					"enabled": 1,
 					"order": 999,
 				}
