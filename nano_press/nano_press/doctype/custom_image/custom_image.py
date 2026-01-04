@@ -32,7 +32,6 @@ class CustomImage(Document):
 		if not self.apps_config:
 			frappe.throw(_("No apps configured for this Custom Image"))
 
-		apps_list = []
 		for app_item in self.apps_config:
 			if not app_item.app_name:
 				continue
@@ -45,14 +44,7 @@ class CustomImage(Document):
 					)
 				)
 
-			apps_list.append(
-				{
-					"url": self._build_repo_url(app_doc),
-					"branch": app_doc.branch,
-				}
-			)
-
-		return json.dumps(self._sort_apps_by_order(apps_list), indent=2)
+		return json.dumps(self._sort_apps_by_order(), indent=2)
 
 	def _generate_apps_json_base64(self):
 		apps_json = self._generate_apps_json()
@@ -68,20 +60,28 @@ class CustomImage(Document):
 
 		return repo_url
 
-	def _sort_apps_by_order(self, apps_list):
-		app_order_map = {}
+	def _sort_apps_by_order(self):
+		order_map = {}
 		for item in self.apps_config:
 			if item.app_name:
-				order = frappe.db.get_value("Apps", item.app_name, "order") or 999
-				app_order_map[item.app_name] = order
+				order_map[item.app_name] = frappe.db.get_value("Apps", item.app_name, "order") or 999
 
-		sorted_apps = []
-		for i, app_item in enumerate(self.apps_config):
-			if app_item.app_name and i < len(apps_list):
-				order = app_order_map.get(app_item.app_name, 999)
-				sorted_apps.append((apps_list[i], order))
+		sorted_config = sorted(
+			[item for item in self.apps_config if item.app_name],
+			key=lambda item: order_map.get(item.app_name, 999),
+		)
 
-		return [app for app, _ in sorted(sorted_apps, key=lambda x: x[1])]
+		sorted_list = []
+		for item in sorted_config:
+			app_doc = frappe.get_cached_doc("Apps", item.app_name)
+			sorted_list.append(
+				{
+					"url": self._build_repo_url(app_doc),
+					"branch": app_doc.branch,
+				}
+			)
+
+		return sorted_list
 
 	def _get_deployment_vars(self):
 		return {

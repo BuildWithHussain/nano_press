@@ -234,7 +234,7 @@
 
             async addCustomApp() {
                 const appData = {
-                    name: this.localCustomAppForm.name.toLowerCase(),
+                    name: this.localCustomAppForm.name.trim(),
                     githubUrl: this.localCustomAppForm.githubUrl,
                     branch: this.localCustomAppForm.branch || 'main'
                 };
