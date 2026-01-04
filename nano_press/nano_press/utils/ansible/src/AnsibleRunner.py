@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import frappe
+from frappe import _
 
 
 @dataclass(frozen=True)
@@ -80,7 +81,7 @@ class AnsibleOps:
 			private_key = private_key or resolved_key
 
 		if not host or not user or port is None:
-			frappe.throw("Insufficient connection details: host/user/port are required.")
+			frappe.throw(_("Insufficient connection details: host/user/port are required."))
 
 		playbook_abs = self._resolve_playbook_path(playbook_path)
 
@@ -140,7 +141,7 @@ class AnsibleOps:
 			private_key = private_key or resolved_key
 
 		if not host or not user or port is None:
-			frappe.throw("Insufficient connection details: host/user/port are required.")
+			frappe.throw(_("Insufficient connection details: host/user/port are required."))
 
 		with self._temp_inventory(host, user, int(port)) as inv:
 			cmd = [self.ansible_bin, "all", "-i", str(inv), "-m", "ping"]
@@ -164,10 +165,6 @@ class AnsibleOps:
 					"server_name": server_name,
 				},
 			)
-
-	# ---------------------
-	# Internal helpers
-	# ---------------------
 
 	def _run(self, cmd: list[str], timeout: int) -> tuple[int, str, str]:
 		try:
@@ -201,10 +198,6 @@ class AnsibleOps:
 			path = Path(tmpdir) / "vars.json"
 			path.write_text(json.dumps(extra_vars))
 			yield path
-
-	# ---------------------
-	# Structured JSON output
-	# ---------------------
 
 	def _to_structured_json(
 		self,
@@ -254,7 +247,7 @@ class AnsibleOps:
 		Returns: (host, user, port, private_key_path_or_None)
 		"""
 		if not (server_ip or server_name):
-			frappe.throw("Pass either server_ip or server_name to resolve connection details.")
+			frappe.throw(_("Pass either server_ip or server_name to resolve connection details."))
 
 		filters = {"server_ip": server_ip} if server_ip else {"server_name": server_name}
 		row = frappe.db.get_value(

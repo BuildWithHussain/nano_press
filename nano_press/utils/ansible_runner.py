@@ -1,6 +1,7 @@
 import json
 
 import frappe
+from frappe import _
 
 from nano_press.nano_press.doctype.ansible_log.ansible_log import log_ansible_result
 from nano_press.nano_press.utils.ansible.src.AnsibleRunner import AnsibleOps
@@ -30,7 +31,7 @@ def run_playbook(**kwargs):
 		server_name = kwargs.get("server_name")
 		playbook_arg = kwargs.get("playbook_path")
 		if not playbook_arg or not (host or server_name):
-			frappe.throw("Missing required fields: playbook_path and one of host or server_name")
+			frappe.throw(_("Missing required fields: playbook_path and one of host or server_name"))
 
 		extra_vars = kwargs.get("extra_vars", {}) or {}
 		become = bool(kwargs.get("become", False))
@@ -102,7 +103,7 @@ def ping_server(**kwargs):
 		server_name = kwargs.get("server_name")
 
 		if not host and not server_name:
-			frappe.throw("Provide either 'host' (server_ip) or 'server_name'")
+			frappe.throw(_("Provide either 'host' (server_ip) or 'server_name'"))
 
 		runner = AnsibleOps()
 		result = runner.run_ping(

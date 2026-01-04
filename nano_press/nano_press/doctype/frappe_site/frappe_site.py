@@ -4,6 +4,7 @@
 import os
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import random_string
 
@@ -67,12 +68,12 @@ class FrappeSite(Document):
 	def validate_server(self):
 		linked_server = (self.server_name or "").strip()
 		if not linked_server:
-			frappe.throw("Please select a Server before deploying.")
+			frappe.throw(_("Please select a Server before deploying."))
 		if not frappe.db.exists("Server", linked_server):
-			frappe.throw(f"Linked Server '{linked_server}' does not exist.")
+			frappe.throw(_("Linked Server '{0}' does not exist.").format(linked_server))
 		server = frappe.get_cached_doc("Server", linked_server)
 		if getattr(server, "verify_status", "Not Verified") != "Prepared":
-			frappe.throw("Server is not verified. Please verify the server first.")
+			frappe.throw(_("Server is not verified. Please verify the server first."))
 		return server
 
 	def _ensure_password(self):

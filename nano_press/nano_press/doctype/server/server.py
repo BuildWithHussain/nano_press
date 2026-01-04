@@ -5,6 +5,7 @@ import os
 import subprocess
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from nano_press.utils.ansible_runner import run_playbook
@@ -240,7 +241,7 @@ def prepare_server(server_name: str, include_traefik: bool = False):
 		dict with status, message, versions, and log_id
 	"""
 	if not server_name:
-		frappe.throw("Server name is required")
+		frappe.throw(_("Server name is required"))
 
 	server = frappe.get_doc("Server", server_name)
 	return server.prepare_server(include_traefik=include_traefik)

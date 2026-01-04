@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import frappe
+from frappe import _
 
 from nano_press.utils.ansible_runner import run_playbook
 
@@ -21,7 +22,7 @@ class RemoteImageBuilder:
 	def build_image_on_server(self, server_name: str | None = None) -> str:
 		if not server_name:
 			if not self.custom_image_doc.server_name:
-				frappe.throw("No server linked to Custom Image and no server_name provided")
+				frappe.throw(_("No server linked to Custom Image and no server_name provided"))
 			server_name = self.custom_image_doc.server_name
 
 		server_doc = frappe.get_cached_doc("Server", server_name)
@@ -47,16 +48,16 @@ class RemoteImageBuilder:
 
 	def _validate_custom_image(self) -> None:
 		if not self.custom_image_doc.apps_config:
-			frappe.throw("No apps configured for this Custom Image")
+			frappe.throw(_("No apps configured for this Custom Image"))
 
 		if not self.custom_image_doc.frappe_version:
-			frappe.throw("Frappe version not specified")
+			frappe.throw(_("Frappe version not specified"))
 
 		if not self.custom_image_doc.image_name:
-			frappe.throw("Image name not specified")
+			frappe.throw(_("Image name not specified"))
 
 		if not self.custom_image_doc.server_name:
-			frappe.throw("No server linked to this Custom Image")
+			frappe.throw(_("No server linked to this Custom Image"))
 
 	def _validate_server(self, server_doc) -> None:
 		if server_doc.verify_status != "Verified":
