@@ -65,6 +65,14 @@ class FrappeSite(Document):
 		if self.docstatus == 0:
 			self._ensure_password()
 
+		if self.status == "Deploying" and self.is_new():
+			existing = frappe.db.exists(
+				"Frappe Site",
+				{"server_name": self.server_name, "status": "Deploying", "owner": frappe.session.user},
+			)
+			if existing:
+				frappe.throw(_("A deployment is already in progress for this server. Please wait."))
+
 	def validate_server(self):
 		linked_server = (self.server_name or "").strip()
 		if not linked_server:
@@ -263,6 +271,103 @@ class FrappeSite(Document):
 			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
+	@frappe.whitelist()
+	def enqueue_full_deployment(self):
+		self.status = "Deploying"
+		self.deployment_substep = "Preparing server"
+		self.save()
+
+		frappe.enqueue_doc(
+			"Frappe Site",
+			self.name,
+			"execute_full_deployment",
+			queue="long",
+			timeout=3600,
+			enqueue_after_commit=True,
+		)
+
+		return {"status": "queued", "message": _("Full deployment has been queued")}
+
+	def execute_full_deployment(self):
+		try:
+			self._update_substep("Preparing server")
+			self._prepare_server_step()
+
+			self._update_substep("Preparing deployment")
+			result = self.prepare_for_deployment()
+			if result.get("status") != 200:
+				raise Exception(result.get("message"))
+
+			self._update_substep("Deploying site")
+			result = self.deploy_site()
+			if result.get("status") != 200:
+				raise Exception(result.get("message"))
+
+			self.deployment_substep = None
+			self.status = "Deployed"
+			self.last_deployed_at = frappe.utils.now_datetime()
+			self.save()
+
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), "Full deployment failed")
+			self.status = "Failed"
+			self.deployment_substep = None
+			self.save()
+			raise
+
+	def _update_substep(self, substep):
+		frappe.db.set_value("Frappe Site", self.name, "deployment_substep", substep, update_modified=False)
+		frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+
+	def _prepare_server_step(self):
+		server = frappe.get_doc("Server", self.server_name)
+		result = server.prepare_server(include_traefik=True)
+		if result.get("status") != 200:
+			raise Exception(f"Server preparation failed: {result.get('message')}")
+
+	def _build_custom_image_step(self):
+		import time
+
+		from nano_press.nano_press.doctype.custom_image.custom_image import create_and_build_custom_image
+
+		timestamp = int(time.time())
+		image_name = f"custom-{timestamp}"
+
+		apps = [row.app_name for row in self.install_apps if row.app_name]
+
+		result = create_and_build_custom_image(
+			server_name=self.server_name,
+			apps=apps,
+			custom_apps=[],
+			image_name=image_name,
+			frappe_version="version-15",
+		)
+
+		custom_image_name = result.get("custom_image_name")
+		if not custom_image_name:
+			raise Exception("Failed to create custom image")
+
+		max_wait = 1200
+		elapsed = 0
+		interval = 10
+
+		while elapsed < max_wait:
+			custom_image = frappe.get_doc("Custom Image", custom_image_name)
+
+			if custom_image.build_status == "Built":
+				self.custom_image = custom_image_name
+				self.is_custom = 1
+				self.save()
+				return custom_image_name
+			elif custom_image.build_status == "Failed":
+				raise Exception("Custom image build failed")
+
+			frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+			time.sleep(interval)
+			elapsed += interval
+
+		raise Exception("Custom image build timed out")
+
 
 @frappe.whitelist()
 def prepare_for_deployment(site_name: str) -> dict:
@@ -302,3 +407,59 @@ def deploy_site(site_name: str) -> dict:
 	"""Wrapper function to call deploy_site on a Frappe Site document"""
 	doc = frappe.get_doc("Frappe Site", site_name)
 	return doc.deploy_site()
+
+
+@frappe.whitelist()
+def get_deployment_state(server_name: str | None = None) -> dict:
+	filters = {"owner": frappe.session.user}
+	if server_name:
+		filters["server_name"] = server_name
+
+	active = frappe.db.get_all(
+		"Frappe Site",
+		filters={**filters, "status": ["in", ["Deploying", "Ready To Deploy"]]},
+		fields=["name", "bench_name", "status", "server_name", "site_url", "custom_image", "modified"],
+		order_by="modified desc",
+		limit=1,
+	)
+
+	recent = frappe.db.get_all(
+		"Frappe Site",
+		filters={
+			**filters,
+			"status": "Deployed",
+			"modified": [">", frappe.utils.add_to_date(None, hours=-1)],
+		},
+		fields=["name", "bench_name", "site_url", "modified"],
+		order_by="modified desc",
+		limit=3,
+	)
+
+	image_build = None
+	if active and len(active) > 0 and active[0].get("custom_image"):
+		custom_image_doc = frappe.get_doc("Custom Image", active[0]["custom_image"])
+		if custom_image_doc.build_status == "Building":
+			image_build = {
+				"name": custom_image_doc.name,
+				"image_name": custom_image_doc.image_name,
+				"build_status": custom_image_doc.build_status,
+			}
+
+	recent_built_images = frappe.db.get_all(
+		"Custom Image",
+		filters={
+			"owner": frappe.session.user,
+			"build_status": "Built",
+			"modified": [">", frappe.utils.add_to_date(None, hours=-1)],
+		},
+		fields=["name", "image_name", "build_status", "modified", "server_name"],
+		order_by="modified desc",
+		limit=3,
+	)
+
+	return {
+		"active_deployment": active[0] if active else None,
+		"recent_completed": recent,
+		"in_progress_image_build": image_build,
+		"recent_built_images": recent_built_images,
+	}

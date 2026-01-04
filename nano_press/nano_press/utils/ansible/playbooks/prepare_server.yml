@@ -220,7 +220,7 @@
           register: traefik_version_check
           changed_when: false
           failed_when: false
-      when: traefik_check.stdout | length == 0 and traefik_domain is defined
+      when: traefik_check.stdout | length == 0 and (traefik_domain | default('') | length > 0)
 
     # =============================================
     # STEP 10: Display summary

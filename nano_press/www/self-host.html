@@ -38,7 +38,16 @@
             domain: Alpine.$persist('').as('nano_press_domain'),
             domainVerified: Alpine.$persist(false).as('nano_press_domain_verified'),
             siteName: Alpine.$persist(null).as('nano_press_site_name'),
-            siteUrl: Alpine.$persist(null).as('nano_press_site_url')
+            siteUrl: Alpine.$persist(null).as('nano_press_site_url'),
+            deploymentState: Alpine.$persist({
+                isDeploying: false,
+                isComplete: false,
+                currentStep: 0,
+                deployingDocName: null,
+                customImageName: null,
+                lastUpdated: null,
+                version: 1
+            }).as('nano_press_deployment_state')
         });
     });
 

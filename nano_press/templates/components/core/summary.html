@@ -160,105 +160,96 @@
 
 <script>
 function summarySetup() {
-    return {
-        deploying: false,
-        deployComplete: false,
-        deploymentStatus: 'Initializing deployment...',
-        deployStep: 0,
+    const state = Alpine.store('installer')?.deploymentState || {
+        isDeploying: false,
+        isComplete: false,
+        currentStep: 0
+    };
 
-        
+    return {
+        deploying: state.isDeploying || false,
+        deployComplete: state.isComplete || false,
+        deploymentStatus: state.isDeploying
+            ? (['', 'Preparing server...', 'Setting up your Apps...', 'Creating site...', 'Preparing deployment...', 'Deploying site...'][state.currentStep] || 'Processing...')
+            : 'Initializing deployment...',
+        deployStep: state.currentStep || 0,
+
+
         buildingImage: false,
 
-        
+
         siteUsername: '',
         sitePassword: '',
+
+        async init() {
+            const siteName = this.$store.installer.siteName;
+
+            if (siteName) {
+                await this.checkExistingDeployment(siteName);
+            }
+        },
+
+        async checkExistingDeployment(siteName) {
+            try {
+                const url = '/api/method/nano_press.api.get_deployment_status';
+                const response = await frappe_call(url, { site_name: siteName }, "POST");
+
+                if (response?.message) {
+                    const status = response.message;
+
+                    if (status.status === 'Deploying') {
+                        this.deploying = true;
+                        this.updateStepFromSubstep(status.substep);
+                        this.deploymentStatus = status.substep || 'Deploying...';
+                        this.pollDeploymentStatus(siteName);
+                    } else if (status.status === 'Deployed') {
+                        this.deployComplete = true;
+                        await this.fetchSiteCredentials(siteName);
+                    } else if (status.status === 'Failed') {
+                        if (typeof toast !== 'undefined') {
+                            toast('Previous deployment failed', { type: 'danger' });
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check existing deployment:', error);
+            }
+        },
 
         prevStep() {
             this.$store.installer.currentStep = 3;
         },
-        
+
         async startDeployment() {
-            this.deploying = true;
-            this.deployComplete = false;
-            this.deployStep = 0;
-
             try {
-                this.deploymentStatus = 'Preparing server (installing Docker, Docker Compose, Traefik)...';
-                this.deployStep = 1;
+                this.deploying = true;
+                this.deployComplete = false;
+                this.deployStep = 0;
+                this.deploymentStatus = 'Starting deployment...';
 
-                const serverName = this.$store.installer.serverName;
-                if (!serverName) {
-                    throw new Error('Server not found. Please verify your server first.');
+                const url = '/api/method/nano_press.api.initiate_site_deployment';
+                const payload = {
+                    server_name: this.$store.installer.serverName,
+                    apps: this.$store.installer.selectedApps,
+                    custom_apps: this.$store.installer.customApps,
+                    frappe_version: this.$store.installer.frappeVersion,
+                    domain: this.$store.installer.domain
+                };
+
+                const response = await frappe_call(url, payload, "POST");
+
+                if (!response?.message?.success) {
+                    throw new Error(response?.message?.message || 'Failed to start deployment');
                 }
 
-                const prepareResult = await this.callPrepareServer(serverName, true);
+                const siteName = response.message.site_name;
+                this.$store.installer.siteName = siteName;
+                this.$store.installer.siteUrl = response.message.site_url;
 
-                if (typeof toast !== 'undefined') {
-                    const successMsg = prepareResult.message || 'Server prepared successfully!';
-                    toast(successMsg, { type: 'success' });
-                }
+                console.log('Deployment started, polling for status:', siteName);
 
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await this.pollDeploymentStatus(siteName);
 
-                this.deploymentStatus = 'Setting up your Apps...';
-                this.deployStep = 2;
-                this.buildingImage = true;
-
-                const customImageName = await this.buildCustomImage();
-
-
-                if (typeof toast !== 'undefined') {
-                    toast('Custom image built successfully!', { type: 'success' });
-                }
-
-                // Wait a moment before moving to next step
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Step 3: Create Frappe Site document (with custom image)
-                this.deploymentStatus = 'Creating site structure...';
-                this.deployStep = 3;
-                this.buildingImage = false;
-
-                const siteDoc = await this.createFrappeSiteDoc(customImageName);
-
-                // Fetch actual credentials (passwords are masked in regular response)
-                await this.fetchSiteCredentials(siteDoc.name);
-
-                if (typeof toast !== 'undefined') {
-                    toast('Site structure created successfully!', { type: 'success' });
-                }
-
-                // Wait a moment before moving to next step
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Step 4: Prepare for deployment (provision bench structure)
-                this.deploymentStatus = 'Preparing deployment (provisioning bench structure)...';
-                this.deployStep = 4;
-
-                const prepareDeploymentResult = await this.callPrepareForDeployment(siteDoc.name);
-
-                if (typeof toast !== 'undefined') {
-                    toast('Deployment prepared successfully!', { type: 'success' });
-                }
-
-                // Wait a moment before moving to next step
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Step 5: Deploy site (bring up containers)
-                this.deploymentStatus = 'Deploying site (starting containers)...';
-                this.deployStep = 5;
-
-                const deployResult = await this.callDeploySite(siteDoc.name);
-
-                if (typeof toast !== 'undefined') {
-                    toast('Site deployed successfully!', { type: 'success' });
-                }
-
-                // Store the site name for accessing later
-                this.$store.installer.siteName = siteDoc.name;
-                this.$store.installer.siteUrl = siteDoc.site_url;
-
-                // Deployment complete
                 this.deploying = false;
                 this.deployComplete = true;
 
@@ -277,7 +268,48 @@ function summarySetup() {
                 }
             }
         },
-        
+
+        async pollDeploymentStatus(siteName) {
+            return new Promise((resolve, reject) => {
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const url = '/api/method/nano_press.api.get_deployment_status';
+                        const payload = { site_name: siteName };
+                        const response = await frappe_call(url, payload, "POST");
+
+                        if (response?.message) {
+                            const status = response.message;
+
+                            this.updateStepFromSubstep(status.substep);
+                            this.deploymentStatus = status.substep || 'Deploying...';
+
+                            if (status.is_complete) {
+                                clearInterval(pollInterval);
+                                await this.fetchSiteCredentials(siteName);
+                                resolve();
+                            } else if (status.is_failed) {
+                                clearInterval(pollInterval);
+                                reject(new Error('Deployment failed on backend'));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to poll deployment status:', error);
+                    }
+                }, 3000);
+            });
+        },
+
+        updateStepFromSubstep(substep) {
+            const stepMap = {
+                'Preparing server': 1,
+                'Setting up your Apps': 2,
+                'Creating site': 3,
+                'Preparing deployment': 4,
+                'Deploying site': 5
+            };
+            this.deployStep = stepMap[substep] || this.deployStep;
+        },
+
         // Call the prepare_server API
         async callPrepareServer(serverName, includeTraefik = false) {
             const url = '/api/method/nano_press.nano_press.doctype.server.server.prepare_server';
@@ -399,6 +431,67 @@ function summarySetup() {
             }
         },
 
+        updateDeploymentState(updates) {
+            this.$store.installer.deploymentState = {
+                ...this.$store.installer.deploymentState,
+                ...updates,
+                lastUpdated: new Date().toISOString()
+            };
+        },
+
+        clearDeploymentState() {
+            this.$store.installer.deploymentState = {
+                isDeploying: false,
+                isComplete: false,
+                currentStep: 0,
+                deployingDocName: null,
+                customImageName: null,
+                lastUpdated: null,
+                version: 1
+            };
+        },
+
+        getStatusMessage(step) {
+            const messages = {
+                1: 'Preparing server...',
+                2: 'Setting up your Apps...',
+                3: 'Creating site...',
+                4: 'Preparing deployment...',
+                5: 'Deploying site...'
+            };
+            return messages[step] || 'Processing...';
+        },
+
+        async resumeImageBuildPolling(customImageName) {
+            console.log('resumeImageBuildPolling called with:', customImageName);
+            try {
+                this.buildingImage = true;
+                this.deploymentStatus = 'Resuming image build...';
+
+                console.log('Starting pollForBuildCompletion...');
+                const imageName = await this.pollForBuildCompletion(customImageName);
+                console.log('Poll completed, image name:', imageName);
+
+                this.buildingImage = false;
+                this.deployStep = 3;
+                this.updateDeploymentState({ currentStep: 3 });
+
+                if (!this.$store.installer.siteName) {
+                    console.log('No siteName found, creating Frappe Site doc...');
+                    const siteDoc = await this.createFrappeSiteDoc(customImageName);
+                    this.updateDeploymentState({ deployingDocName: siteDoc.name });
+                    console.log('Site doc created:', siteDoc.name);
+                }
+            } catch (error) {
+                console.error('Failed to resume image build:', error);
+                this.deploying = false;
+                if (typeof toast !== 'undefined') {
+                    toast('Image build failed. Please restart deployment.', { type: 'danger' });
+                }
+                this.clearDeploymentState();
+            }
+        },
+
         visitSite() {
             const siteUrl = this.$store.installer.siteUrl;
             const domain = this.$store.installer.domain?.trim();
@@ -436,6 +529,7 @@ function summarySetup() {
                 if (response?.message?.custom_image_name) {
                     const customImageName = response.message.custom_image_name;
 
+                    this.updateDeploymentState({ customImageName });
 
                     return await this.pollForBuildCompletion(customImageName);
                 } else if (response?.message?.status === 'error') {

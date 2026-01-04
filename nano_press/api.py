@@ -156,3 +156,108 @@ def delete_custom_app(app_name: str) -> dict:
 		frappe.log_error(f"Error deleting custom app: {e}")
 		frappe.db.rollback()
 		return {"success": False, "message": str(e)}
+
+
+@frappe.whitelist()
+def initiate_site_deployment(
+	server_name: str, apps: list, custom_apps: list, frappe_version: str, domain: str | None = None
+) -> dict:
+	try:
+		from nano_press.nano_press.doctype.custom_image.custom_image import create_and_build_custom_image
+
+		apps = frappe.parse_json(apps) if isinstance(apps, str) else apps
+		custom_apps = frappe.parse_json(custom_apps) if isinstance(custom_apps, str) else (custom_apps or [])
+
+		if not frappe.db.exists("Server", server_name):
+			frappe.throw(_("Server '{0}' not found").format(server_name))
+
+		import time
+
+		timestamp = int(time.time())
+		image_name = f"custom-{timestamp}"
+
+		custom_image_result = create_and_build_custom_image(
+			server_name=server_name,
+			apps=apps,
+			custom_apps=custom_apps,
+			image_name=image_name,
+			frappe_version=frappe_version,
+		)
+
+		custom_image_name = custom_image_result.get("custom_image_name")
+		if not custom_image_name:
+			raise Exception("Failed to create custom image")
+
+		import time
+
+		max_wait = 1200
+		elapsed = 0
+		interval = 10
+
+		while elapsed < max_wait:
+			custom_image = frappe.get_doc("Custom Image", custom_image_name)
+
+			if custom_image.build_status == "Built":
+				break
+			elif custom_image.build_status == "Failed":
+				raise Exception("Custom image build failed")
+
+			frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+			time.sleep(interval)
+			elapsed += interval
+
+		if elapsed >= max_wait:
+			raise Exception("Custom image build timed out")
+
+		site_doc = frappe.new_doc("Frappe Site")
+		site_doc.update(
+			{
+				"server_name": server_name,
+				"site_url": domain.strip() if domain else None,
+				"custom_image": custom_image_name,
+				"is_custom": 1,
+				"status": "Deploying",
+			}
+		)
+
+		for app_name in apps:
+			site_doc.append("install_apps", {"app_name": app_name})
+
+		site_doc.insert(ignore_permissions=True)
+		site_doc.submit()
+
+		site_doc.enqueue_full_deployment()
+
+		return {
+			"success": True,
+			"site_name": site_doc.name,
+			"site_url": site_doc.site_url,
+			"custom_image_name": custom_image_name,
+			"message": _("Deployment started"),
+		}
+
+	except Exception as e:
+		frappe.log_error(f"Error starting deployment: {e}")
+		frappe.db.rollback()
+		return {"success": False, "message": str(e)}
+
+
+@frappe.whitelist()
+def get_deployment_status(site_name: str) -> dict:
+	try:
+		if not frappe.db.exists("Frappe Site", site_name):
+			return {"error": "Site not found"}
+
+		doc = frappe.get_doc("Frappe Site", site_name)
+
+		return {
+			"status": doc.status,
+			"substep": doc.deployment_substep,
+			"site_url": doc.site_url,
+			"is_complete": doc.status == "Deployed",
+			"is_failed": doc.status == "Failed",
+		}
+
+	except Exception as e:
+		frappe.log_error(f"Error getting deployment status: {e}")
+		return {"error": str(e)}

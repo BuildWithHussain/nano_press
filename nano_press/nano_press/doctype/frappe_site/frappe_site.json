@@ -10,6 +10,7 @@
 		"bench_name",
 		"site_url",
 		"status",
+		"deployment_substep",
 		"is_custom",
 		"ssl_enabled",
 		"column_break_dkti",
@@ -58,6 +59,16 @@
 			"label": "Status",
 			"no_copy": 1,
 			"options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped",
+			"read_only": 1
+		},
+		{
+			"allow_on_submit": 1,
+			"depends_on": "eval:doc.status=='Deploying'",
+			"fieldname": "deployment_substep",
+			"fieldtype": "Select",
+			"label": "Deployment Substep",
+			"no_copy": 1,
+			"options": "\nPreparing server\nSetting up your Apps\nCreating site\nPreparing deployment\nDeploying site",
 			"read_only": 1
 		},
 		{
