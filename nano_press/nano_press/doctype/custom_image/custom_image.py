@@ -17,8 +17,16 @@ class CustomImage(Document):
 		self._set_image_tag()
 
 	def _set_image_tag(self):
-		clean_name = self.image_name.lower().replace(" ", "-")
-		self.image_tag = f"{clean_name}:latest"
+		import re
+
+		name = self.image_name.lower()
+		name = re.sub(r"\s+", "-", name)
+		name = re.sub(r"[^a-z0-9_.-]", "", name)
+		name = re.sub(r"[-_.]{2,}", "-", name)
+		name = name.lstrip(".-")
+
+		sanitized_name = name if name else "image"
+		self.image_tag = f"{sanitized_name}:latest"
 
 	def _generate_apps_json(self):
 		if not self.apps_config:
@@ -61,19 +69,25 @@ class CustomImage(Document):
 		return repo_url
 
 	def _sort_apps_by_order(self, apps_list):
-		app_names = [item.app_name for item in self.apps_config if item.app_name]
-		app_orders = {name: frappe.db.get_value("Apps", name, "order") or 999 for name in app_names}
+		app_order_map = {}
+		for item in self.apps_config:
+			if item.app_name:
+				order = frappe.db.get_value("Apps", item.app_name, "order") or 999
+				app_order_map[item.app_name] = order
 
-		apps_with_order = [
-			(app, app_orders.get(app_names[i], 999)) for i, app in enumerate(apps_list) if i < len(app_names)
-		]
-		return [app for app, _ in sorted(apps_with_order, key=lambda x: x[1])]
+		sorted_apps = []
+		for i, app_item in enumerate(self.apps_config):
+			if app_item.app_name and i < len(apps_list):
+				order = app_order_map.get(app_item.app_name, 999)
+				sorted_apps.append((apps_list[i], order))
+
+		return [app for app, _ in sorted(sorted_apps, key=lambda x: x[1])]
 
 	def _get_deployment_vars(self):
 		return {
 			"image_name": self.image_name,
 			"frappe_version": self.frappe_version,
-			"apps_json_base64": self._generate_apps_json_base64(),
+			"apps_json_base64": self.apps_json_base64,
 		}
 
 	def build_custom_image(self):
@@ -218,9 +232,14 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 	apps = frappe.parse_json(apps) if isinstance(apps, str) else apps
 	custom_apps = frappe.parse_json(custom_apps) if isinstance(custom_apps, str) else (custom_apps or [])
 
+	if not frappe.db.exists("Server", server_name):
+		frappe.throw(_("Server '{0}' not found").format(server_name))
+
 	server = frappe.get_doc("Server", server_name)
 	if server.verify_status != "Prepared":
-		frappe.throw(_("Server must be in 'Prepared' status before building custom images"))
+		frappe.throw(
+			_("Server '{0}' must be in 'Prepared' status before building custom images").format(server_name)
+		)
 
 	custom_image = frappe.new_doc("Custom Image")
 	custom_image.update(
@@ -239,16 +258,20 @@ def create_and_build_custom_image(server_name, apps, custom_apps, image_name, fr
 
 	for custom_app in custom_apps:
 		app_name = custom_app.get("name")
-		if not app_name:
-			continue
+		repo_url = custom_app.get("githubUrl")
+
+		if not app_name or not repo_url:
+			frappe.throw(
+				_("Custom app must have both 'name' and 'githubUrl' fields. Received: {0}").format(custom_app)
+			)
 
 		if not frappe.db.exists("Apps", app_name):
 			frappe.get_doc(
 				{
 					"doctype": "Apps",
 					"app_name": app_name,
-					"repo_url": custom_app.get("githubUrl", ""),
-					"branch": custom_app.get("branch", "main"),
+					"repo_url": repo_url,
+					"branch": custom_app.get("branch") or "main",
 					"is_custom": 1,
 					"is_public": 1,
 					"enabled": 1,
