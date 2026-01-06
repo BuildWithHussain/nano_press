@@ -87,7 +87,6 @@
 			"in_preview": 1,
 			"label": "Admin Password",
 			"no_copy": 1,
-			"not_nullable": 1,
 			"placeholder": "s0QlAPg8udcOvij",
 			"read_only": 1
 		},
@@ -102,7 +101,7 @@
 			"fieldname": "custom_image",
 			"fieldtype": "Link",
 			"label": "Custom Image",
-			"link_filters": "[[\"Custom Image\",\"build_status\",\"=\",\"Built\"]]",
+			"link_filters": "[[\"Custom Image\",\"build_status\",\"in\",[\"Built\",\"Building\"]]]",
 			"mandatory_depends_on": "eval:doc.is_custom=='1'",
 			"options": "Custom Image"
 		},
@@ -199,7 +198,7 @@
 			"link_fieldname": "bench_name"
 		}
 	],
-	"modified": "2025-11-05 23:04:45.350674",
+	"modified": "2026-01-06 22:17:53.193125",
 	"modified_by": "Administrator",
 	"module": "Nano Press",
 	"name": "Frappe Site",
