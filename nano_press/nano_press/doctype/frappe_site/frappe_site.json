@@ -57,7 +57,7 @@
 			"in_list_view": 1,
 			"label": "Status",
 			"no_copy": 1,
-			"options": "Not Deployed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped",
+			"options": "Not Deployed\nBuilding\nBuild Failed\nReady To Deploy\nDeploying\nDeployed\nFailed\nStopped",
 			"read_only": 1
 		},
 		{

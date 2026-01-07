@@ -6,6 +6,19 @@
 @utility no-scrollbar {
 	@apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
 }
+
+@utility animate-blink {
+	animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+	0%, 100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.3;
+	}
+}
 /* Embla carousel settings */
 .embla__controls {
 	display: flex;

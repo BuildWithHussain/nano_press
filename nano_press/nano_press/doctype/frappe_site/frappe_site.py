@@ -54,6 +54,29 @@ class FrappeSite(Document):
 		self.flags.ignore_validate = True
 		self.save(ignore_permissions=True)
 
+		self._check_custom_image_status()
+
+	def _check_custom_image_status(self):
+		if not self.is_custom or not self.custom_image:
+			return
+
+		custom_image = frappe.get_cached_doc("Custom Image", self.custom_image)
+
+		if custom_image.build_status == "Building":
+			frappe.db.set_value("Frappe Site", self.name, "status", "Building", update_modified=False)
+			frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+		elif custom_image.build_status == "Built":
+			pass
+		elif custom_image.build_status == "Failed":
+			frappe.db.set_value("Frappe Site", self.name, "status", "Build Failed", update_modified=False)
+			frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+		elif custom_image.build_status == "Draft":
+			frappe.msgprint(
+				_("Custom Image has not been built yet. Please build it first."),
+				indicator="orange",
+				alert=True,
+			)
+
 	def before_save(self):
 		if self.docstatus == 1:
 			return
@@ -62,6 +85,7 @@ class FrappeSite(Document):
 
 	def validate(self):
 		self.validate_server()
+		self.validate_custom_image()
 		if self.docstatus == 0:
 			self._ensure_password()
 
@@ -75,6 +99,21 @@ class FrappeSite(Document):
 		if getattr(server, "verify_status", "Not Verified") != "Prepared":
 			frappe.throw(_("Server is not verified. Please verify the server first."))
 		return server
+
+	def validate_custom_image(self):
+		if not self.is_custom or not self.custom_image:
+			return
+
+		custom_image = frappe.get_cached_doc("Custom Image", self.custom_image)
+
+		if custom_image.build_status == "Failed":
+			frappe.msgprint(
+				_("Custom Image '{0}' build failed. Please rebuild or select a different image.").format(
+					self.custom_image
+				),
+				indicator="orange",
+				alert=True,
+			)
 
 	def _ensure_password(self):
 		if not self.admin_password:
@@ -140,6 +179,15 @@ class FrappeSite(Document):
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:
 		self.validate_server()
+
+		if self.is_custom and self.custom_image:
+			custom_image = frappe.get_cached_doc("Custom Image", self.custom_image)
+			if custom_image.build_status != "Built":
+				return {
+					"status": 400,
+					"message": f"Custom Image is not ready (status: {custom_image.build_status}). Please wait for build to complete.",
+				}
+
 		vars = self.get_deployment_vars()
 		self.status = "Deploying"
 		self.save()
@@ -302,3 +350,22 @@ def deploy_site(site_name: str) -> dict:
 	"""Wrapper function to call deploy_site on a Frappe Site document"""
 	doc = frappe.get_doc("Frappe Site", site_name)
 	return doc.deploy_site()
+
+
+@frappe.whitelist()
+def rebuild_custom_image_for_site(site_name: str) -> dict:
+	if not frappe.db.exists("Frappe Site", site_name):
+		frappe.throw(f"Frappe Site {site_name} not found")
+
+	site = frappe.get_doc("Frappe Site", site_name)
+
+	if not site.is_custom or not site.custom_image:
+		return {"status": "error", "message": "Site does not use custom image"}
+
+	custom_image = frappe.get_doc("Custom Image", site.custom_image)
+	result = custom_image.enqueue_build_custom_image()
+
+	frappe.db.set_value("Frappe Site", site_name, "status", "Building", update_modified=False)
+	frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+
+	return {"status": "success", "message": result.get("message"), "custom_image_name": custom_image.name}

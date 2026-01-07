@@ -92,7 +92,6 @@ class CustomImage(Document):
 
 	def build_custom_image(self):
 		start_time = frappe.utils.now_datetime()
-		self._update_status("Building")
 
 		try:
 			result = run_playbook(
@@ -116,6 +115,7 @@ class CustomImage(Document):
 	def _update_status(self, status):
 		frappe.db.set_value("Custom Image", self.name, "build_status", status, update_modified=False)
 		frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+		self._sync_status_to_frappe_sites()
 
 	def _on_build_success(self, start_time):
 		end_time = frappe.utils.now_datetime()
@@ -130,6 +130,7 @@ class CustomImage(Document):
 			},
 		)
 		self.reload()
+		self._sync_status_to_frappe_sites()
 		self._notify("success", _("Image built successfully"))
 
 	def _on_build_failure(self, error_message):
@@ -201,8 +202,48 @@ class CustomImage(Document):
 		except Exception:
 			frappe.log_error(title=_("Email Notification Failed"))
 
+	def _sync_status_to_frappe_sites(self):
+		if not self.has_value_changed("build_status"):
+			return
+
+		linked_sites = frappe.get_all(
+			"Frappe Site",
+			filters={
+				"custom_image": self.name,
+				"status": ["in", ["Not Deployed", "Building", "Build Failed"]],
+			},
+			fields=["name", "status", "owner"],
+		)
+
+		if not linked_sites:
+			return
+
+		new_status = self._map_build_status_to_site_status()
+		if not new_status:
+			return
+
+		for site in linked_sites:
+			if new_status != site.status:
+				frappe.db.set_value("Frappe Site", site.name, "status", new_status, update_modified=False)
+				frappe.logger().info(
+					f"Synced status for Frappe Site {site.name}: {site.status} → {new_status}"
+				)
+
+		frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
+
+	def _map_build_status_to_site_status(self):
+		mapping = {
+			"Draft": None,
+			"Building": "Building",
+			"Built": "Ready To Deploy",
+			"Failed": "Build Failed",
+		}
+		return mapping.get(self.build_status)
+
 	@frappe.whitelist()
 	def enqueue_build_custom_image(self):
+		self._update_status("Building")
+
 		frappe.enqueue_doc(
 			"Custom Image",
 			self.name,

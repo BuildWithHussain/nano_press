@@ -77,25 +77,37 @@
         <p class="text-gray-400 text-sm mb-8" x-text="deploymentStatus"></p>
 
         <div class="max-w-64 mx-auto">
-            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 1 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep > 1 ? 'bg-gray-900' : (deployStep === 1 ? 'text-gray-400' : 'bg-gray-300')"></div>
-                <span class="text-sm">Preparing server</span>
+            <div class="flex items-start gap-3 mb-3">
+                <div class="flex flex-col items-center">
+                    <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400" :class="{'bg-gray-900': deployStep > 1, 'animate-blink': deployStep === 1, 'bg-gray-300': deployStep < 1}"></div>
+                    <div class="w-0.5 h-8" :class="deployStep > 1 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 1 ? 'text-gray-900' : 'text-gray-400'">Preparing server</span>
             </div>
-            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep > 2 ? 'bg-gray-900' : (deployStep === 2 ? 'text-gray-400' : 'bg-gray-300')"></div>
-                <span class="text-sm">Setting up your Apps</span>
+            <div class="flex items-start gap-3 mb-3">
+                <div class="flex flex-col items-center">
+                    <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400" :class="{'bg-gray-900': deployStep > 2, 'animate-blink': deployStep === 2, 'bg-gray-300': deployStep < 2}"></div>
+                    <div class="w-0.5 h-8" :class="deployStep > 2 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">Building custom image</span>
             </div>
-            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 3 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep > 3 ? 'bg-gray-900' : (deployStep === 3 ? 'text-gray-400' : 'bg-gray-300')"></div>
-                <span class="text-sm">Creating site</span>
+            <div class="flex items-start gap-3 mb-3">
+                <div class="flex flex-col items-center">
+                    <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400" :class="{'bg-gray-900': deployStep > 3, 'animate-blink': deployStep === 3, 'bg-gray-300': deployStep < 3}"></div>
+                    <div class="w-0.5 h-8" :class="deployStep > 3 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 3 ? 'text-gray-900' : 'text-gray-400'">Creating site</span>
             </div>
-            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 4 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep > 4 ? 'bg-gray-900' : (deployStep === 4 ? 'text-gray-400' : 'bg-gray-300')"></div>
-                <span class="text-sm">Preparing deployment</span>
+            <div class="flex items-start gap-3 mb-3">
+                <div class="flex flex-col items-center">
+                    <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400" :class="{'bg-gray-900': deployStep > 4, 'animate-blink': deployStep === 4, 'bg-gray-300': deployStep < 4}"></div>
+                    <div class="w-0.5 h-8" :class="deployStep > 4 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 4 ? 'text-gray-900' : 'text-gray-400'">Preparing deployment</span>
             </div>
-            <div class="flex items-center gap-3" :class="deployStep >= 5 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep === 5 ? 'bg-gray-900' : 'bg-gray-300'"></div>
-                <span class="text-sm">Deploying site</span>
+            <div class="flex items-start gap-3">
+                <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400" :class="{'bg-gray-900': deployStep > 5, 'animate-blink': deployStep === 5, 'bg-gray-300': deployStep < 5}"></div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 5 ? 'text-gray-900' : 'text-gray-400'">Deploying site</span>
             </div>
         </div>
     </div>
@@ -203,7 +215,7 @@ function summarySetup() {
 
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                this.deploymentStatus = 'Setting up your Apps...';
+                this.deploymentStatus = 'Building custom image...';
                 this.deployStep = 2;
                 this.buildingImage = true;
 
@@ -211,7 +223,7 @@ function summarySetup() {
 
 
                 if (typeof toast !== 'undefined') {
-                    toast('Custom image built successfully!', { type: 'success' });
+                    toast('Custom image queued for building...', { type: 'success' });
                 }
 
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -228,6 +240,18 @@ function summarySetup() {
 
                 if (typeof toast !== 'undefined') {
                     toast('Site structure created successfully!', { type: 'success' });
+                }
+
+                if (siteDoc.status === 'Building') {
+                    this.deploymentStatus = 'Waiting for custom image to build...';
+                    this.deployStep = 2;
+
+                    if (typeof toast !== 'undefined') {
+                        toast('Custom image is building. Monitoring progress...', { type: 'info' });
+                    }
+
+                    this.resumeDeployment(siteDoc.name);
+                    return;
                 }
 
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -414,6 +438,29 @@ function summarySetup() {
             }
         },
 
+        async rebuildCustomImage(siteName) {
+            try {
+                const url = '/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.rebuild_custom_image_for_site';
+                const payload = { site_name: siteName };
+                const response = await frappe_call(url, payload, "POST");
+
+                if (response?.message?.status === 'success') {
+                    if (typeof toast !== 'undefined') {
+                        toast('Rebuild started. Monitoring progress...', { type: 'success' });
+                    }
+
+                    this.resumeDeployment(siteName);
+                } else {
+                    throw new Error(response?.message?.message || 'Rebuild failed');
+                }
+            } catch (error) {
+                console.error('Rebuild error:', error);
+                if (typeof toast !== 'undefined') {
+                    toast(error.message || 'Failed to start rebuild', { type: 'danger' });
+                }
+            }
+        },
+
         async buildCustomImage() {
             const timestamp = Date.now();
             const imageName = `custom-${timestamp}`;
@@ -479,10 +526,23 @@ function summarySetup() {
                     }
 
                     const status = response.data.status;
-
                     console.log('Site status:', status);
 
-                    if (status === 'Ready To Deploy') {
+                    if (status === 'Building') {
+                        this.deploymentStatus = 'Building custom image...';
+                        this.deployStep = 2;
+
+                    } else if (status === 'Build Failed') {
+                        clearInterval(pollInterval);
+                        this.deploying = false;
+                        this.deploymentStatus = 'Custom image build failed';
+                        this.deployStep = 2;
+
+                        if (typeof toast !== 'undefined') {
+                            toast('Custom image build failed. Click Rebuild to try again.', { type: 'danger' });
+                        }
+
+                    } else if (status === 'Ready To Deploy') {
                         clearInterval(pollInterval);
                         this.deploymentStatus = 'Preparing deployment...';
                         this.deployStep = 4;
@@ -590,8 +650,10 @@ function summarySetup() {
 
         getStepFromStatus(status) {
             const statusMap = {
-                'Not Deployed': 2,
-                'Ready To Deploy': 3,
+                'Not Deployed': 1,
+                'Building': 2,
+                'Build Failed': 2,
+                'Ready To Deploy': 4,
                 'Deploying': 4,
                 'Deployed': 5
             };
