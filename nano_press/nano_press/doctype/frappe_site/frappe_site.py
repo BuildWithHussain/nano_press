@@ -107,12 +107,10 @@ class FrappeSite(Document):
 		custom_image = frappe.get_cached_doc("Custom Image", self.custom_image)
 
 		if custom_image.build_status == "Failed":
-			frappe.msgprint(
-				_("Custom Image '{0}' build failed. Please rebuild or select a different image.").format(
-					self.custom_image
-				),
-				indicator="orange",
-				alert=True,
+			frappe.throw(
+				_(
+					"Custom Image '{0}' build failed. Please rebuild the image or select a different one before deploying."
+				).format(self.custom_image)
 			)
 
 	def _ensure_password(self):
@@ -364,8 +362,5 @@ def rebuild_custom_image_for_site(site_name: str) -> dict:
 
 	custom_image = frappe.get_doc("Custom Image", site.custom_image)
 	result = custom_image.enqueue_build_custom_image()
-
-	frappe.db.set_value("Frappe Site", site_name, "status", "Building", update_modified=False)
-	frappe.db.commit()  # nosemgrep: frappe-semgrep-rules.rules.frappe-manual-commit
 
 	return {"status": "success", "message": result.get("message"), "custom_image_name": custom_image.name}

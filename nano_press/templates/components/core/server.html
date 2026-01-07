@@ -161,7 +161,7 @@
             showAdvanced: false,
             selectedServerName: '',
 
-            userServers: {{ user_servers | tojson }},
+            userServers: {{ user_servers | default([]) | tojson }},
 
             onServerSelect(serverName) {
                 if (!serverName) {

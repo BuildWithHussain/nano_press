@@ -167,10 +167,9 @@ function summarySetup() {
         deployComplete: false,
         deploymentStatus: 'Initializing deployment...',
         deployStep: 0,
-
+        pollIntervalId: null,
 
         buildingImage: false,
-
 
         siteUsername: '',
         sitePassword: '',
@@ -182,9 +181,18 @@ function summarySetup() {
             const siteName = params.get('site');
 
             if (isComplete === 'true' && siteName) {
+                this.$store.installer.currentStep = 4;
                 this.resumeCompletedDeployment(siteName);
             } else if (isDeploying === 'true' && siteName) {
+                this.$store.installer.currentStep = 4;
                 this.resumeDeployment(siteName);
+            }
+        },
+
+        destroy() {
+            if (this.pollIntervalId) {
+                clearInterval(this.pollIntervalId);
+                this.pollIntervalId = null;
             }
         },
 
@@ -516,7 +524,12 @@ function summarySetup() {
             this.deploying = true;
             this.deploymentStatus = 'Resuming deployment...';
 
-            const pollInterval = setInterval(async () => {
+            if (this.pollIntervalId) {
+                clearInterval(this.pollIntervalId);
+                this.pollIntervalId = null;
+            }
+
+            this.pollIntervalId = setInterval(async () => {
                 try {
                     const url = `/api/resource/Frappe Site/${siteName}`;
                     const response = await frappe_call(url, {}, "GET");
@@ -533,7 +546,8 @@ function summarySetup() {
                         this.deployStep = 2;
 
                     } else if (status === 'Build Failed') {
-                        clearInterval(pollInterval);
+                        clearInterval(this.pollIntervalId);
+                        this.pollIntervalId = null;
                         this.deploying = false;
                         this.deploymentStatus = 'Custom image build failed';
                         this.deployStep = 2;
@@ -543,7 +557,8 @@ function summarySetup() {
                         }
 
                     } else if (status === 'Ready To Deploy') {
-                        clearInterval(pollInterval);
+                        clearInterval(this.pollIntervalId);
+                        this.pollIntervalId = null;
                         this.deploymentStatus = 'Preparing deployment...';
                         this.deployStep = 4;
 
@@ -588,7 +603,8 @@ function summarySetup() {
                         }
 
                     } else if (status === 'Deployed') {
-                        clearInterval(pollInterval);
+                        clearInterval(this.pollIntervalId);
+                        this.pollIntervalId = null;
                         this.deploying = false;
                         this.deployComplete = true;
                         this.deployStep = 5;
@@ -605,7 +621,8 @@ function summarySetup() {
                         }
 
                     } else if (status === 'Failed') {
-                        clearInterval(pollInterval);
+                        clearInterval(this.pollIntervalId);
+                        this.pollIntervalId = null;
                         this.deploying = false;
                         this.deploymentStatus = 'Deployment failed';
 

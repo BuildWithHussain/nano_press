@@ -19,6 +19,13 @@
 		opacity: 0.3;
 	}
 }
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-blink {
+		animation: none;
+	}
+}
+
 /* Embla carousel settings */
 .embla__controls {
 	display: flex;
