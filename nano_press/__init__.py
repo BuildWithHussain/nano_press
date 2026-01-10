@@ -29,5 +29,5 @@ def get_admin_password(site_name):
 			frappe._("You do not have permission to access this Frappe Site"), frappe.PermissionError
 		)
 
-	site = frappe.get_doc("Frappe Site", site_name)
+	site = frappe.get_cached_doc("Frappe Site", site_name)
 	return site.get_password("admin_password")
