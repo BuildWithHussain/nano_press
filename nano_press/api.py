@@ -156,3 +156,69 @@ def delete_custom_app(app_name: str) -> dict:
 		frappe.log_error(f"Error deleting custom app: {e}")
 		frappe.db.rollback()
 		return {"success": False, "message": str(e)}
+
+
+@frappe.whitelist()
+def get_wallet_balance():
+	user = frappe.session.user
+	from nano_press.utils.wallet_manager import get_user_balance
+
+	return {"balance": get_user_balance(user), "user": user}
+
+
+@frappe.whitelist()
+def get_wallet_transactions(limit=20, offset=0):
+	user = frappe.session.user
+	transactions = frappe.get_all(
+		"Wallet Transaction",
+		filters={"user": user},
+		fields=[
+			"name",
+			"transaction_type",
+			"amount",
+			"balance_after",
+			"description",
+			"transaction_date",
+			"reference_doctype",
+			"reference_name",
+		],
+		order_by="transaction_date desc",
+		limit=limit,
+		start=offset,
+	)
+	return transactions
+
+
+@frappe.whitelist()
+def create_recharge_order(amount):
+	user = frappe.session.user
+	amount = float(amount)
+
+	from nano_press.nano_press.doctype.nano_press_pricing.nano_press_pricing import NanoPressPricing
+
+	min_amount = NanoPressPricing.get_minimum_recharge()
+
+	if amount < min_amount:
+		frappe.throw(f"Minimum recharge amount is ${min_amount}")
+
+	from nano_press.utils.razorpay_integration import create_wallet_recharge_order
+
+	return create_wallet_recharge_order(user, amount)
+
+
+@frappe.whitelist()
+def get_razorpay_key():
+	from nano_press.utils.razorpay_integration import get_razorpay_key_id
+
+	return {"key_id": get_razorpay_key_id()}
+
+
+@frappe.whitelist()
+def get_deployment_pricing():
+	from nano_press.nano_press.doctype.nano_press_pricing.nano_press_pricing import NanoPressPricing
+
+	return {
+		"deployment_cost": NanoPressPricing.get_site_deployment_cost(),
+		"currency": NanoPressPricing.get_currency(),
+		"minimum_recharge": NanoPressPricing.get_minimum_recharge(),
+	}
