@@ -1,0 +1,166 @@
+{
+	"actions": [],
+	"allow_rename": 0,
+	"autoname": "format:WTX-{#######}",
+	"creation": "2026-01-10 19:45:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"user",
+		"transaction_type",
+		"amount",
+		"column_break_balance",
+		"balance_before",
+		"balance_after",
+		"section_break_reference",
+		"reference_doctype",
+		"reference_name",
+		"razorpay_order",
+		"section_break_details",
+		"description",
+		"transaction_date",
+		"processed_by"
+	],
+	"fields": [
+		{
+			"fieldname": "user",
+			"fieldtype": "Link",
+			"in_list_view": 1,
+			"label": "User",
+			"options": "User",
+			"reqd": 1,
+			"read_only": 1
+		},
+		{
+			"fieldname": "transaction_type",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Transaction Type",
+			"options": "Credit\nDebit\nRefund\nInitial Bonus\nPromotion",
+			"reqd": 1,
+			"read_only": 1
+		},
+		{
+			"fieldname": "amount",
+			"fieldtype": "Currency",
+			"in_list_view": 1,
+			"label": "Amount",
+			"precision": "2",
+			"reqd": 1,
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_balance",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "balance_before",
+			"fieldtype": "Currency",
+			"label": "Balance Before",
+			"precision": "2",
+			"read_only": 1
+		},
+		{
+			"fieldname": "balance_after",
+			"fieldtype": "Currency",
+			"in_list_view": 1,
+			"label": "Balance After",
+			"precision": "2",
+			"read_only": 1
+		},
+		{
+			"collapsible": 1,
+			"fieldname": "section_break_reference",
+			"fieldtype": "Section Break",
+			"label": "Reference"
+		},
+		{
+			"fieldname": "reference_doctype",
+			"fieldtype": "Link",
+			"label": "Reference DocType",
+			"options": "DocType",
+			"read_only": 1
+		},
+		{
+			"fieldname": "reference_name",
+			"fieldtype": "Dynamic Link",
+			"label": "Reference Document",
+			"options": "reference_doctype",
+			"read_only": 1
+		},
+		{
+			"fieldname": "razorpay_order",
+			"fieldtype": "Link",
+			"label": "Razorpay Order",
+			"options": "Razorpay Order",
+			"read_only": 1
+		},
+		{
+			"collapsible": 1,
+			"fieldname": "section_break_details",
+			"fieldtype": "Section Break",
+			"label": "Details"
+		},
+		{
+			"fieldname": "description",
+			"fieldtype": "Small Text",
+			"label": "Description",
+			"read_only": 1
+		},
+		{
+			"default": "now",
+			"fieldname": "transaction_date",
+			"fieldtype": "Datetime",
+			"label": "Transaction Date",
+			"reqd": 1,
+			"read_only": 1
+		},
+		{
+			"default": "__user",
+			"fieldname": "processed_by",
+			"fieldtype": "Link",
+			"label": "Processed By",
+			"options": "User",
+			"read_only": 1
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"is_submittable": 0,
+	"links": [],
+	"modified": "2026-01-10 19:45:00.000000",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "Wallet Transaction",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 0,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 0
+		},
+		{
+			"create": 0,
+			"delete": 0,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Nano Press User",
+			"share": 0,
+			"write": 0
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}

@@ -1,0 +1,99 @@
+{
+	"actions": [],
+	"creation": "2026-01-10 19:50:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"enable_wallet_system",
+		"section_break_pricing",
+		"site_deployment_cost",
+		"initial_signup_bonus",
+		"column_break_amounts",
+		"minimum_recharge_amount",
+		"currency"
+	],
+	"fields": [
+		{
+			"default": "1",
+			"description": "Global toggle for wallet functionality. Disable to turn off wallet system completely.",
+			"fieldname": "enable_wallet_system",
+			"fieldtype": "Check",
+			"label": "Enable Wallet System"
+		},
+		{
+			"fieldname": "section_break_pricing",
+			"fieldtype": "Section Break",
+			"label": "Pricing Configuration"
+		},
+		{
+			"default": "5.00",
+			"description": "Flat rate charged for each site deployment (one-time charge)",
+			"fieldname": "site_deployment_cost",
+			"fieldtype": "Currency",
+			"label": "Site Deployment Cost",
+			"precision": "2",
+			"reqd": 1
+		},
+		{
+			"default": "5.00",
+			"description": "Credit given to new users on signup",
+			"fieldname": "initial_signup_bonus",
+			"fieldtype": "Currency",
+			"label": "Initial Signup Bonus",
+			"precision": "2",
+			"reqd": 1
+		},
+		{
+			"fieldname": "column_break_amounts",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "5.00",
+			"description": "Minimum amount a user can recharge their wallet with",
+			"fieldname": "minimum_recharge_amount",
+			"fieldtype": "Currency",
+			"label": "Minimum Recharge Amount",
+			"precision": "2",
+			"reqd": 1
+		},
+		{
+			"default": "USD",
+			"fieldname": "currency",
+			"fieldtype": "Select",
+			"label": "Currency",
+			"options": "USD\nINR\nEUR\nGBP",
+			"reqd": 1
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"issingle": 1,
+	"links": [],
+	"modified": "2026-01-10 19:50:00.000000",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "Nano Press Pricing",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"print": 1,
+			"read": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"email": 1,
+			"print": 1,
+			"read": 1,
+			"role": "Nano Press User",
+			"share": 0
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}

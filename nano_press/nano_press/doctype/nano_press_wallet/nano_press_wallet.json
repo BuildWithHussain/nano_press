@@ -1,0 +1,117 @@
+{
+	"actions": [],
+	"allow_rename": 0,
+	"autoname": "field:user",
+	"creation": "2026-01-10 19:40:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"user",
+		"balance",
+		"column_break_statistics",
+		"total_credited",
+		"total_debited",
+		"section_break_settings",
+		"is_active",
+		"created_at"
+	],
+	"fields": [
+		{
+			"fieldname": "user",
+			"fieldtype": "Link",
+			"in_list_view": 1,
+			"label": "User",
+			"options": "User",
+			"reqd": 1,
+			"unique": 1,
+			"read_only": 1
+		},
+		{
+			"default": "0.00",
+			"fieldname": "balance",
+			"fieldtype": "Currency",
+			"in_list_view": 1,
+			"label": "Current Balance",
+			"non_negative": 1,
+			"precision": "2",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_statistics",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "0.00",
+			"fieldname": "total_credited",
+			"fieldtype": "Currency",
+			"label": "Total Credited (Lifetime)",
+			"precision": "2",
+			"read_only": 1
+		},
+		{
+			"default": "0.00",
+			"fieldname": "total_debited",
+			"fieldtype": "Currency",
+			"label": "Total Debited (Lifetime)",
+			"precision": "2",
+			"read_only": 1
+		},
+		{
+			"collapsible": 1,
+			"fieldname": "section_break_settings",
+			"fieldtype": "Section Break",
+			"label": "Settings"
+		},
+		{
+			"default": "1",
+			"fieldname": "is_active",
+			"fieldtype": "Check",
+			"label": "Active"
+		},
+		{
+			"default": "now",
+			"fieldname": "created_at",
+			"fieldtype": "Datetime",
+			"label": "Created At",
+			"read_only": 1
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2026-01-10 19:40:00.000000",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "Nano Press Wallet",
+	"naming_rule": "By fieldname",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 0,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 0,
+			"delete": 0,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Nano Press User",
+			"share": 0,
+			"write": 0
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}
