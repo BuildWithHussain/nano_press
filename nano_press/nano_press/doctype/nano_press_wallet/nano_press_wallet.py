@@ -28,7 +28,7 @@ class NanoPressWallet(Document):
 		if self.balance < 0:
 			frappe.throw(
 				_("Wallet balance cannot be negative. Current balance: {0}").format(self.balance),
-				title=_("Invalid Balance")
+				title=_("Invalid Balance"),
 			)
 
 	@staticmethod

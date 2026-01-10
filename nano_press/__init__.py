@@ -17,6 +17,10 @@ def has_app_permission():
 def add_user_role(doc, event=None):
 	doc.add_roles("Nano Press User")
 
+	from nano_press.utils.wallet_manager import initialize_user_wallet
+
+	initialize_user_wallet(doc.name)
+
 
 @frappe.whitelist()
 def get_admin_password(site_name):

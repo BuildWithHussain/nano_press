@@ -9,6 +9,13 @@ from frappe.model.document import Document
 from frappe.utils import random_string
 
 from nano_press.utils.ansible_runner import run_playbook
+from nano_press.utils.wallet_manager import (
+	check_sufficient_balance,
+	deduct_deployment_charge,
+	get_user_balance,
+	release_reserved_balance,
+	reserve_balance_for_deployment,
+)
 
 
 class FrappeSite(Document):
@@ -86,6 +93,7 @@ class FrappeSite(Document):
 	def validate(self):
 		self.validate_server()
 		self.validate_custom_image()
+		self.validate_wallet_balance()
 		if self.docstatus == 0:
 			self._ensure_password()
 
@@ -111,6 +119,28 @@ class FrappeSite(Document):
 				_(
 					"Custom Image '{0}' build failed. Please rebuild the image or select a different one before deploying."
 				).format(self.custom_image)
+			)
+
+	def validate_wallet_balance(self):
+		if self.status in ["Deployed", "Deploying"]:
+			return
+
+		from nano_press.nano_press.doctype.nano_press_pricing.nano_press_pricing import NanoPressPricing
+
+		if not NanoPressPricing.is_wallet_enabled():
+			return
+
+		user = self.created_by or frappe.session.user
+		deployment_cost = NanoPressPricing.get_site_deployment_cost()
+
+		if not check_sufficient_balance(user, deployment_cost):
+			current_balance = get_user_balance(user)
+			frappe.throw(
+				_(
+					"Insufficient wallet balance. Required: ${0}, Available: ${1}. "
+					"Please recharge your wallet to continue."
+				).format(deployment_cost, current_balance),
+				title=_("Insufficient Balance"),
 			)
 
 	def _ensure_password(self):
@@ -186,6 +216,17 @@ class FrappeSite(Document):
 					"message": f"Custom Image is not ready (status: {custom_image.build_status}). Please wait for build to complete.",
 				}
 
+		user = self.created_by or frappe.session.user
+		from nano_press.nano_press.doctype.nano_press_pricing.nano_press_pricing import NanoPressPricing
+
+		deployment_cost = NanoPressPricing.get_site_deployment_cost()
+
+		if not reserve_balance_for_deployment(user, self.name, deployment_cost):
+			return {
+				"status": 400,
+				"message": "Could not reserve balance. Please ensure sufficient funds or try again.",
+			}
+
 		vars = self.get_deployment_vars()
 		self.status = "Deploying"
 		self.save()
@@ -211,6 +252,7 @@ class FrappeSite(Document):
 			return {"status": 200, "message": "Deployment prepared successfully"}
 
 		except Exception as exc:
+			release_reserved_balance(user, self.name)
 			frappe.log_error(frappe.get_traceback(), "prepare_for_deployment failed")
 			self.reload()
 			self.status = "Failed"
@@ -220,6 +262,12 @@ class FrappeSite(Document):
 	@frappe.whitelist()
 	def deploy_site(self) -> dict:
 		self.validate_server()
+
+		user = self.created_by or frappe.session.user
+		from nano_press.nano_press.doctype.nano_press_pricing.nano_press_pricing import NanoPressPricing
+
+		deployment_cost = NanoPressPricing.get_site_deployment_cost()
+
 		try:
 			result = run_playbook(
 				server_name=self.server_name,
@@ -229,11 +277,20 @@ class FrappeSite(Document):
 			if result.get("status") != "success":
 				raise Exception(f"compose_up.yml failed: {result.get('message', 'Unknown error')}")
 
+			transaction = deduct_deployment_charge(user, self.name, deployment_cost)
+
+			self.wallet_transaction = transaction.name
+			self.deployment_cost = deployment_cost
+			self.deployment_charged_at = frappe.utils.now_datetime()
 			self.status = "Deployed"
 			self.save()
-			return {"status": 200, "message": "Deployment completed successfully"}
+			return {
+				"status": 200,
+				"message": f"Deployment completed. ${deployment_cost} charged to your wallet.",
+			}
 
 		except Exception as exc:
+			release_reserved_balance(user, self.name)
 			frappe.log_error(frappe.get_traceback(), "deploy_site failed")
 			self.reload()
 			self.status = "Failed"

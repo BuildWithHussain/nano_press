@@ -25,22 +25,13 @@ class NanoPressPricing(Document):
 	def validate(self):
 		"""Ensure all amounts are positive"""
 		if self.site_deployment_cost <= 0:
-			frappe.throw(
-				_("Site Deployment Cost must be greater than zero"),
-				title=_("Invalid Amount")
-			)
+			frappe.throw(_("Site Deployment Cost must be greater than zero"), title=_("Invalid Amount"))
 
 		if self.initial_signup_bonus < 0:
-			frappe.throw(
-				_("Initial Signup Bonus cannot be negative"),
-				title=_("Invalid Amount")
-			)
+			frappe.throw(_("Initial Signup Bonus cannot be negative"), title=_("Invalid Amount"))
 
 		if self.minimum_recharge_amount <= 0:
-			frappe.throw(
-				_("Minimum Recharge Amount must be greater than zero"),
-				title=_("Invalid Amount")
-			)
+			frappe.throw(_("Minimum Recharge Amount must be greater than zero"), title=_("Invalid Amount"))
 
 	@staticmethod
 	def get_site_deployment_cost():

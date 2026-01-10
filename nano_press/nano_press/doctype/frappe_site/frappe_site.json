@@ -27,7 +27,11 @@
 		"last_deployed_at",
 		"amended_from",
 		"column_break_jrub",
-		"created_by"
+		"created_by",
+		"wallet_section",
+		"wallet_transaction",
+		"deployment_cost",
+		"deployment_charged_at"
 	],
 	"fields": [
 		{
@@ -179,14 +183,45 @@
 			"unique": 1
 		},
 		{
+			"default": "__user",
 			"fieldname": "created_by",
 			"fieldtype": "Link",
 			"label": "Created by",
-			"options": "User"
+			"options": "User",
+			"read_only": 1
 		},
 		{
 			"fieldname": "column_break_jrub",
 			"fieldtype": "Column Break"
+		},
+		{
+			"collapsible": 1,
+			"fieldname": "wallet_section",
+			"fieldtype": "Section Break",
+			"label": "Wallet & Billing"
+		},
+		{
+			"fieldname": "wallet_transaction",
+			"fieldtype": "Link",
+			"label": "Wallet Transaction",
+			"no_copy": 1,
+			"options": "Wallet Transaction",
+			"read_only": 1
+		},
+		{
+			"fieldname": "deployment_cost",
+			"fieldtype": "Currency",
+			"label": "Deployment Cost",
+			"no_copy": 1,
+			"precision": "2",
+			"read_only": 1
+		},
+		{
+			"fieldname": "deployment_charged_at",
+			"fieldtype": "Datetime",
+			"label": "Charged At",
+			"no_copy": 1,
+			"read_only": 1
 		}
 	],
 	"grid_page_length": 50,

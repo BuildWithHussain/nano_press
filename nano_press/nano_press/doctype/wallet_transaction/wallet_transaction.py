@@ -34,21 +34,20 @@ class WalletTransaction(Document):
 		if self.amount <= 0:
 			frappe.throw(
 				_("Transaction amount must be greater than zero. Amount: {0}").format(self.amount),
-				title=_("Invalid Amount")
+				title=_("Invalid Amount"),
 			)
 
 		# Prevent modifications after insert (make transaction immutable)
 		if not self.is_new():
 			frappe.throw(
-				_("Wallet Transaction cannot be modified after creation"),
-				title=_("Transaction Immutable")
+				_("Wallet Transaction cannot be modified after creation"), title=_("Transaction Immutable")
 			)
 
 	def on_trash(self):
 		"""Prevent deletion of wallet transactions"""
 		frappe.throw(
 			_("Wallet Transactions cannot be deleted. They are part of the immutable audit trail."),
-			title=_("Cannot Delete Transaction")
+			title=_("Cannot Delete Transaction"),
 		)
 
 	def after_insert(self):
@@ -57,14 +56,16 @@ class WalletTransaction(Document):
 		wallet_name = self.user
 		if not frappe.db.exists("Nano Press Wallet", wallet_name):
 			# Create wallet if it doesn't exist
-			wallet = frappe.get_doc({
-				"doctype": "Nano Press Wallet",
-				"user": self.user,
-				"balance": 0.0,
-				"total_credited": 0.0,
-				"total_debited": 0.0,
-				"is_active": 1
-			})
+			wallet = frappe.get_doc(
+				{
+					"doctype": "Nano Press Wallet",
+					"user": self.user,
+					"balance": 0.0,
+					"total_credited": 0.0,
+					"total_debited": 0.0,
+					"is_active": 1,
+				}
+			)
 			wallet.insert(ignore_permissions=True)
 		else:
 			wallet = frappe.get_doc("Nano Press Wallet", wallet_name)
@@ -84,7 +85,7 @@ class WalletTransaction(Document):
 					_("Insufficient balance. Available: {0}, Required: {1}").format(
 						wallet.balance, self.amount
 					),
-					title=_("Insufficient Balance")
+					title=_("Insufficient Balance"),
 				)
 			wallet.balance -= self.amount
 			wallet.total_debited += self.amount

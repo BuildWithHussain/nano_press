@@ -22,14 +22,31 @@ add_to_apps_screen = [
 ]
 
 
-doc_events = {"User": {"after_insert": "nano_press.add_user_role"}}
+doc_events = {
+	"User": {"after_insert": "nano_press.add_user_role"},
+	"Razorpay Order": {"on_update": "nano_press.utils.razorpay_integration.handle_razorpay_order_update"},
+}
 
 fixtures = [
 	{"dt": "Role", "filters": {"name": ("in", ("Nano Press User",))}},
 	{
 		"dt": "Custom DocPerm",
-		"filters": {"parent": ("in", ("Frappe Site", "Server", "Apps", "Custom Image", "Ansible Log"))},
+		"filters": {
+			"parent": (
+				"in",
+				(
+					"Frappe Site",
+					"Server",
+					"Apps",
+					"Custom Image",
+					"Ansible Log",
+					"Nano Press Wallet",
+					"Wallet Transaction",
+				),
+			)
+		},
 	},
+	{"dt": "Nano Press Pricing"},
 ]
 
 # Includes in <head>
@@ -41,7 +58,7 @@ fixtures = [
 
 # include js, css files in header of web template
 # web_include_css = "/assets/nano_press/css/nano_press.css"
-# web_include_js = "/assets/nano_press/js/nano_press.js"
+web_include_js = ["/assets/nano_press/js/wallet.js", "https://checkout.razorpay.com/v1/checkout.js"]
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "nano_press/public/scss/website"
@@ -55,6 +72,7 @@ fixtures = [
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_list_js = {"Frappe Site": "public/js/frappe_site_list.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
