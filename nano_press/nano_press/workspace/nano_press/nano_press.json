@@ -1,21 +1,284 @@
 {
-	"app": "frappe",
 	"charts": [],
-	"content": "[{\"id\":\"5xhOWssRWV\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Install Server\",\"col\":12}},{\"id\":\"ShdJClZdnq\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"List of Servers\",\"col\":4}},{\"id\":\"k-ClA7rPw5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Create New Site\",\"col\":4}},{\"id\":\"T66eITLJKE\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Build a Custom Image\",\"col\":4}},{\"id\":\"w5K4KmYyd2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Apps\",\"col\":4}},{\"id\":\"Z9VR_A7Erm\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
+	"content": "[{\"id\":\"LSCmVKcVwg\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Install Server\",\"col\":12}},{\"id\":\"shortcuts_section\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Access</b></span>\",\"col\":12}},{\"id\":\"jdD0W7D2YT\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Visit Site\",\"col\":3}},{\"id\":\"shortcut_servers\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Servers\",\"col\":3}},{\"id\":\"shortcut_sites\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Frappe Sites\",\"col\":3}},{\"id\":\"shortcut_images\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Custom Images\",\"col\":3}},{\"id\":\"shortcut_logs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Ansible Logs\",\"col\":3}},{\"id\":\"spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"05Krqw-BP_\",\"type\":\"card\",\"data\":{\"card_name\":\"Infrastructure\",\"col\":4}},{\"id\":\"w5Hg-N2PIy\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"Sa_zGefsV2\",\"type\":\"card\",\"data\":{\"card_name\":\"Wallet Management\",\"col\":4}},{\"id\":\"K6Xdr_lmT8\",\"type\":\"card\",\"data\":{\"card_name\":\"Logs & Monitoring\",\"col\":4}},{\"id\":\"A0usKSUQ3a\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}},{\"id\":\"8RbGZd7NFi\",\"type\":\"card\",\"data\":{\"card_name\":\"User Management\",\"col\":4}}]",
 	"creation": "2025-08-15 14:10:20.962369",
 	"custom_blocks": [],
 	"docstatus": 0,
 	"doctype": "Workspace",
 	"for_user": "",
 	"hide_custom": 0,
-	"icon": "color-energy-points",
+	"icon": "tool",
 	"idx": 0,
 	"indicator_color": "green",
 	"is_hidden": 0,
 	"label": "Nano Press",
-	"link_type": "DocType",
-	"links": [],
-	"modified": "2025-10-24 00:02:01.594540",
+	"links": [
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Ansible Log",
+			"link_count": 0,
+			"link_to": "Ansible Log",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Error Log",
+			"link_count": 0,
+			"link_to": "Error Log",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Scheduled Job Log",
+			"link_count": 0,
+			"link_to": "Scheduled Job Log",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Nano Press Pricing",
+			"link_count": 0,
+			"link_to": "Nano Press Pricing",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Razorpay Settings",
+			"link_count": 0,
+			"link_to": "Razorpay Settings",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "User",
+			"link_count": 0,
+			"link_to": "User",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Role",
+			"link_count": 0,
+			"link_to": "Role",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Infrastructure",
+			"link_count": 3,
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Card Break"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Server",
+			"link_count": 0,
+			"link_to": "Server",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Frappe Site",
+			"link_count": 0,
+			"link_to": "Frappe Site",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Custom Image",
+			"link_count": 0,
+			"link_to": "Custom Image",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Masters",
+			"link_count": 1,
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Card Break"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Apps",
+			"link_count": 0,
+			"link_to": "Apps",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Wallet Management",
+			"link_count": 3,
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Card Break"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Nano Press Wallet",
+			"link_count": 0,
+			"link_to": "Nano Press Wallet",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Wallet Transaction",
+			"link_count": 0,
+			"link_to": "Wallet Transaction",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Razorpay Order",
+			"link_count": 0,
+			"link_to": "Razorpay Order",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Logs & Monitoring",
+			"link_count": 3,
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Card Break"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Ansible Log",
+			"link_count": 0,
+			"link_to": "Ansible Log",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Error Log",
+			"link_count": 0,
+			"link_to": "Error Log",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Scheduled Job Log",
+			"link_count": 0,
+			"link_to": "Scheduled Job Log",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Settings",
+			"link_count": 2,
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Card Break"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Nano Press Pricing",
+			"link_count": 0,
+			"link_to": "Nano Press Pricing",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Razorpay Settings",
+			"link_count": 0,
+			"link_to": "Razorpay Settings",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "User Management",
+			"link_count": 2,
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Card Break"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "User",
+			"link_count": 0,
+			"link_to": "User",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		},
+		{
+			"hidden": 0,
+			"is_query_report": 0,
+			"label": "Role",
+			"link_count": 0,
+			"link_to": "Role",
+			"link_type": "DocType",
+			"onboard": 0,
+			"type": "Link"
+		}
+	],
+	"modified": "2026-01-12 23:20:59.854809",
 	"modified_by": "Administrator",
 	"module": "Nano Press",
 	"name": "Nano Press",
@@ -28,10 +291,17 @@
 	"sequence_id": 23.0,
 	"shortcuts": [
 		{
-			"color": "Green",
+			"color": "Grey",
 			"doc_view": "List",
-			"format": "{} Verified",
-			"label": "List of Servers",
+			"label": "Visit Site",
+			"type": "URL",
+			"url": "/self-host"
+		},
+		{
+			"color": "Blue",
+			"doc_view": "List",
+			"format": "{} Servers",
+			"label": "Servers",
 			"link_to": "Server",
 			"stats_filter": "[]",
 			"type": "DocType"
@@ -39,8 +309,8 @@
 		{
 			"color": "Green",
 			"doc_view": "List",
-			"format": "{} Deployed",
-			"label": "Create New Site",
+			"format": "{} Sites",
+			"label": "Frappe Sites",
 			"link_to": "Frappe Site",
 			"stats_filter": "[]",
 			"type": "DocType"
@@ -48,22 +318,21 @@
 		{
 			"color": "Yellow",
 			"doc_view": "List",
-			"format": "{}",
-			"label": "Build a Custom Image",
+			"format": "{} Images",
+			"label": "Custom Images",
 			"link_to": "Custom Image",
 			"stats_filter": "[]",
 			"type": "DocType"
 		},
 		{
-			"color": "Cyan",
+			"color": "Grey",
 			"doc_view": "List",
-			"format": "{} ",
-			"label": "Apps",
-			"link_to": "Apps",
+			"format": "{} Logs",
+			"label": "Ansible Logs",
+			"link_to": "Ansible Log",
 			"stats_filter": "[]",
 			"type": "DocType"
 		}
 	],
-	"title": "Nano Press",
-	"type": "Workspace"
+	"title": "Nano Press"
 }
