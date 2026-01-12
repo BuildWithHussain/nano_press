@@ -1,13 +1,13 @@
 frappe.listview_settings['Frappe Site'] = {
-	onload: function(listview) {
+	onload: (listview) => {
 		frappe.call({
 			method: 'nano_press.api.get_wallet_balance',
-			callback: function(r) {
+			callback: (r) => {
 				if (r.message) {
 					const balance = r.message.balance;
 					frappe.call({
 						method: 'nano_press.api.get_deployment_pricing',
-						callback: function(p) {
+						callback: (p) => {
 							if (p.message) {
 								const currency = p.message.currency;
 								const cost = p.message.deployment_cost;
@@ -15,20 +15,20 @@ frappe.listview_settings['Frappe Site'] = {
 
 								listview.page.add_inner_message(
 									`Wallet Balance: ${currency} ${balance.toFixed(2)}`,
-									indicator
+									indicator,
 								);
 
 								if (balance < cost) {
 									listview.page.add_inner_message(
 										`<a href="/wallet" class="text-blue-600 hover:text-blue-800">Recharge Wallet</a> to deploy sites`,
-										'orange'
+										'orange',
 									);
 								}
 							}
-						}
+						},
 					});
 				}
-			}
+			},
 		});
-	}
+	},
 };

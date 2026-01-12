@@ -5,6 +5,11 @@ from frappe import _
 def create_wallet_recharge_order(user, amount):
 	from razorpay_frappe.razorpay_integration.doctype.razorpay_order.razorpay_order import RazorpayOrder
 
+	from nano_press.utils.wallet_manager import initialize_user_wallet
+
+	if not frappe.db.exists("Nano Press Wallet", user):
+		initialize_user_wallet(user)
+
 	result = RazorpayOrder.initiate(
 		amount=amount,
 		currency="INR",

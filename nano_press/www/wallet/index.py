@@ -5,8 +5,8 @@ def get_context(context):
 	if frappe.session.user == "Guest":
 		frappe.throw("Please login to view wallet", frappe.PermissionError)
 
-	from nano_press.utils.wallet_manager import get_user_balance
 	from nano_press.nano_press.doctype.nano_press_pricing.nano_press_pricing import NanoPressPricing
+	from nano_press.utils.wallet_manager import get_user_balance
 
 	user = frappe.session.user
 	balance = get_user_balance(user)
@@ -24,7 +24,7 @@ def get_context(context):
 		filters={"user": user},
 		fields=["name", "transaction_type", "amount", "balance_after", "description", "transaction_date"],
 		order_by="transaction_date desc",
-		limit=10
+		limit=10,
 	)
 
 	return context

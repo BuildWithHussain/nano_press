@@ -222,3 +222,21 @@ def get_deployment_pricing():
 		"currency": NanoPressPricing.get_currency(),
 		"minimum_recharge": NanoPressPricing.get_minimum_recharge(),
 	}
+
+
+@frappe.whitelist()
+def verify_recharge_payment(razorpay_order_id, razorpay_payment_id, razorpay_signature):
+	from razorpay_frappe.razorpay_integration.doctype.razorpay_order.razorpay_order import RazorpayOrder
+
+	RazorpayOrder.handle_success(
+		order_id=razorpay_order_id,
+		payment_id=razorpay_payment_id,
+		signature=razorpay_signature,
+	)
+
+	from nano_press.utils.wallet_manager import get_user_balance
+
+	return {
+		"success": True,
+		"new_balance": get_user_balance(frappe.session.user),
+	}
