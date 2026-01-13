@@ -30,6 +30,7 @@ fixtures = [
 		"dt": "Custom DocPerm",
 		"filters": {"parent": ("in", ("Frappe Site", "Server", "Apps", "Custom Image", "Ansible Log"))},
 	},
+	{"dt": "App Version"},
 ]
 
 # Includes in <head>
