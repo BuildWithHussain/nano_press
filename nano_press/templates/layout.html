@@ -7,13 +7,13 @@
     <title>{{_("Nano Press")}}</title>
 
     <meta name="author" content="Nano Press">
-	{% if metatags %}
-		{% for name, content in metatags.items() %}
-			<meta name="{{ name }}" content="{{ content }}">
-		{% endfor %}
-	{% else %}
-		<meta name="description" content="Nano Press - The quick way to deploy Frappe Apps">
-	{% endif %}
+    {% if metatags %}
+        {% for name, content in metatags.items() %}
+            <meta name="{{ name }}" content="{{ content }}">
+        {% endfor %}
+        {% else %}
+        <meta name="description" content="Nano Press - The quick way to deploy Frappe Apps">
+    {% endif %}
 
 
     <link rel="stylesheet" href="/assets/nano_press/css/tailwind.css">
@@ -36,7 +36,7 @@
 
 
 <script src="/assets/nano_press/js/utils/synced-query-params.js"></script>
-<script >
+<script>
     const querySync = new QuerySync({
         defaultValues: { page: 1 }
     });
@@ -53,19 +53,17 @@
 </style>
 
 <body x-data dir="auto">
-    {% include "templates/includes/sidebar.html" %}
+    <div x-data="{ showSidebar: false,menuIsOpen: false }" class="flex">
+        {% include "templates/includes/sidebar.html" %}
+        <div class="flex flex-col w-full">
+            {% include "templates/includes/topbar.html" %}
+            {% include "templates/includes/toast-teleport.html" %}
 
-                <div class="overflow-y-auto" x-data="toaster">
-                    <div class="w-full px-6 md:px-10 py-8">
-                        {% block body %} {% endblock %}
-                    </div>
-                    <div>
-                        {% block uncontained_body %}{% endblock %}
-                    </div>
-                    {% include "templates/includes/toast-teleport.html" %}
-
-                    {% include "templates/includes/footer.html" %}
+            <div class="self-center" x-data="toaster">
+                <div class="max-w-5xl px-6 md:px-10 py-8">
+                    {% block body %} {% endblock %}
                 </div>
+                {% include "templates/includes/footer.html" %}
             </div>
         </div>
     </div>

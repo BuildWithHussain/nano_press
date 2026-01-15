@@ -1,0 +1,30 @@
+    <div class=" w-full bg-surface dark:bg-surface-dark">
+        <!-- Top navigation bar -->
+        <nav class="sticky top-0 z-10 flex items-center justify-between border-b border-outline bg-surface-alt px-4 py-2 dark:border-outline-dark dark:bg-surface-dark-alt"
+            aria-label="top navigation bar">
+            <!-- Mobile toggle button -->
+            <button type="button"
+                class="md:hidden inline-flex items-center justify-center rounded-radius p-2 text-on-surface hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-on-surface-dark dark:hover:bg-primary-dark/5"
+                x-on:click="showSidebar = true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5"
+                    aria-hidden="true">
+                    <path
+                        d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm5-1v12h9a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM4 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h2z" />
+                </svg>
+                <span class="sr-only">sidebar toggle</span>
+            </button>
+
+            <!-- Breadcrumb (desktop only) -->
+            <nav class="hidden md:inline-block text-sm font-medium text-on-surface dark:text-on-surface-dark"
+                aria-label="breadcrumb">
+                <ol class="flex flex-wrap items-center gap-1">
+                    <li class="flex items-center gap-1">
+                        <a href="/self-host"
+                            class="hover:text-on-surface-strong dark:hover:text-on-surface-dark-strong">Home</a>
+                    </li>
+                </ol>
+            </nav>
+
+        </nav>
+        
+    </div>
