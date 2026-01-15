@@ -1,0 +1,45 @@
+<script>
+    async function frappe_call(url, args, method = "POST") {
+        let response;
+        let headers = {
+            'Content-Type': 'application/json; charset=utf-8',
+            "X-Frappe-CSRF-Token": '{{ frappe.session.csrf_token }}',
+            Accept: "application/json",
+        }
+        if (method === "POST") {
+            response = await fetch(url, {
+                body: JSON.stringify(args),
+                method: "POST",
+                headers
+            })
+        }
+        else if (method === "PUT") {
+            response = await fetch(url, {
+                body: JSON.stringify(args),
+                method: "PUT",
+                headers
+            })
+        }
+        else {
+            response = await fetch(url)
+        }
+
+        const data = await response.json()
+        if (data.errors) {
+            const error = data.errors[0] // todo: handle multiple errors
+
+            if (error.message) {
+                toast(error.message, { type: "danger" })
+            } else {
+                toast("Internal Server Error", { type: "danger" })
+            }
+
+            throw Error(error.exception)
+        } else if (!response.ok) {
+            toast("Something went wrong", { type: "danger" })
+        }
+        else {
+            return data
+        }
+    }
+</script>

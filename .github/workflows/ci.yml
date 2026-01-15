@@ -1,9 +1,11 @@
+
 name: CI
 
 on:
   push:
     branches:
       - develop
+      - main
   pull_request:
 
 concurrency:
@@ -76,9 +78,7 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install MariaDB Client
-        run: |
-          sudo apt update
-          sudo apt-get install mariadb-client
+        run: sudo apt update && sudo apt-get install mariadb-client
 
       - name: Setup
         run: |

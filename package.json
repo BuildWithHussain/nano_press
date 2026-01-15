@@ -1,0 +1,29 @@
+{
+	"name": "nano_press",
+	"version": "1.0.0",
+	"description": "Nano Press automates the full lifecycle of a self-hosted Frappe/ERPNext deployment—from connecting a fresh server to shipping production-ready sites. It wraps Ansible automation, server health checks, app management, and site provisioning into a guided workflow that lives inside your Frappe desk.",
+	"main": "index.js",
+	"scripts": {
+		"build": "yarn tailwind:build",
+		"tailwind:watch": "npx @tailwindcss/cli -i ./nano_press/public/css/main.css -o ./nano_press/public/css/tailwind.css --watch",
+		"tailwind:build": "npx @tailwindcss/cli -i ./nano_press/public/css/main.css -o ./nano_press/public/css/tailwind.css"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/BuildWithHussain/nano_press.git"
+	},
+	"author": "Venkatesh M",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/BuildWithHussain/nano_press/issues"
+	},
+	"homepage": "https://github.com/BuildWithHussain/nano_press#readme",
+	"dependencies": {
+		"@tailwindcss/cli": "^4.1.14",
+		"tailwindcss": "^4.1.14"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@tailwindcss/typography": "^0.5.16"
+	}
+}

@@ -1,41 +1,41 @@
 {
- "allow_roles": [
-  {
-   "role": "All"
-  }
- ],
- "creation": "2025-08-24 20:43:57.279971",
- "docstatus": 0,
- "doctype": "Module Onboarding",
- "documentation_url": "https://github.com/BuildWithHussain/nano_press",
- "idx": 0,
- "is_complete": 0,
- "modified": "2025-10-17 12:24:46.277813",
- "modified_by": "Administrator",
- "module": "Nano Press",
- "name": "Install Server",
- "owner": "Administrator",
- "steps": [
-  {
-   "step": "Create a Server"
-  },
-  {
-   "step": "Verify Server Connection"
-  },
-  {
-   "step": "Prepare Server"
-  },
-  {
-   "step": "Add Frappe Apps"
-  },
-  {
-   "step": "Build Custom Image"
-  },
-  {
-   "step": "Deploy Server"
-  }
- ],
- "subtitle": "Deploy Frappe/ERPNext from zero to production in 4 simple steps",
- "success_message": "\u2705 Deployment successful. The Frappe site has been provisioned and configured via NanoPress. You can now access it using the specified domain",
- "title": "Deploy Frappe/ERPNext Server"
+	"allow_roles": [
+		{
+			"role": "All"
+		}
+	],
+	"creation": "2025-08-24 20:43:57.279971",
+	"docstatus": 0,
+	"doctype": "Module Onboarding",
+	"documentation_url": "https://github.com/BuildWithHussain/nano_press",
+	"idx": 0,
+	"is_complete": 0,
+	"modified": "2025-10-17 12:24:46.277813",
+	"modified_by": "Administrator",
+	"module": "Nano Press",
+	"name": "Install Server",
+	"owner": "Administrator",
+	"steps": [
+		{
+			"step": "Create a Server"
+		},
+		{
+			"step": "Verify Server Connection"
+		},
+		{
+			"step": "Prepare Server"
+		},
+		{
+			"step": "Add Frappe Apps"
+		},
+		{
+			"step": "Build Custom Image"
+		},
+		{
+			"step": "Deploy Server"
+		}
+	],
+	"subtitle": "Deploy Frappe/ERPNext from zero to production in 4 simple steps",
+	"success_message": "\u2705 Deployment successful. The Frappe site has been provisioned and configured via NanoPress. You can now access it using the specified domain",
+	"title": "Deploy Frappe/ERPNext Server"
 }

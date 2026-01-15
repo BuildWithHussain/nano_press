@@ -40,6 +40,13 @@ class Server(Document):
 		]
 	# end: auto-generated types
 
+	def validate(self):
+		if not self.traefik_email:
+			self.traefik_email = frappe.session.user
+		self.created_by = frappe.session.user
+		if self.name:
+			self.server_name = self.name
+
 	@staticmethod
 	def _read_local_public_key() -> str | None:
 		"""Attempt to read a usable SSH public key from standard locations.
@@ -64,7 +71,6 @@ class Server(Document):
 							return data
 			except Exception:
 				continue
-		# Try deriving from private keys using ssh-keygen
 		private_candidates = [
 			os.path.expanduser(p)
 			for p in [
@@ -91,171 +97,153 @@ class Server(Document):
 				continue
 		return None
 
-	def prepare_server(self):
-		result = run_playbook(host=self.server_ip, playbook_path="install_docker.yml", become=True)
+	def prepare_server(self, include_traefik=False):
+		"""
+		Unified server preparation that installs Docker, Docker Compose, and optionally Traefik.
+		Checks if components are already installed before attempting installation.
+
+		Args:
+			include_traefik: Whether to also deploy Traefik (default: False, requires traefik fields to be set)
+		"""
+		if include_traefik:
+			if self.docker_installed and self.compose_installed and self.traefik_deployed:
+				return {
+					"status": 200,
+					"message": "Server is already prepared with Docker, Docker Compose, and Traefik",
+					"docker_version": self.docker_version or "Unknown",
+					"compose_version": self.compose_version or "Unknown",
+					"traefik_version": self.traefik_version or "Unknown",
+					"skipped": True,
+				}
+		else:
+			if self.docker_installed and self.compose_installed:
+				return {
+					"status": 200,
+					"message": "Server is already prepared with Docker and Docker Compose",
+					"docker_version": self.docker_version or "Unknown",
+					"compose_version": self.compose_version or "Unknown",
+					"skipped": True,
+				}
+
+		extra_vars = {}
+
+		if include_traefik:
+			if not self.traefik_domain:
+				frappe.throw(frappe._("Traefik domain is required for Traefik deployment"))
+			if not self.traefik_email:
+				frappe.throw(frappe._("Traefik email is required for Traefik deployment"))
+			if not self.traefik_username:
+				frappe.throw(frappe._("Traefik username is required for Traefik deployment"))
+			if not self.traefik_password:
+				frappe.throw(frappe._("Traefik password is required for Traefik deployment"))
+
+			extra_vars = {
+				"traefik_domain": self.traefik_domain,
+				"traefik_email": self.traefik_email,
+				"traefik_username": self.traefik_username,
+				"traefik_password": self.get_password("traefik_password"),
+			}
+
+		result = run_playbook(
+			host=self.server_ip,
+			playbook_path="prepare_server.yml",
+			become=True,
+			extra_vars=extra_vars if extra_vars else None,
+		)
 
 		if not result.get("ok"):
 			data = result.get("data", {})
-			stderr = data.get("stderr", "Unknown error")
-			error_msg = data.get("message", stderr)
-			frappe.throw(f"Failed to install docker: {error_msg}")
+			error_msg = (
+				data.get("message") or data.get("stderr_tail") or data.get("stderr") or "Unknown error"
+			)
+
+			log_ref = f" (Check log: {result.get('log_id')})" if result.get("log_id") else ""
+			frappe.log_error(
+				title="Server Preparation Failed",
+				message=f"Server: {self.name}\nFull response: {frappe.as_json(result, indent=2)}",
+			)
+
+			frappe.throw(f"Failed to prepare server: {error_msg}{log_ref}")
 
 		data = result.get("data", {})
 
 		if data.get("stderr"):
-			frappe.log_error(f"Docker installation stderr: {data.get('stderr')}", "Docker Install Warning")
+			frappe.log_error(f"Server preparation stderr: {data.get('stderr')}", "Server Preparation Warning")
 
-		# Extract versions from Ansible playbook results
 		docker_version = "Unknown"
 		compose_version = "Unknown"
+		traefik_version = None
 
-		# Parse through plays and tasks to find registered variables
-		# The actual playbook results are in raw_json
 		raw_json = data.get("raw_json", {})
 		plays = raw_json.get("plays", [])
 
 		for play in plays:
 			tasks = play.get("tasks", [])
 			for task in tasks:
-				# Task name is in task["task"]["name"]
 				task_info = task.get("task", {})
 				task_name = task_info.get("name", "")
 				hosts_data = task.get("hosts", {})
 
-				# Get the first host's data (assuming single host execution)
 				for _host, host_result in hosts_data.items():
 					if task_name == "Get Docker version":
 						docker_version = host_result.get("stdout", "").strip() or "Unknown"
 					elif task_name == "Get Docker Compose version":
 						compose_version = host_result.get("stdout", "").strip() or "Unknown"
+					elif task_name == "Get Traefik version":
+						traefik_version = host_result.get("stdout", "").strip() or "v2.11"
 
-		# Update server fields
-		self.db_set("docker_installed", True)
-		self.db_set("docker_version", docker_version)
-		self.db_set("compose_installed", True)
-		self.db_set("compose_version", compose_version)
-		self.db_set("verify_status", "Prepared")
-		self.db_set("last_prepared_at", frappe.utils.now_datetime())
+		self.docker_installed = True
+		self.docker_version = docker_version
+		self.compose_installed = True
+		self.compose_version = compose_version
+		self.verify_status = "Prepared"
+		self.last_prepared_at = frappe.utils.now_datetime()
 
-		return {
+		if include_traefik and traefik_version:
+			self.traefik_deployed = True
+			self.traefik_version = traefik_version
+
+		self.save()
+
+		response = {
 			"status": 200,
-			"message": f"Docker {docker_version} and Compose {compose_version} installed successfully",
+			"message": "Server prepared successfully",
 			"log_id": result.get("log_id"),
 			"docker_version": docker_version,
 			"compose_version": compose_version,
 		}
 
-	def deploy_traefik(self):
-		"""Deploy Traefik reverse proxy with Let's Encrypt SSL."""
-		# Validate required fields
-		if not self.traefik_domain:
-			frappe.throw("Traefik domain is required")
-		if not self.traefik_email:
-			frappe.throw("Traefik email is required")
-		if not self.traefik_username:
-			frappe.throw("Traefik username is required")
-		if not self.traefik_password:
-			frappe.throw("Traefik password is required")
-
-		# Prepare extra vars for the playbook
-		extra_vars = {
-			"traefik_domain": self.traefik_domain,
-			"traefik_email": self.traefik_email,
-			"traefik_username": self.traefik_username,
-			"traefik_password": self.get_password("traefik_password"),
-		}
-
-		result = run_playbook(
-			host=self.server_ip, playbook_path="install_traefik.yml", become=True, extra_vars=extra_vars
-		)
-
-		if not result.get("ok"):
-			data = result.get("data", {})
-
-			# Try multiple ways to extract error message
-			error_msg = (
-				data.get("message") or data.get("stderr_tail") or data.get("stderr") or "Unknown error"
+		if include_traefik and traefik_version:
+			response["traefik_version"] = traefik_version
+			response["traefik_domain"] = self.traefik_domain
+			response["message"] = (
+				f"Server prepared with Docker {docker_version}, Compose {compose_version}, and Traefik {traefik_version}"
+			)
+		else:
+			response["message"] = (
+				f"Server prepared with Docker {docker_version} and Compose {compose_version}"
 			)
 
-			# Get log_id for reference
-			log_ref = f" (Check log: {result.get('log_id')})" if result.get("log_id") else ""
-
-			# Log full response for debugging
-			frappe.log_error(
-				title="Traefik Deployment Failed",
-				message=f"Server: {self.name}\nFull response: {frappe.as_json(result, indent=2)}",
-			)
-
-			frappe.throw(f"Failed to deploy Traefik: {error_msg}{log_ref}")
-
-		data = result.get("data", {})
-
-		if data.get("stderr"):
-			frappe.log_error(f"Traefik deployment stderr: {data.get('stderr')}", "Traefik Deploy Warning")
-
-		# Extract version info from raw_json
-		traefik_version = "v2.11"  # Default from template
-		raw_json = data.get("raw_json", {})
-		plays = raw_json.get("plays", [])
-
-		for play in plays:
-			tasks = play.get("tasks", [])
-			for task in tasks:
-				task_info = task.get("task", {})
-				task_name = task_info.get("name", "")
-				hosts_data = task.get("hosts", {})
-
-				for _host, host_result in hosts_data.items():
-					if task_name == "Get Traefik version":
-						traefik_version = host_result.get("stdout", "").strip() or traefik_version
-
-		# Update server fields
-		self.db_set("traefik_deployed", True)
-		self.db_set("traefik_version", traefik_version)
-
-		return {
-			"status": 200,
-			"message": f"Traefik {traefik_version} deployed successfully on {self.traefik_domain}",
-			"log_id": result.get("log_id"),
-			"traefik_version": traefik_version,
-			"traefik_domain": self.traefik_domain,
-		}
+		return response
 
 
 @frappe.whitelist()
-def prepare_server(server_name: str):
+def prepare_server(server_name: str, include_traefik: bool = False):
 	"""
-	Whitelisted wrapper to prepare a server by installing Docker.
+	Whitelisted wrapper to prepare a server by installing Docker, Docker Compose, and optionally Traefik.
 
 	Args:
 		server_name: Name of the Server document
+		include_traefik: Whether to also deploy Traefik (default: False)
 
 	Returns:
-		dict with status, message, and log_id
+		dict with status, message, versions, and log_id
 	"""
 	if not server_name:
 		frappe.throw("Server name is required")
 
 	server = frappe.get_doc("Server", server_name)
-	return server.prepare_server()
-
-
-@frappe.whitelist()
-def deploy_traefik(server_name: str):
-	"""
-	Whitelisted wrapper to deploy Traefik reverse proxy on a server.
-
-	Args:
-		server_name: Name of the Server document
-
-	Returns:
-		dict with status, message, log_id, and traefik info
-	"""
-	if not server_name:
-		frappe.throw("Server name is required")
-
-	server = frappe.get_doc("Server", server_name)
-	return server.deploy_traefik()
+	return server.prepare_server(include_traefik=include_traefik)
 
 
 @frappe.whitelist()

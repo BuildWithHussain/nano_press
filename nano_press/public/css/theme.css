@@ -1,0 +1,47 @@
+/* This file contains all the theme variables regarding the website it automatically extends and overwrites the tailwindcss default variables */
+@theme {
+    
+    --default-font-family: "OpenSans";
+    --font-sans: "OpenSans", system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-serif: "doto", Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	--bg-rahul : #334432;
+
+    /* Colors */
+
+  
+    /* font size */
+    --text-xxs: 10px;
+    --text-3xs: 8px;
+    /* screen size */
+    --breakpoint-ipad: 821px;
+    --breakpoint-ipad-pro: 1025px;
+
+    --text-4.5xl: 2.5rem;
+
+    /* animation */
+    --animate-slideDown: slideDown 0.3s linear;
+    @keyframes slideDown {
+      from {
+        height: 0;
+        opacity: 0;
+      }
+      to {
+        height: auto;
+        opacity: 1;
+      }
+    }
+    --animate-slideUp: slideUp 0.3s linear;
+  
+    @keyframes slideUp {
+      from {
+        height: auto;
+        opacity: 1;
+      }
+      to {
+        height: 0;
+        opacity: 0;
+      }
+    }
+  }
+  

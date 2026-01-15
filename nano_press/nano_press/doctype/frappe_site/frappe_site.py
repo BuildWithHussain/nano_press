@@ -42,8 +42,16 @@ class FrappeSite(Document):
 
 	def before_insert(self):
 		self._ensure_password()
+
+	def after_insert(self):
+		bench_name = self.bench_name or self.name
+		self.bench_name = bench_name
+
 		if not self.site_url:
-			self.set_site_url()
+			self.site_url = self._generate_site_url(bench_name)
+
+		self.flags.ignore_validate = True
+		self.save(ignore_permissions=True)
 
 	def before_save(self):
 		if self.docstatus == 1:
@@ -62,7 +70,7 @@ class FrappeSite(Document):
 			frappe.throw("Please select a Server before deploying.")
 		if not frappe.db.exists("Server", linked_server):
 			frappe.throw(f"Linked Server '{linked_server}' does not exist.")
-		server = frappe.get_doc("Server", linked_server)
+		server = frappe.get_cached_doc("Server", linked_server)
 		if getattr(server, "verify_status", "Not Verified") != "Prepared":
 			frappe.throw("Server is not verified. Please verify the server first.")
 		return server
@@ -76,7 +84,7 @@ class FrappeSite(Document):
 
 	def _sync_apps_from_custom_image(self):
 		self.set("install_apps", [])
-		custom = frappe.get_doc("Custom Image", self.custom_image)
+		custom = frappe.get_cached_doc("Custom Image", self.custom_image)
 		for row in custom.apps_config:
 			self.append("install_apps", {"app_name": row.app_name})
 
@@ -84,7 +92,7 @@ class FrappeSite(Document):
 		"""Resolve the Docker image to use for deployment
 		Returns the appropriate Docker image based on is_custom flag"""
 		if self.is_custom and self.custom_image:
-			custom_img = frappe.get_doc("Custom Image", self.custom_image)
+			custom_img = frappe.get_cached_doc("Custom Image", self.custom_image)
 
 			if custom_img.image_tag:
 				return custom_img.image_tag
@@ -94,7 +102,13 @@ class FrappeSite(Document):
 	def get_deployment_vars(self) -> dict:
 		"""Prepare all variables needed for deployment"""
 
-		install_apps = [row.app_name for row in self.get("install_apps") if row.app_name]
+		install_apps = []
+		for row in self.get("install_apps"):
+			if row.app_name:
+				app_doc = frappe.get_cached_doc("Apps", row.app_name)
+				if app_doc.scrubbed_name:
+					install_apps.append(app_doc.scrubbed_name)
+
 		install_apps_csv = ",".join(install_apps) if install_apps else "erpnext"
 
 		docker_image = self.get_docker_image()
@@ -109,18 +123,27 @@ class FrappeSite(Document):
 			"bench_name": self.bench_name or "",
 		}
 
-	def set_site_url(self) -> None:
-		server = frappe.get_doc("Server", self.server_name)
-		self.site_url = f"{self.bench_name}.{server.server_ip}.traefik.me"
+	def _generate_site_url(self, bench_name: str) -> str:
+		"""Generate a traefik.me domain for the site based on bench name and server IP.
+
+		Args:
+			bench_name: The bench name to use for the URL prefix
+
+		Returns:
+			str: Generated site URL in format: {bench_name}.{server_ip}.traefik.me
+		"""
+		server = frappe.get_cached_doc("Server", self.server_name)
+		site_prefix = bench_name.lower()
+		return f"{site_prefix}.{server.server_ip}.traefik.me"
 
 	@frappe.whitelist()
 	def prepare_for_deployment(self) -> dict:
 		self.validate_server()
 		vars = self.get_deployment_vars()
-		self.db_set("status", "Deploying", update_modified=False)
+		self.status = "Deploying"
+		self.save()
 
 		try:
-			# Step 1: Prepare repository
 			result1 = run_playbook(
 				server_name=self.server_name,
 				playbook_path="prepare_repo.yml",
@@ -129,20 +152,22 @@ class FrappeSite(Document):
 			if result1.get("status") != "success":
 				raise Exception(f"prepare_repo.yml failed: {result1.get('message', 'Unknown error')}")
 
-			# Step 2: Render pwd.yml with deployment vars
 			result2 = run_playbook(
 				server_name=self.server_name, playbook_path="render_pwd.yml", extra_vars=vars
 			)
 			if result2.get("status") != "success":
 				raise Exception(f"render_pwd.yml failed: {result2.get('message', 'Unknown error')}")
 
-			self.db_set("status", "Ready To Deploy", update_modified=False)
-			self.db_set("last_deployed_at", frappe.utils.now_datetime(), update_modified=False)
+			self.status = "Ready To Deploy"
+			self.last_deployed_at = frappe.utils.now_datetime()
+			self.save()
 			return {"status": 200, "message": "Deployment prepared successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "prepare_for_deployment failed")
-			self.db_set("status", "Failed", update_modified=False)
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
@@ -157,12 +182,15 @@ class FrappeSite(Document):
 			if result.get("status") != "success":
 				raise Exception(f"compose_up.yml failed: {result.get('message', 'Unknown error')}")
 
-			self.db_set("status", "Deployed", update_modified=False)
+			self.status = "Deployed"
+			self.save()
 			return {"status": 200, "message": "Deployment completed successfully"}
 
 		except Exception as exc:
-			frappe.log_error(frappe.get_traceback(), "prepare_for_deployment failed")
-			self.db_set("status", "Failed", update_modified=False)
+			frappe.log_error(frappe.get_traceback(), "deploy_site failed")
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
@@ -175,14 +203,17 @@ class FrappeSite(Document):
 				extra_vars={"bench_name": self.bench_name},
 			)
 			if result.get("status") != "success":
-				raise Exception(f"compose_up.yml failed: {result.get('message', 'Unknown error')}")
-			self.db_set("status", "Stopped", update_modified=False)
+				raise Exception(f"stop_all_containers.yml failed: {result.get('message', 'Unknown error')}")
 
+			self.status = "Stopped"
+			self.save()
 			return {"status": 200, "message": "All containers stopped successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "stop_all_containers failed")
-			self.db_set("status", "Failed", update_modified=False)
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
@@ -196,13 +227,16 @@ class FrappeSite(Document):
 			)
 			if result.get("status") != "success":
 				raise Exception(f"destroy_site.yml failed: {result.get('message', 'Unknown error')}")
-			self.db_set("status", "Stopped", update_modified=False)
 
+			self.status = "Stopped"
+			self.save()
 			return {"status": 200, "message": "Site Destroyed successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "destroy_site.yml failed")
-			self.db_set("status", "Failed", update_modified=False)
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
 
 	@frappe.whitelist()
@@ -216,11 +250,54 @@ class FrappeSite(Document):
 			)
 			if result.get("status") != "success":
 				raise Exception(f"restart_site.yml failed: {result.get('message', 'Unknown error')}")
-			self.db_set("status", "Stopped", update_modified=False)
 
+			self.status = "Deployed"
+			self.save()
 			return {"status": 200, "message": "Site Restarted successfully"}
 
 		except Exception as exc:
 			frappe.log_error(frappe.get_traceback(), "restart_site.yml failed")
-			self.db_set("status", "Failed", update_modified=False)
+			self.reload()
+			self.status = "Failed"
+			self.save()
 			return {"status": 500, "message": frappe.utils.cstr(exc)}
+
+
+@frappe.whitelist()
+def prepare_for_deployment(site_name: str) -> dict:
+	"""Wrapper function to call prepare_for_deployment on a Frappe Site document"""
+	doc = frappe.get_doc("Frappe Site", site_name)
+	return doc.prepare_for_deployment()
+
+
+@frappe.whitelist()
+def get_site_credentials(site_name: str) -> dict:
+	"""Get the username and password for a Frappe Site.
+
+	Args:
+		site_name: Name of the Frappe Site document
+
+	Returns:
+		dict: {username, password}
+	"""
+	try:
+		if not frappe.db.exists("Frappe Site", site_name):
+			frappe.throw(f"Frappe Site {site_name} not found")
+
+		doc = frappe.get_doc("Frappe Site", site_name)
+
+		return {
+			"username": doc.username or "Administrator",
+			"password": doc.get_password("admin_password") or "",
+		}
+
+	except Exception as e:
+		frappe.log_error(f"Error getting site credentials: {e}")
+		return {"username": "", "password": ""}
+
+
+@frappe.whitelist()
+def deploy_site(site_name: str) -> dict:
+	"""Wrapper function to call deploy_site on a Frappe Site document"""
+	doc = frappe.get_doc("Frappe Site", site_name)
+	return doc.deploy_site()

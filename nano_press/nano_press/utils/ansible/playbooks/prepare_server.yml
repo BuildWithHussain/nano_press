@@ -1,0 +1,237 @@
+- hosts: all
+  become: true
+  vars:
+    traefik_dir: "/opt/traefik"
+  tasks:
+    # =============================================
+    # STEP 1: Clean up any APT conflicts
+    # =============================================
+    - name: Clean up Docker APT conflicts (if any)
+      block:
+        - name: Remove conflicting Docker APT sources
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - /etc/apt/sources.list.d/docker.list
+            - /etc/apt/sources.list.d/docker-ce.list
+          ignore_errors: true
+
+        - name: Remove conflicting Docker keyrings
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - /etc/apt/keyrings/docker.asc
+            - /etc/apt/keyrings/docker.gpg
+            - /usr/share/keyrings/docker-archive-keyring.gpg
+          ignore_errors: true
+
+        - name: Force APT cache update
+          ansible.builtin.shell: |
+            rm -rf /var/lib/apt/lists/* || true
+            apt-get update --fix-missing --allow-releaseinfo-change || true
+            apt-get update || true
+          changed_when: false
+          ignore_errors: true
+
+    # =============================================
+    # STEP 2: Check if Docker is already installed
+    # =============================================
+    - name: Check if Docker is already installed
+      ansible.builtin.command: docker --version
+      register: docker_check
+      failed_when: false
+      changed_when: false
+
+    - name: Display Docker status
+      ansible.builtin.debug:
+        msg: "Docker is already installed: {{ docker_check.stdout }}"
+      when: docker_check.rc == 0
+
+    # =============================================
+    # STEP 3: Install Docker (only if not present)
+    # =============================================
+    - name: Install Docker
+      block:
+        - name: Install Docker via convenience script
+          ansible.builtin.shell: curl -fsSL https://get.docker.com | bash
+          args:
+            executable: /bin/bash
+
+        - name: Ensure Docker service is running
+          ansible.builtin.systemd:
+            name: docker
+            state: started
+            enabled: true
+
+        - name: Add user to docker group
+          ansible.builtin.user:
+            name: "{{ ansible_user }}"
+            groups: docker
+            append: true
+      when: docker_check.rc != 0
+
+    # =============================================
+    # STEP 4: Get Docker version
+    # =============================================
+    - name: Get Docker version
+      ansible.builtin.command: docker --version
+      register: docker_version_output
+      changed_when: false
+
+    # =============================================
+    # STEP 5: Check if Docker Compose is available
+    # =============================================
+    - name: Check if Docker Compose is available
+      ansible.builtin.command: docker compose version
+      register: compose_check
+      failed_when: false
+      changed_when: false
+
+    - name: Display Docker Compose status
+      ansible.builtin.debug:
+        msg: "Docker Compose is already available: {{ compose_check.stdout }}"
+      when: compose_check.rc == 0
+
+    # =============================================
+    # STEP 6: Install Docker Compose (only if not present)
+    # =============================================
+    - name: Install Compose v2 binary
+      ansible.builtin.shell: |
+        DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+        mkdir -p $DOCKER_CONFIG/cli-plugins
+        curl -SL https://github.com/docker/compose/releases/download/{{ compose_v2_version | default('v2.24.5') }}/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
+        chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+      args:
+        executable: /bin/bash
+      when: compose_check.rc != 0
+
+    # =============================================
+    # STEP 7: Get Docker Compose version
+    # =============================================
+    - name: Get Docker Compose version
+      ansible.builtin.command: docker compose version
+      register: compose_version_output
+      changed_when: false
+
+    # =============================================
+    # STEP 8: Check if Traefik is already deployed
+    # =============================================
+    - name: Check if Traefik is already running
+      ansible.builtin.shell: docker ps --filter "name=traefik" -q
+      register: traefik_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display Traefik status
+      ansible.builtin.debug:
+        msg: "Traefik is already deployed"
+      when: traefik_check.stdout | length > 0
+
+    # =============================================
+    # STEP 9: Deploy Traefik (only if not present)
+    # =============================================
+    - name: Deploy Traefik
+      block:
+        - name: Ensure Traefik directory exists
+          ansible.builtin.file:
+            path: "{{ traefik_dir }}"
+            state: directory
+            mode: '0755'
+
+        - name: Create traefik-public network
+          ansible.builtin.shell: docker network create traefik-public || true
+          changed_when: false
+          ignore_errors: true
+
+        - name: Check if openssl is installed
+          ansible.builtin.command: which openssl
+          register: openssl_check
+          failed_when: false
+          changed_when: false
+
+        - name: Install openssl if not present
+          ansible.builtin.shell: |
+            apt-get install -y openssl || true
+          when: openssl_check.rc != 0
+          ignore_errors: true
+
+        - name: Generate password hash for Traefik admin
+          block:
+            - name: Try openssl method first
+              ansible.builtin.shell: |
+                set -e
+                PASS={{ traefik_password }}
+                openssl passwd -apr1 "$PASS"
+              register: openssl_out
+              failed_when: false
+              changed_when: false
+              args:
+                executable: /bin/bash
+
+            - name: Fallback to Python method if openssl fails
+              ansible.builtin.shell: |
+                python3 -c "
+                import crypt
+                import string
+                import secrets
+                password = '{{ traefik_password }}'
+                salt = '$apr1$' + ''.join(secrets.choice(string.ascii_letters + string.digits + './') for _ in range(8)) + '$'
+                hash_result = crypt.crypt(password, salt)
+                print(hash_result)
+                "
+              register: python_out
+              when: openssl_out.rc != 0
+              changed_when: false
+              args:
+                executable: /bin/bash
+
+            - name: Set password hash from successful method
+              ansible.builtin.set_fact:
+                password_hash: "{{ openssl_out.stdout if openssl_out.rc == 0 else python_out.stdout }}"
+
+        - name: Set password hash variable (escape $ for docker-compose)
+          ansible.builtin.set_fact:
+            traefik_password_hash: "{{ password_hash | trim | replace('$', '$$') }}"
+
+        - name: Create Traefik docker-compose.yml
+          ansible.builtin.template:
+            src: ../templates/traefik.yml.j2
+            dest: "{{ traefik_dir }}/docker-compose.yml"
+            mode: '0644'
+
+        - name: Start Traefik container
+          ansible.builtin.shell: |
+            cd {{ traefik_dir }}
+            docker compose up -d
+          args:
+            executable: /bin/bash
+
+        - name: Wait for Traefik to be ready
+          ansible.builtin.wait_for:
+            host: "{{ traefik_domain }}"
+            port: 443
+            timeout: 60
+          ignore_errors: true
+
+        - name: Get Traefik version
+          ansible.builtin.shell: docker exec traefik traefik version | head -n1 || echo "v2.11"
+          register: traefik_version_check
+          changed_when: false
+          failed_when: false
+      when: traefik_check.stdout | length == 0 and traefik_domain is defined
+
+    # =============================================
+    # STEP 10: Display summary
+    # =============================================
+    - name: Display installation summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "Server Preparation Complete!"
+          - "========================================="
+          - "Docker Version: {{ docker_version_output.stdout }}"
+          - "Docker Compose Version: {{ compose_version_output.stdout }}"
+          - "Traefik Status: {{ 'Deployed' if traefik_check.stdout | length == 0 and traefik_domain is defined else 'Skipped or Already Running' }}"
+          - "========================================="

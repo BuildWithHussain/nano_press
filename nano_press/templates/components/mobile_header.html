@@ -1,0 +1,26 @@
+{% set direction = "left" %}
+{% set position = "inset-0" %}
+{% set width = "w-full" %}
+{% set height = "h-screen" %}
+{% extends "templates/components/core/offcanvas.html" %}
+
+{% block offcanvas_header %}
+    <div class="flex items-center justify-between  ">
+        <a href="/self-host" class="flex items-center space-x-2 text-primary font-semibold text-lg">
+    <span>Nano Press</span>
+  </a>
+        <button @click="is_offcanvas_open = false" class="text-white bg-green-900 rounded-full p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+{% endblock %}
+
+{% block offcanvas_content %}
+    <div class="mt-8">
+        
+     <a href="/self-host" class="flex w-full items-center justify-between  text-md mt-4 capitalize ">Home</a>
+     <a href="/sites" class="flex w-full items-center justify-between  text-md mt-4 capitalize ">My Sites</a>
+    </div>
+{% endblock %}
