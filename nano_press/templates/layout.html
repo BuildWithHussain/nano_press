@@ -4,17 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{_("Nano Press")}}</title>
+    <title>
+        {% block title %}{{ _("Nano Press") }}{% endblock %}
+    </title>
+
 
     <!-- meta -->
-	<meta name="author" content="Nano Press">
-	{% if metatags %}
-		{% for name, content in metatags.items() %}
-			<meta name="{{ name }}" content="{{ content }}">
-		{% endfor %}
-	{% else %}
-		<meta name="description" content="Nano Press - The quick way to deploy Frappe Apps">
-	{% endif %}
+    <meta name="author" content="Nano Press">
+    {% if metatags %}
+    {% for name, content in metatags.items() %}
+    <meta name="{{ name }}" content="{{ content }}">
+    {% endfor %}
+    {% else %}
+    <meta name="description" content="Nano Press - The quick way to deploy Frappe Apps">
+    {% endif %}
 
 
     <link rel="stylesheet" href="/assets/nano_press/css/tailwind.css">
@@ -37,7 +40,7 @@
 
 
 <script src="/assets/nano_press/js/utils/synced-query-params.js"></script>
-<script >
+<script>
     // Initialize with options
     const querySync = new QuerySync({
         defaultValues: { page: 1 }
@@ -58,21 +61,28 @@
 </style>
 
 <body x-data dir="auto">
+
+    {% if not hide_header %}
     {% include "templates/includes/header.html" %}
+    {% endif %}
+
 
     <main class="relative" x-data="toaster">
-        <div class="max-w-5xl mx-auto px-6 md:px-10 ">
 
-            {% block body %} {% endblock %}
+        {% block container %}
+        <div class="max-w-5xl mx-auto px-6 md:px-10">
+            {% block body %}{% endblock %}
         </div>
-        <div>
-            {% block uncontained_body %}{% endblock %}
+        {% endblock %}
 
-        </div>
+        {% block uncontained_body %}{% endblock %}
+
         {% include "templates/includes/toast-teleport.html" %}
     </main>
+
 
     {% include "templates/includes/footer.html" %}
 </body>
 {% block script %} {% endblock %}
+
 </html>
