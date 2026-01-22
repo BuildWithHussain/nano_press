@@ -203,13 +203,13 @@
                     this.$store.installer.currentStep = 4;
                     this.resumeDeployment(siteName);
                 }
-            },
 
-            destroy() {
-                if (this.pollIntervalId) {
-                    clearInterval(this.pollIntervalId);
-                    this.pollIntervalId = null;
-                }
+                this.$cleanup(() => {
+                    if (this.pollIntervalId) {
+                        clearInterval(this.pollIntervalId);
+                        this.pollIntervalId = null;
+                    }
+                });
             },
 
             async startDeployment() {

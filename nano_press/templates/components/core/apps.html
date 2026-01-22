@@ -289,13 +289,16 @@
                         }
 
                         toast("Custom app deleted", { type: "success" });
+
+                        this.localCustomApps.splice(index, 1);
+                        this.syncToStore();
                     } catch (err) {
                         toast(err.message || "Failed to delete custom app from backend", { type: "warning" });
                     }
+                } else {
+                    this.localCustomApps.splice(index, 1);
+                    this.syncToStore();
                 }
-
-                this.localCustomApps.splice(index, 1);
-                this.syncToStore();
             },
 
             toggleApp(appName) {
