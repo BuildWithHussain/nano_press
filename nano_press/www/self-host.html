@@ -22,7 +22,6 @@
 {% block script %}
 {{ super() }}
 <script>
-    // Create Alpine.store for shared state with persistence
     document.addEventListener('alpine:init', () => {
         Alpine.store('installer', {
             currentStep: Alpine.$persist(1).as('nano_press_current_step'),
@@ -32,96 +31,21 @@
                 sshPort: '22'
             }).as('nano_press_server_details'),
             isVerified: Alpine.$persist(false).as('nano_press_is_verified'),
-            serverName: Alpine.$persist(null).as('nano_press_server_name'),  // Store the server document name
+            serverName: Alpine.$persist(null).as('nano_press_server_name'),
             selectedApps: Alpine.$persist([]).as('nano_press_selected_apps'),
             customApps: Alpine.$persist([]).as('nano_press_custom_apps'),
-            frappeVersion: Alpine.$persist('Version-15').as('nano_press_frappe_version'),
+            frappeVersion: Alpine.$persist('version-15').as('nano_press_frappe_version'),
             domain: Alpine.$persist('').as('nano_press_domain'),
             domainVerified: Alpine.$persist(false).as('nano_press_domain_verified'),
-            siteName: Alpine.$persist(null).as('nano_press_site_name'),  // Store the Frappe Site document name
-            siteUrl: Alpine.$persist(null).as('nano_press_site_url')  // Store the generated site URL
+            siteName: Alpine.$persist(null).as('nano_press_site_name'),
+            siteUrl: Alpine.$persist(null).as('nano_press_site_url')
         });
     });
 
     function frappeInstaller() {
-        const data = {
+        return {
             stepNames: ['Server', 'Apps', 'Domain', 'Deploy'],
-            showAdvanced: false,
-            
-            generatedSSHKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... frappe@deploy',
-            showCustomAppDialog: false,
-            customAppForm: {
-                name: '',
-                githubUrl: '',
-                token: ''
-            },
 
-            domain: '',
-            domainVerified: false,
-            domainStatusMessage: '',
-            isLoading: false,
-
-            deploying: false,
-            deployComplete: false,
-            deployStep: 0,
-            deploymentStatus: 'Preparing server...',
-
-            copied: false,
-
-            copyToClipboard() {
-                navigator.clipboard.writeText(this.generatedSSHKey).then(() => {
-                    this.copied = true;
-                    setTimeout(() => {
-                        this.copied = false;
-                    }, 2000);
-                });
-            },
-
-            toggleApp(appId) {
-                const index = this.selectedApps.indexOf(appId);
-                if (index > -1) {
-                    this.selectedApps.splice(index, 1);
-                } else {
-                    this.selectedApps.push(appId);
-                }
-            },
-
-
-            getSelectedAppsNames() {
-                const appNames = this.selectedApps.map(id => {
-                    const app = this.availableApps.find(a => a.id === id);
-                    return app ? app.name : '';
-                });
-                const allApps = [...appNames, ...this.customApps.map(a => a.name)];
-                return allApps.join(', ') || 'None';
-            },
-
-            startDeployment() {
-                this.deploying = true;
-                this.deployStep = 0;
-
-                setTimeout(() => {
-                    this.deployStep = 1;
-                    this.deploymentStatus = 'Preparing server...';
-                }, 1000);
-
-                setTimeout(() => {
-                    this.deployStep = 2;
-                    this.deploymentStatus = 'Deploying site...';
-                }, 3000);
-
-                setTimeout(() => {
-                    this.deploying = false;
-                    this.deployComplete = true;
-                }, 5000);
-            },
-
-            visitSite() {
-                const siteUrl = this.domain || this.serverDetails.ip;
-                alert(`Opening site: ${siteUrl}`);
-            },
-
-            // Access store properties
             get currentStep() { return this.$store.installer.currentStep; },
             get serverDetails() { return this.$store.installer.serverDetails; },
             get selectedApps() { return this.$store.installer.selectedApps; },
@@ -142,8 +66,6 @@
                 }
             }
         };
-        
-        return data;
     }
 </script>
 {% endblock %}
