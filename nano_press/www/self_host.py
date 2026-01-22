@@ -13,7 +13,7 @@ def get_context(context):
 
 
 def get_user_servers():
-	return frappe.db.get_list(
+	return frappe.get_all(
 		"Server",
 		filters={"owner": frappe.session.user},
 		fields=["name", "server_ip", "ssh_user", "ssh_port", "verify_status"],
@@ -22,7 +22,7 @@ def get_user_servers():
 
 
 def get_apps():
-	return frappe.db.get_list(
+	return frappe.get_all(
 		"Apps",
 		filters={"is_public": 1, "enabled": 1},
 		fields=["name", "branch", "repo_url", "scrubbed_name", "frappe", "app_logo"],
@@ -30,7 +30,7 @@ def get_apps():
 
 
 def get_frappe_versions():
-	return frappe.db.get_all(
+	return frappe.get_all(
 		"App Version",
 		fields=["version", "scrubbed_version"],
 		order_by="creation asc",

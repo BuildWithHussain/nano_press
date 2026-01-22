@@ -113,7 +113,7 @@
             Continue
         </button>
     </div>
-    <div x-show="localShowCustomAppDialog"
+    <div x-show="localShowCustomAppDialog" x-cloak
         class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
         @click.self="localShowCustomAppDialog = false">
         <div class="bg-white rounded-lg p-8 max-w-md w-11/12 mx-4 border border-gray-300" @click.stop>
