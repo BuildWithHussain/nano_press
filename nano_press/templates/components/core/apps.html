@@ -4,105 +4,198 @@
     <div class="mb-6">
         <label class="block text-sm font-medium mb-2 text-gray-900">Frappe Version</label>
         <div class="flex gap-2">
-            <template x-for="version in frappeVersionOptions" :key="version">
-                <button @click="selectFrappeVersion(version)"
-                    :class="localFrappeVersion === version
+            <template x-for="ver in frappeVersionOptions" :key="ver.scrubbed_version">
+                <button @click="selectFrappeVersion(ver.scrubbed_version)" :class="localFrappeVersion === ver.scrubbed_version
                         ? 'bg-gray-900 text-white border-gray-900'
                         : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
                     class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm"
-                    x-text="version">
+                    x-text="ver.version">
                 </button>
             </template>
         </div>
     </div>
-
 
     <div class="mb-6">
         <label class="block text-sm font-medium mb-2 text-gray-900">Apps</label>
-        <div class="grid grid-cols-2 gap-2 mb-4">
-            <template x-for="app in availableApps" :key="app.name">
+
+        <h3 class="text-sm font-semibold mb-3 text-gray-900">Frappe Apps</h3>
+        <div class="grid gap-2 mb-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            <template x-for="app in frappeApps" :key="app.name">
                 <button @click="toggleApp(app.name)" :class="localSelectedApps.includes(app.name.toLowerCase())
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-900 border-gray-300'"
-                    class="p-3 border rounded-md text-left cursor-pointer transition-all duration-200 hover:border-gray-900">
-                    <div class="font-medium mb-1 text-sm" x-text="app.name"></div>
-                    <div class="text-xs text-gray-400" x-text="app.branch"></div>
+                        ? 'bg-gray-100 text-gray-900 border-gray-900'
+                        : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                    class="p-3 border rounded-md text-left cursor-pointer transition-all duration-200 flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                        <template x-if="app.app_logo">
+                            <img :src="app.app_logo" :alt="app.name" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!app.app_logo">
+                            <span class="text-lg font-semibold text-gray-400"
+                                x-text="app.name.charAt(0).toUpperCase()"></span>
+                        </template>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm truncate" x-text="app.name"></div>
+                        <div class="text-xs text-gray-500 truncate" x-text="app.branch"></div>
+                    </div>
                 </button>
             </template>
         </div>
-    </div>
 
-    <button @click="localShowCustomAppDialog = true"
-        class="w-full p-3 bg-white border border-dashed border-gray-300 rounded-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 text-gray-400 font-medium text-sm hover:border-gray-900 hover:text-gray-900">
-        <span class="text-xl">+</span> Add Custom App
-    </button>
+        <h3 class="text-sm font-semibold mb-3 mt-6 text-gray-900">Custom Apps</h3>
 
-    <template x-if="localCustomApps.length > 0">
-        <div class="mt-4">
-            <template x-for="(app, index) in localCustomApps" :key="index">
-                <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-300 rounded-md mb-2">
-                    <div>
-                        <div class="font-medium mb-1 text-sm" x-text="app.name"></div>
-                        <div class="text-xs text-gray-400" x-text="app.branch || 'main'"></div>
+        <div class="grid gap-2 mb-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));"
+            x-show="customApps.length > 0">
+            <template x-for="app in customApps" :key="app.name">
+                <button @click="toggleApp(app.name)" :class="localSelectedApps.includes(app.name.toLowerCase())
+                        ? 'bg-gray-100 text-gray-900 border-gray-900'
+                        : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                    class="p-3 border rounded-md text-left cursor-pointer transition-all duration-200 flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                        <template x-if="app.app_logo">
+                            <img :src="app.app_logo" :alt="app.name" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!app.app_logo">
+                            <span class="text-lg font-semibold text-gray-400"
+                                x-text="app.name.charAt(0).toUpperCase()"></span>
+                        </template>
                     </div>
-                    <button @click="removeCustomApp(index)"
-                        class="bg-red-500 border border-red-500 text-gray-900 cursor-pointer px-3 py-1 text-xs rounded-md hover:bg-red-600 hover:border-red-600 transition-colors duration-200">
-                        Remove
-                    </button>
-                </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm truncate" x-text="app.name"></div>
+                        <div class="text-xs text-gray-500 truncate" x-text="app.branch"></div>
+                    </div>
+                </button>
             </template>
         </div>
-    </template>
 
-  <div class="flex gap-3 mt-6">
-    <button @click="prevStep()"
-      class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
-      Back
-    </button>
-    <button @click="nextStep()"
-      class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
-      Continue
-    </button>
-  </div>    <!-- Custom App Modal -->
-    <div x-show="localShowCustomAppDialog" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+        <template x-if="localCustomApps.length > 0">
+            <div class="grid gap-2 mb-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+                <template x-for="(app, index) in localCustomApps" :key="index">
+                    <div class="relative p-3 bg-gray-50 border border-gray-300 rounded-md flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                            <span class="text-lg font-semibold text-gray-400"
+                                x-text="app.name.charAt(0).toUpperCase()"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-sm truncate" x-text="app.name"></div>
+                            <div class="text-xs text-gray-400 truncate" x-text="app.branch || 'main'"></div>
+                        </div>
+                        <button @click="removeCustomApp(index)" class="flex-shrink-0 cursor-pointer p-1"
+                            title="Remove app">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                class="w-4 h-4 text-red-500">
+                                <path fill-rule="evenodd"
+                                    d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <button @click="localShowCustomAppDialog = true"
+            class="w-full p-3 bg-white border border-dashed border-gray-300 rounded-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 text-gray-400 font-medium text-sm hover:border-gray-900 hover:text-gray-900">
+            <span class="text-xl">+</span> Add Custom App
+        </button>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+        <button @click="prevStep()"
+            class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+            Back
+        </button>
+        <button @click="nextStep()"
+            class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
+            Continue
+        </button>
+    </div>
+    <div x-show="localShowCustomAppDialog" x-cloak
+        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
         @click.self="localShowCustomAppDialog = false">
         <div class="bg-white rounded-lg p-8 max-w-md w-11/12 mx-4 border border-gray-300" @click.stop>
             <h3 class="text-lg font-semibold mb-6 text-gray-900">Add Custom App</h3>
 
-            <div class="mb-5">
-                <label class="block text-sm font-medium mb-2 text-gray-900">App Name</label>
-                <input type="text" x-model="localCustomAppForm.name" placeholder="my-custom-app"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
-            </div>
+            <form @submit.prevent="addCustomApp()">
+                <div class="mb-6">
+                    <div role="tablist" aria-label="app type" class="flex gap-2 mb-6">
+                        <button type="button" role="tab" @click="appType = 'public'"
+                            :aria-selected="appType === 'public'" :class="appType === 'public'
+                                ? 'bg-gray-900 text-white border-gray-900'
+                                : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                            class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm">
+                            Public
+                        </button>
+                        <button type="button" role="tab" @click="appType = 'private'"
+                            :aria-selected="appType === 'private'" :class="appType === 'private'
+                                ? 'bg-gray-900 text-white border-gray-900'
+                                : 'bg-white text-gray-900 border-gray-300 hover:border-gray-900'"
+                            class="flex-1 px-4 py-2.5 border rounded-md cursor-pointer transition-all duration-200 font-medium text-sm">
+                            Private
+                        </button>
+                    </div>
 
-            <div class="mb-5">
-                <label class="block text-sm font-medium mb-2 text-gray-900">GitHub URL</label>
-                <input type="text" x-model="localCustomAppForm.githubUrl" placeholder="https://github.com/user/repo"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
-            </div>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium mb-2 text-gray-900">
+                            App Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" x-model="localCustomAppForm.name" placeholder="my-custom-app" required
+                            class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                    </div>
 
-            <div class="mb-6">
-                <label class="block text-sm font-medium mb-2 text-gray-900">GitHub Token</label>
-                <input type="password" x-model="localCustomAppForm.token" placeholder="ghp_xxxxxxxxxxxx"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
-            </div>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium mb-2 text-gray-900">
+                            GitHub URL <span class="text-red-500">*</span>
+                        </label>
+                        <input type="url" x-model="localCustomAppForm.githubUrl"
+                            placeholder="https://github.com/user/repo" required pattern="https://.*"
+                            title="URL must start with https://"
+                            class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                        <p class="mt-1 text-xs text-gray-500">Must start with https://</p>
+                    </div>
 
-            <div class="mb-5">
-                <label class="block text-sm font-medium mb-2 text-gray-900">Branch</label>
-                <input type="text" x-model="localCustomAppForm.branch" placeholder="main"
-                    class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
-            </div>
+                    <div x-show="appType === 'private'" class="mb-5">
+                        <label class="block text-sm font-medium mb-2 text-gray-900">
+                            GitHub Token <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" x-model="localCustomAppForm.token" placeholder="ghp_xxxxxxxxxxxx"
+                            :required="appType === 'private'"
+                            class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                    </div>
 
-            <div class="flex gap-3">
-                <button @click="localShowCustomAppDialog = false"
-                    class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button @click="addCustomApp()"
-                    class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
-                    Add App
-                </button>
-            </div>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium mb-2 text-gray-900">
+                            Branch <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" x-model="localCustomAppForm.branch" placeholder="main" required
+                            class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                    </div>
+
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium mb-2 text-gray-900">
+                            Installation Order (Optional)
+                        </label>
+                        <input type="number" x-model.number="localCustomAppForm.order" placeholder="999" min="0"
+                            class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900">
+                        <p class="mt-1 text-xs text-gray-500">Lower numbers install first. Leave empty for default (999)
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" @click="localShowCustomAppDialog = false"
+                        class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
+                        Add App
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -110,47 +203,101 @@
     function appsComponent() {
         return {
             availableApps: {{ apps | tojson }},
-            frappeVersionOptions: ['Version-15', 'Nightly'],
-            
-            // Local state
+            frappeVersionOptions: {{ frappe_versions | tojson }},
+
+            get frappeApps() {
+                return this.availableApps.filter(app => app.frappe === 1);
+            },
+
+            get customApps() {
+                return this.availableApps.filter(app => app.frappe === 0);
+            },
+
             localSelectedApps: [],
-            localFrappeVersion: 'Version-15',
+            localFrappeVersion: 'version-15',
             localCustomApps: [],
             localShowCustomAppDialog: false,
+            appType: 'public',
             localCustomAppForm: {
                 name: '',
                 githubUrl: '',
                 token: '',
-                branch: 'main'
+                branch: 'main',
+                order: null
             },
-            
-            // Initialize local state from store
+
             init() {
                 this.localSelectedApps = [...this.$store.installer.selectedApps];
                 this.localFrappeVersion = this.$store.installer.frappeVersion;
                 this.localCustomApps = [...this.$store.installer.customApps];
             },
-            
-            addCustomApp() {
-                if (this.localCustomAppForm.name && this.localCustomAppForm.githubUrl) {
-                    const newApp = {
-                        name: this.localCustomAppForm.name.toLowerCase(),
-                        githubUrl: this.localCustomAppForm.githubUrl,
-                        token: this.localCustomAppForm.token,
-                        branch: this.localCustomAppForm.branch || 'main'
-                    };
-                    this.localCustomApps.push(newApp);
-                    this.localCustomAppForm = { name: '', githubUrl: '', token: '', branch: 'main' };
-                    this.localShowCustomAppDialog = false;
-                    // Sync with store
-                    this.syncToStore();
+
+            async addCustomApp() {
+                const appData = {
+                    name: this.localCustomAppForm.name.trim(),
+                    githubUrl: this.localCustomAppForm.githubUrl,
+                    branch: this.localCustomAppForm.branch || 'main'
+                };
+
+                if (this.appType === 'private' || this.localCustomAppForm.order !== null) {
+                    try {
+                        const url = '/api/method/nano_press.api.register_custom_app';
+                        const payload = {
+                            app_name: appData.name,
+                            github_url: appData.githubUrl,
+                            branch: appData.branch,
+                            token: this.appType === 'private' ? this.localCustomAppForm.token : null,
+                            order: this.localCustomAppForm.order
+                        };
+
+                        const response = await frappe_call(url, payload, "POST");
+
+                        if (!response?.message?.success) {
+                            throw new Error(response?.message?.message || "Failed to register custom app");
+                        }
+
+                        appData.app_reference_id = response.message.app_reference_id;
+
+                        toast("Custom app registered securely", { type: "success" });
+                    } catch (err) {
+                        toast(err.message || "Failed to register custom app", { type: "danger" });
+                        return;
+                    }
                 }
-            },
-            removeCustomApp(index) {
-                this.localCustomApps.splice(index, 1);
-                // Sync with store
+
+                this.localCustomApps.push(appData);
+
+                this.localCustomAppForm = { name: '', githubUrl: '', token: '', branch: 'main', order: null };
+                this.appType = 'public';
+                this.localShowCustomAppDialog = false;
+
                 this.syncToStore();
             },
+
+            async removeCustomApp(index) {
+                const app = this.localCustomApps[index];
+
+                if (app && app.app_reference_id) {
+                    try {
+                        const url = '/api/method/nano_press.api.delete_custom_app';
+                        const payload = { app_name: app.name };
+
+                        const response = await frappe_call(url, payload, "POST");
+
+                        if (!response?.message?.success) {
+                            throw new Error(response?.message?.message || "Failed to delete custom app");
+                        }
+
+                        toast("Custom app deleted", { type: "success" });
+                    } catch (err) {
+                        toast(err.message || "Failed to delete custom app from backend", { type: "warning" });
+                    }
+                }
+
+                this.localCustomApps.splice(index, 1);
+                this.syncToStore();
+            },
+
             toggleApp(appName) {
                 const lowerCaseAppName = appName.toLowerCase();
                 if (this.localSelectedApps.includes(lowerCaseAppName)) {
@@ -161,17 +308,17 @@
 
                 this.syncToStore();
             },
-            
+
             syncToStore() {
                 this.$store.installer.selectedApps = [...this.localSelectedApps];
                 this.$store.installer.customApps = [...this.localCustomApps];
                 this.$store.installer.frappeVersion = this.localFrappeVersion;
             },
+
             selectFrappeVersion(version) {
                 this.localFrappeVersion = version;
-                // Sync with store
                 this.syncToStore();
-            },
+            }
         };
     }
 </script>
