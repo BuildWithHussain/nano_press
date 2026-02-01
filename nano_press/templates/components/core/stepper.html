@@ -1,11 +1,10 @@
 <div class="flex items-center justify-between mb-12 relative max-w-2xl mx-auto">
     <!-- Stepper line -->
     <div class="absolute top-4 left-0 right-0 h-px bg-gray-300 z-0"></div>
-    <div class="absolute top-4 left-0 h-px bg-gray-900 z-0 transition-all duration-500"
-         :style="`width: ${(currentStep - 1) * 33.33}%`"></div>
+    <div class="absolute top-4 left-0 h-px bg-gray-900 z-0 transition-all duration-500" :style="`width: ${(currentStep - 1) * 33.33}%`"></div>
 
     <template x-for="i in 4" :key="i">
-        <div class="flex flex-col items-center z-10 bg-white-50 px-2">
+        <div class="flex flex-col items-center z-0 bg-white-50 px-2">
             <div class="w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm transition-all duration-300"
                  :class="i <= currentStep ? 'bg-gray-900 text-white border border-gray-900' : 'bg-white text-gray-400 border border-gray-300'">
                 <span x-text="i"></span>

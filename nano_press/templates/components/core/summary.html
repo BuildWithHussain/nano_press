@@ -1,116 +1,131 @@
-<div x-show="$store.installer.currentStep === 4" class="animate-fade-in" x-data="summarySetup()">
+<div x-show="$store.installer.currentStep === 4" class="animate-fade-in" x-data="summarySetup()" x-init="init()">
     <h2 class="text-xl font-semibold mb-6 text-gray-900">Summary</h2>
 
     <div x-show="!deploying && !deployComplete">
-        <!-- Server -->
-        <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-4">
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Server</h3>
-            <p class="text-xs text-gray-400 mb-1">
-                <span class="text-gray-400">IP:</span> 
-                <span x-text="$store.installer.serverDetails.ip" class="text-gray-900"></span>
-                <template x-if="$store.installer.isVerified">
-                    <span class="ml-2 text-green-600">✓ Verified</span>
+        <div class="bg-white border border-gray-300 rounded-md p-6 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4">Verified</h3>
+
+            <div class="mb-3">
+                <p class="text-xs text-gray-400 mb-1">Server IP</p>
+                <p class="text-sm text-gray-900" x-text="$store.installer.serverDetails.ip"></p>
+            </div>
+
+            <div>
+                <p class="text-xs text-gray-400 mb-1">Domain</p>
+                <template x-if="$store.installer.domain && $store.installer.domain.trim()">
+                    <p class="text-sm text-gray-900" x-text="$store.installer.domain"></p>
                 </template>
-            </p>
-            <p class="text-xs text-gray-400 mb-1">
-                <span class="text-gray-400">User:</span> 
-                <span x-text="$store.installer.serverDetails.rootUser" class="text-gray-900"></span>
-            </p>
-            <p class="text-xs text-gray-400">
-                <span class="text-gray-400">Port:</span> 
-                <span x-text="$store.installer.serverDetails.sshPort" class="text-gray-900"></span>
-            </p>
+                <template x-if="!$store.installer.domain || !$store.installer.domain.trim()">
+                    <p class="text-sm text-gray-500 italic">Not configured</p>
+                </template>
+            </div>
         </div>
 
-        <!-- Apps -->
-        <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-4">
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Frappe Apps</h3>
-            <p class="text-xs text-gray-400 mb-1">
-                <span class="text-gray-400">Version:</span> 
-                <span x-text="$store.installer.frappeVersion" class="text-gray-900"></span>
-            </p>
-            <p class="text-xs text-gray-400 mb-1">
-                <span class="text-gray-400">Apps:</span> 
-                <span x-show="$store.installer.selectedApps.length > 0" class="text-gray-900">
-                    <template x-for="(app, index) in $store.installer.selectedApps" :key="app">
-                        <span>
-                            <span x-text="app"></span><span x-show="index < $store.installer.selectedApps.length - 1">, </span>
-                        </span>
-                    </template>
-                </span>
-                <span x-show="$store.installer.selectedApps.length === 0" class="text-gray-900 italic">None</span>
-            </p>
-            <template x-if="$store.installer.customApps.length > 0">
-                <p class="text-xs text-gray-400">
-                    <span class="text-gray-400">Custom Apps:</span>
-                    <span class="text-gray-900">
-                        <template x-for="(app, index) in $store.installer.customApps" :key="app.name">
+        <div class="bg-white border border-gray-300 rounded-md p-6 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4">Environment Details</h3>
+
+            <div class="mb-3">
+                <p class="text-xs text-gray-400 mb-1">Frappe Version</p>
+                <p class="text-sm text-gray-900" x-text="$store.installer.frappeVersion"></p>
+            </div>
+
+            <div class="mb-3">
+                <p class="text-xs text-gray-400 mb-1">Frappe Apps</p>
+                <template x-if="$store.installer.selectedApps.length > 0">
+                    <p class="text-sm text-gray-900">
+                        <template x-for="(app, index) in $store.installer.selectedApps" :key="app">
                             <span>
-                                <span x-text="app.name + (app.branch && app.branch !== 'main' ? ` (${app.branch})` : '')"></span><span x-show="index < $store.installer.customApps.length - 1">, </span>
+                                <span x-text="app"></span><span
+                                    x-show="index < $store.installer.selectedApps.length - 1">, </span>
                             </span>
                         </template>
-                    </span>
-                </p>
-            </template>
-        </div>
+                    </p>
+                </template>
+                <template x-if="$store.installer.selectedApps.length === 0">
+                    <p class="text-sm text-gray-500 italic">None</p>
+                </template>
+            </div>
 
-        <!-- Domain -->
-        <div class="bg-gray-50 border border-gray-300 rounded-md p-4 mb-6">
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Domain</h3>
-            <template x-if="$store.installer.domain && $store.installer.domain.trim()">
-                <p class="text-xs text-gray-400">
-                    <span class="text-gray-400">Domain:</span> 
-                    <span x-text="$store.installer.domain" class="text-gray-900"></span>
-                    <template x-if="$store.installer.domainVerified">
-                        <span class="ml-2 text-green-600">✓ Verified</span>
-                    </template>
-                    <template x-if="!$store.installer.domainVerified">
-                        <span class="ml-2 text-yellow-600">⚠ Not Verified</span>
-                    </template>
-                </p>
-            </template>
-            <template x-if="!$store.installer.domain || !$store.installer.domain.trim()">
-                <p class="text-xs text-gray-400 italic">No domain configured</p>
+            <template x-if="$store.installer.customApps.length > 0">
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">Custom Apps</p>
+                    <p class="text-sm text-gray-900">
+                        <template x-for="(app, index) in $store.installer.customApps" :key="app.name">
+                            <span>
+                                <span x-text="app.name + (app.branch ? ` (${app.branch})` : '')"></span><span
+                                    x-show="index < $store.installer.customApps.length - 1">, </span>
+                            </span>
+                        </template>
+                    </p>
+                </div>
             </template>
         </div>
 
         <div class="flex gap-3">
             <button @click="prevStep()"
-                    class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+                class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
                 Back
             </button>
             <button @click="startDeployment()"
-                    class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
+                class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm bg-gray-900 text-white hover:bg-gray-800">
                 Deploy
             </button>
         </div>
     </div>
 
     <div x-show="deploying" class="text-center py-8">
-        <div class="inline-block w-12 h-12 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin mb-4"></div>
+        <div class="inline-block w-12 h-12 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin mb-4">
+        </div>
         <h3 class="text-lg font-semibold mb-2 text-gray-900">Deploying</h3>
         <p class="text-gray-400 text-sm mb-8" x-text="deploymentStatus"></p>
 
         <div class="max-w-64 mx-auto">
-            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 1 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 1 ? 'bg-gray-900' : 'bg-gray-300'"></div>
-                <span class="text-sm">Preparing server</span>
+            <div class="flex items-start gap-3 mb-3">
+                <div class="flex flex-col items-center">
+                    <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400"
+                        :class="{'bg-gray-900': deployStep > 1, 'animate-blink': deployStep === 1, 'bg-gray-300': deployStep < 1}">
+                    </div>
+                    <div class="w-0.5 h-8" :class="deployStep > 1 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 1 ? 'text-gray-900' : 'text-gray-400'">Preparing
+                    server</span>
             </div>
-            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 2 ? 'bg-gray-900' : 'bg-gray-300'"></div>
-                <span class="text-sm">Setting up your Apps</span>
+            <div class="flex items-start gap-3 mb-3">
+                <div class="flex flex-col items-center">
+                    <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400"
+                        :class="{'bg-gray-900': deployStep > 2, 'animate-blink': deployStep === 2, 'bg-gray-300': deployStep < 2}">
+                    </div>
+                    <div class="w-0.5 h-8" :class="deployStep > 2 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 2 ? 'text-gray-900' : 'text-gray-400'">Building
+                    custom image</span>
             </div>
-            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 3 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 3 ? 'bg-gray-900' : 'bg-gray-300'"></div>
-                <span class="text-sm">Creating site</span>
+            <div class="flex items-start gap-3 mb-3">
+                <div class="flex flex-col items-center">
+                    <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400"
+                        :class="{'bg-gray-900': deployStep > 3, 'animate-blink': deployStep === 3, 'bg-gray-300': deployStep < 3}">
+                    </div>
+                    <div class="w-0.5 h-8" :class="deployStep > 3 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 3 ? 'text-gray-900' : 'text-gray-400'">Creating
+                    site</span>
             </div>
-            <div class="flex items-center gap-3 mb-3" :class="deployStep >= 4 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 4 ? 'bg-gray-900' : 'bg-gray-300'"></div>
-                <span class="text-sm">Preparing deployment</span>
+            <div class="flex items-start gap-3 mb-3">
+                <div class="flex flex-col items-center">
+                    <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400"
+                        :class="{'bg-gray-900': deployStep > 4, 'animate-blink': deployStep === 4, 'bg-gray-300': deployStep < 4}">
+                    </div>
+                    <div class="w-0.5 h-8" :class="deployStep > 4 ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 4 ? 'text-gray-900' : 'text-gray-400'">Preparing
+                    deployment</span>
             </div>
-            <div class="flex items-center gap-3" :class="deployStep >= 5 ? 'text-gray-900' : 'text-gray-400'">
-                <div class="w-4 h-4 rounded-full shrink-0" :class="deployStep >= 5 ? 'bg-gray-900' : 'bg-gray-300'"></div>
-                <span class="text-sm">Deploying site</span>
+            <div class="flex items-start gap-3">
+                <div class="w-4 h-4 rounded-full shrink-0 bg-gray-400"
+                    :class="{'bg-gray-900': deployStep > 5, 'animate-blink': deployStep === 5, 'bg-gray-300': deployStep < 5}">
+                </div>
+                <span class="text-sm -mt-0.5" :class="deployStep >= 5 ? 'text-gray-900' : 'text-gray-400'">Deploying
+                    site</span>
             </div>
         </div>
     </div>
@@ -124,16 +139,13 @@
         <h3 class="text-xl font-semibold mb-2 text-gray-900">Deployment Complete</h3>
         <p class="text-gray-400 text-sm mb-2">Your Frappe site has been successfully deployed!</p>
 
-        <!-- Site URL -->
         <div class="mb-4">
             <p class="text-sm text-gray-900 font-medium mb-1">Site will be accessible at:</p>
-            <a :href="`https://${$store.installer.siteUrl}`"
-               target="_blank"
-               class="text-sm text-blue-600 hover:text-blue-700 underline break-all"
-               x-text="$store.installer.siteUrl"></a>
+            <a :href="`https://${$store.installer.siteUrl}`" target="_blank"
+                class="text-sm text-blue-600 hover:text-blue-700 underline break-all"
+                x-text="$store.installer.siteUrl"></a>
         </div>
 
-        <!-- Login Credentials -->
         <div class="max-w-lg mx-auto mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md text-left">
             <p class="text-xs font-semibold text-gray-900 mb-3">Login Credentials:</p>
             <div class="space-y-2">
@@ -148,363 +160,488 @@
             </div>
         </div>
 
-        <!-- Deployment notice -->
         <div class="max-w-lg mx-auto mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md text-left">
             <p class="text-xs text-gray-700 mb-2">
-                <span class="font-semibold">Please Note:</span> Deployment time may vary depending on the number of applications being installed.
+                <span class="font-semibold">Please Note:</span> Deployment time may vary depending on the number of
+                applications being installed.
             </p>
             <ul class="text-xs text-gray-700 space-y-1 list-disc list-inside">
                 <li>Typically, the first app becomes available within <span class="font-semibold">5 minutes</span></li>
-                <li>If the site remains inaccessible after <span class="font-semibold">10 minutes</span>, you may need to restart the containers</li>
+                <li>If the site remains inaccessible after <span class="font-semibold">10 minutes</span>, you may need
+                    to restart the containers</li>
             </ul>
         </div>
 
         <button @click="visitSite()"
-                class="inline-flex justify-center items-center rounded-md bg-gray-900 text-white px-4 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors duration-200">
+            class="inline-flex justify-center items-center rounded-md bg-gray-900 text-white px-4 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors duration-200">
             Access Site
         </button>
     </div>
 </div>
 
 <script>
-function summarySetup() {
-    return {
-        deploying: false,
-        deployComplete: false,
-        deploymentStatus: 'Initializing deployment...',
-        deployStep: 0,
+    function summarySetup() {
+        return {
+            deploying: false,
+            deployComplete: false,
+            deploymentStatus: 'Initializing deployment...',
+            deployStep: 0,
+            pollIntervalId: null,
+            siteUsername: '',
+            sitePassword: '',
 
-        
-        buildingImage: false,
+            init() {
+                const params = new URLSearchParams(window.location.search);
+                const isDeploying = params.get('deploying');
+                const isComplete = params.get('complete');
+                const siteName = params.get('site');
 
-        
-        siteUsername: '',
-        sitePassword: '',
-
-        prevStep() {
-            this.$store.installer.currentStep = 3;
-        },
-        
-        async startDeployment() {
-            this.deploying = true;
-            this.deployComplete = false;
-            this.deployStep = 0;
-
-            try {
-                this.deploymentStatus = 'Preparing server (installing Docker, Docker Compose, Traefik)...';
-                this.deployStep = 1;
-
-                const serverName = this.$store.installer.serverName;
-                if (!serverName) {
-                    throw new Error('Server not found. Please verify your server first.');
+                if (isComplete === 'true' && siteName) {
+                    this.$store.installer.currentStep = 4;
+                    this.resumeCompletedDeployment(siteName);
+                } else if (isDeploying === 'true' && siteName) {
+                    this.$store.installer.currentStep = 4;
+                    this.resumeDeployment(siteName);
                 }
 
-                const prepareResult = await this.callPrepareServer(serverName, true);
+                this.$cleanup(() => {
+                    if (this.pollIntervalId) {
+                        clearInterval(this.pollIntervalId);
+                        this.pollIntervalId = null;
+                    }
+                });
+            },
 
-                if (typeof toast !== 'undefined') {
+            async startDeployment() {
+                this.deploying = true;
+                this.deployComplete = false;
+                this.deployStep = 0;
+
+                try {
+                    this.deploymentStatus = 'Preparing server (installing Docker, Docker Compose, Traefik)...';
+                    this.deployStep = 1;
+
+                    const serverName = this.$store.installer.serverName;
+                    if (!serverName) {
+                        throw new Error('Server not found. Please verify your server first.');
+                    }
+
+                    const prepareResult = await this.callPrepareServer(serverName, true);
                     const successMsg = prepareResult.message || 'Server prepared successfully!';
                     toast(successMsg, { type: 'success' });
-                }
 
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
 
-                this.deploymentStatus = 'Setting up your Apps...';
-                this.deployStep = 2;
-                this.buildingImage = true;
+                    this.deploymentStatus = 'Building custom image...';
+                    this.deployStep = 2;
 
-                const customImageName = await this.buildCustomImage();
+                    const customImageName = await this.buildCustomImage();
 
+                    toast('Custom image queued for building...', { type: 'success' });
 
-                if (typeof toast !== 'undefined') {
-                    toast('Custom image built successfully!', { type: 'success' });
-                }
+                    await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Wait a moment before moving to next step
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                    this.deploymentStatus = 'Creating site structure...';
+                    this.deployStep = 3;
 
-                // Step 3: Create Frappe Site document (with custom image)
-                this.deploymentStatus = 'Creating site structure...';
-                this.deployStep = 3;
-                this.buildingImage = false;
+                    const siteDoc = await this.createFrappeSiteDoc(customImageName);
 
-                const siteDoc = await this.createFrappeSiteDoc(customImageName);
+                    window.history.replaceState({}, '', `/self-host?deploying=true&site=${siteDoc.name}`);
 
-                // Fetch actual credentials (passwords are masked in regular response)
-                await this.fetchSiteCredentials(siteDoc.name);
+                    await this.fetchSiteCredentials(siteDoc.name);
 
-                if (typeof toast !== 'undefined') {
                     toast('Site structure created successfully!', { type: 'success' });
-                }
 
-                // Wait a moment before moving to next step
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                    if (siteDoc.status === 'Building') {
+                        this.deploymentStatus = 'Waiting for custom image to build...';
+                        this.deployStep = 2;
 
-                // Step 4: Prepare for deployment (provision bench structure)
-                this.deploymentStatus = 'Preparing deployment (provisioning bench structure)...';
-                this.deployStep = 4;
+                        toast('Custom image is building. Monitoring progress...', { type: 'info' });
 
-                const prepareDeploymentResult = await this.callPrepareForDeployment(siteDoc.name);
+                        this.resumeDeployment(siteDoc.name);
+                        return;
+                    }
 
-                if (typeof toast !== 'undefined') {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    this.deploymentStatus = 'Preparing deployment (provisioning bench structure)...';
+                    this.deployStep = 4;
+
+                    const prepareDeploymentResult = await this.callPrepareForDeployment(siteDoc.name);
+
                     toast('Deployment prepared successfully!', { type: 'success' });
-                }
 
-                // Wait a moment before moving to next step
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Step 5: Deploy site (bring up containers)
-                this.deploymentStatus = 'Deploying site (starting containers)...';
-                this.deployStep = 5;
+                    this.deploymentStatus = 'Deploying site (starting containers)...';
+                    this.deployStep = 5;
 
-                const deployResult = await this.callDeploySite(siteDoc.name);
+                    const deployResult = await this.callDeploySite(siteDoc.name);
 
-                if (typeof toast !== 'undefined') {
                     toast('Site deployed successfully!', { type: 'success' });
-                }
 
-                // Store the site name for accessing later
-                this.$store.installer.siteName = siteDoc.name;
-                this.$store.installer.siteUrl = siteDoc.site_url;
+                    this.$store.installer.siteName = siteDoc.name;
+                    this.$store.installer.siteUrl = siteDoc.site_url;
 
-                // Deployment complete
-                this.deploying = false;
-                this.deployComplete = true;
+                    this.deploying = false;
+                    this.deployComplete = true;
 
-                if (typeof toast !== 'undefined') {
+                    window.history.replaceState({}, '', `/self-host?complete=true&site=${siteDoc.name}`);
+
                     toast('Deployment completed successfully!', { type: 'success' });
-                }
 
-            } catch (error) {
-                console.error('Deployment failed:', error);
-                this.deploying = false;
-                this.deploymentStatus = 'Deployment failed. Please try again.';
+                } catch (error) {
+                    console.error('Deployment failed:', error);
+                    this.deploying = false;
+                    this.deploymentStatus = 'Deployment failed. Please try again.';
 
-                if (typeof toast !== 'undefined') {
                     const errorMessage = error.message || 'Deployment failed. Please check your configuration.';
                     toast(errorMessage, { type: 'danger' });
                 }
-            }
-        },
-        
-        // Call the prepare_server API
-        async callPrepareServer(serverName, includeTraefik = false) {
-            const url = '/api/method/nano_press.nano_press.doctype.server.server.prepare_server';
-            
-            try {
-                const payload = {
-                    server_name: serverName,
-                    include_traefik: includeTraefik
-                };
-                
-                const response = await frappe_call(url, payload, "POST");
-                
-                
-                if (response?.message?.status === 200) {
-                    return response.message;
-                } else if (response?.message) {
-                    
-                    throw new Error(response.message.message || 'Server preparation failed');
-                } else {
-                    console.error('Unexpected response structure:', response);
-                    throw new Error('Server preparation failed - unexpected response structure');
-                }
-            } catch (error) {
-                console.error('Error preparing server:', error);
-                throw error;
-            }
-        },
+            },
 
-        async createFrappeSiteDoc(customImageName = null) {
-            const url = '/api/resource/Frappe Site';
+            async callPrepareServer(serverName, includeTraefik = false) {
+                const url = '/api/method/nano_press.nano_press.doctype.server.server.prepare_server';
 
-            try {
-                const payload = {
-                    server_name: this.$store.installer.serverName,
-                    frappe_version: this.$store.installer.frappeVersion,
-                    install_apps: this.$store.installer.selectedApps.map(app => ({ app_name: app }))
-                };
-
-                if (customImageName) {
-                    payload.is_custom = 1;
-                    payload.custom_image = customImageName;
-                }
-
-                if (this.$store.installer.domain && this.$store.installer.domain.trim()) {
-                    payload.site_url = this.$store.installer.domain.trim();
-                }
-
-                const response = await frappe_call(url, payload, "POST");
-
-                if (response?.data?.name) {
-                    const docName = response.data.name;
-
-                    const submitUrl = `/api/resource/Frappe Site/${docName}`;
-                    const submitPayload = {
-                        docstatus: 1
+                try {
+                    const payload = {
+                        server_name: serverName,
+                        include_traefik: includeTraefik
                     };
 
-                    const submitResponse = await frappe_call(submitUrl, submitPayload, "PUT");
+                    const response = await frappe_call(url, payload, "POST");
 
-                    if (submitResponse?.data) {
-                        return submitResponse.data;
+                    if (response?.message?.status === 200) {
+                        return response.message;
+                    } else if (response?.message) {
+                        throw new Error(response.message.message || 'Server preparation failed');
                     } else {
-                        throw new Error('Failed to submit Frappe Site document');
+                        console.error('Unexpected response structure:', response);
+                        throw new Error('Server preparation failed - unexpected response structure');
                     }
-                } else {
-                    throw new Error('Failed to create Frappe Site document');
+                } catch (error) {
+                    console.error('Error preparing server:', error);
+                    throw error;
                 }
-            } catch (error) {
-                console.error('Error creating Frappe Site:', error);
-                throw error;
-            }
-        },
+            },
 
-        async callPrepareForDeployment(siteName) {
-            const url = `/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.prepare_for_deployment`;
+            async createFrappeSiteDoc(customImageName = null) {
+                const url = '/api/resource/Frappe Site';
 
-            try {
-                const payload = {
-                    site_name: siteName
-                };
+                try {
+                    const payload = {
+                        server_name: this.$store.installer.serverName,
+                        frappe_version: this.$store.installer.frappeVersion,
+                        install_apps: this.$store.installer.selectedApps.map(app => ({ app_name: app }))
+                    };
 
-                const response = await frappe_call(url, payload, "POST");
+                    if (customImageName) {
+                        payload.is_custom = 1;
+                        payload.custom_image = customImageName;
+                    }
 
-                if (response?.message?.status === 200) {
-                    return response.message;
-                } else if (response?.message) {
-                    throw new Error(response.message.message || 'Deployment preparation failed');
-                } else {
-                    console.error('Unexpected response structure:', response);
-                    throw new Error('Deployment preparation failed - unexpected response structure');
-                }
-            } catch (error) {
-                console.error('Error preparing deployment:', error);
-                throw error;
-            }
-        },
+                    if (this.$store.installer.domain && this.$store.installer.domain.trim()) {
+                        payload.site_url = this.$store.installer.domain.trim();
+                    }
 
-        async callDeploySite(siteName) {
-            const url = `/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.deploy_site`;
+                    const response = await frappe_call(url, payload, "POST");
 
-            try {
-                const payload = {
-                    site_name: siteName
-                };
+                    if (response?.data?.name) {
+                        const docName = response.data.name;
 
-                const response = await frappe_call(url, payload, "POST");
-
-                if (response?.message?.status === 200) {
-                    return response.message;
-                } else if (response?.message) {
-                    throw new Error(response.message.message || 'Site deployment failed');
-                } else {
-                    console.error('Unexpected response structure:', response);
-                    throw new Error('Site deployment failed - unexpected response structure');
-                }
-            } catch (error) {
-                console.error('Error deploying site:', error);
-                throw error;
-            }
-        },
-
-        visitSite() {
-            const siteUrl = this.$store.installer.siteUrl;
-            const domain = this.$store.installer.domain?.trim();
-            const ip = this.$store.installer.serverDetails?.ip;
-
-            if (siteUrl) {
-                window.open(`https://${siteUrl}`, '_blank');
-            } else if (domain && this.$store.installer.domainVerified) {
-                window.open(`https://${domain}`, '_blank');
-            } else if (ip) {
-                window.open(`http://${ip}`, '_blank');
-            } else {
-                if (typeof toast !== 'undefined') {
-                    toast('Unable to determine site URL. Please check your configuration.', { type: 'warning' });
-                }
-            }
-        },
-
-        async buildCustomImage() {
-            const timestamp = Date.now();
-            const imageName = `custom-${timestamp}`;
-
-            try {
-                const url = '/api/method/nano_press.nano_press.doctype.custom_image.custom_image.create_and_build_custom_image';
-                const payload = {
-                    server_name: this.$store.installer.serverName,
-                    apps: this.$store.installer.selectedApps,
-                    custom_apps: this.$store.installer.customApps,
-                    image_name: imageName,
-                    frappe_version: this.$store.installer.frappeVersion
-                };
-
-                const response = await frappe_call(url, payload, "POST");
-
-                if (response?.message?.custom_image_name) {
-                    const customImageName = response.message.custom_image_name;
-
-
-                    return await this.pollForBuildCompletion(customImageName);
-                } else if (response?.message?.status === 'error') {
-                    throw new Error(response.message.message || 'Failed to start build');
-                } else {
-                    throw new Error('Unexpected response from build API');
-                }
-            } catch (error) {
-                console.error('Build error:', error);
-                throw error;
-            }
-        },
-
-        async pollForBuildCompletion(customImageName) {
-            return new Promise((resolve, reject) => {
-                const pollInterval = setInterval(async () => {
-                    try {
-                        const url = '/api/method/nano_press.nano_press.doctype.custom_image.custom_image.get_build_status';
-                        const payload = {
-                            custom_image_name: customImageName
+                        const submitUrl = `/api/resource/Frappe Site/${docName}`;
+                        const submitPayload = {
+                            docstatus: 1
                         };
 
-                        const response = await frappe_call(url, payload, "POST");
+                        const submitResponse = await frappe_call(submitUrl, submitPayload, "PUT");
 
-                        if (response?.message) {
-                            const status = response.message.status;
-
-                            if (status === 'Built') {
-                                clearInterval(pollInterval);
-                                resolve(customImageName);
-                            } else if (status === 'Failed') {
-                                clearInterval(pollInterval);
-                                reject(new Error('Custom image build failed'));
-                            }
+                        if (submitResponse?.data) {
+                            return submitResponse.data;
+                        } else {
+                            throw new Error('Failed to submit Frappe Site document');
                         }
-                    } catch (error) {
-                        console.error('Failed to poll build status:', error);
+                    } else {
+                        throw new Error('Failed to create Frappe Site document');
                     }
-                }, 5000);
-            });
-        },
-
-        async fetchSiteCredentials(siteName) {
-            try {
-                const url = '/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.get_site_credentials';
-                const payload = {
-                    site_name: siteName
-                };
-
-                const response = await frappe_call(url, payload, "POST");
-
-                if (response?.message) {
-                    this.siteUsername = response.message.username || 'Administrator';
-                    this.sitePassword = response.message.password || '';
+                } catch (error) {
+                    console.error('Error creating Frappe Site:', error);
+                    throw error;
                 }
-            } catch (error) {
-                console.error('Error fetching credentials:', error);
-                this.siteUsername = 'Administrator';
-                this.sitePassword = 'Check site document for password';
+            },
+
+            async callPrepareForDeployment(siteName) {
+                const url = `/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.prepare_for_deployment`;
+
+                try {
+                    const payload = {
+                        site_name: siteName
+                    };
+
+                    const response = await frappe_call(url, payload, "POST");
+
+                    if (response?.message?.status === 200) {
+                        return response.message;
+                    } else if (response?.message) {
+                        throw new Error(response.message.message || 'Deployment preparation failed');
+                    } else {
+                        console.error('Unexpected response structure:', response);
+                        throw new Error('Deployment preparation failed - unexpected response structure');
+                    }
+                } catch (error) {
+                    console.error('Error preparing deployment:', error);
+                    throw error;
+                }
+            },
+
+            async callDeploySite(siteName) {
+                const url = `/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.deploy_site`;
+
+                try {
+                    const payload = {
+                        site_name: siteName
+                    };
+
+                    const response = await frappe_call(url, payload, "POST");
+
+                    if (response?.message?.status === 200) {
+                        return response.message;
+                    } else if (response?.message) {
+                        throw new Error(response.message.message || 'Site deployment failed');
+                    } else {
+                        console.error('Unexpected response structure:', response);
+                        throw new Error('Site deployment failed - unexpected response structure');
+                    }
+                } catch (error) {
+                    console.error('Error deploying site:', error);
+                    throw error;
+                }
+            },
+
+            visitSite() {
+                const siteUrl = this.$store.installer.siteUrl;
+                const domain = this.$store.installer.domain?.trim();
+                const ip = this.$store.installer.serverDetails?.ip;
+
+                if (siteUrl) {
+                    window.open(`https://${siteUrl}`, '_blank');
+                } else if (domain && this.$store.installer.domainVerified) {
+                    window.open(`https://${domain}`, '_blank');
+                } else if (ip) {
+                    window.open(`http://${ip}`, '_blank');
+                } else {
+                    toast('Unable to determine site URL. Please check your configuration.', { type: 'warning' });
+                }
+            },
+
+            async rebuildCustomImage(siteName) {
+                try {
+                    const url = '/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.rebuild_custom_image_for_site';
+                    const payload = { site_name: siteName };
+                    const response = await frappe_call(url, payload, "POST");
+
+                    if (response?.message?.status === 'success') {
+                        toast('Rebuild started. Monitoring progress...', { type: 'success' });
+                        this.resumeDeployment(siteName);
+                    } else {
+                        throw new Error(response?.message?.message || 'Rebuild failed');
+                    }
+                } catch (error) {
+                    console.error('Rebuild error:', error);
+                    toast(error.message || 'Failed to start rebuild', { type: 'danger' });
+                }
+            },
+
+            async buildCustomImage() {
+                const timestamp = Date.now();
+                const imageName = `custom-${timestamp}`;
+
+                try {
+                    const url = '/api/method/nano_press.nano_press.doctype.custom_image.custom_image.create_and_build_custom_image';
+                    const payload = {
+                        server_name: this.$store.installer.serverName,
+                        apps: this.$store.installer.selectedApps,
+                        custom_apps: this.$store.installer.customApps,
+                        image_name: imageName,
+                        frappe_version: this.$store.installer.frappeVersion
+                    };
+
+                    const response = await frappe_call(url, payload, "POST");
+
+                    if (response?.message?.custom_image_name) {
+                        const customImageName = response.message.custom_image_name;
+                        return customImageName;
+                    } else if (response?.message?.status === 'error') {
+                        throw new Error(response.message.message || 'Failed to start build');
+                    } else {
+                        throw new Error('Unexpected response from build API');
+                    }
+                } catch (error) {
+                    console.error('Build error:', error);
+                    throw error;
+                }
+            },
+
+            async fetchSiteCredentials(siteName) {
+                try {
+                    const url = '/api/method/nano_press.nano_press.doctype.frappe_site.frappe_site.get_site_credentials';
+                    const payload = {
+                        site_name: siteName
+                    };
+
+                    const response = await frappe_call(url, payload, "POST");
+
+                    if (response?.message) {
+                        this.siteUsername = response.message.username || 'Administrator';
+                        this.sitePassword = response.message.password || '';
+                    }
+                } catch (error) {
+                    console.error('Error fetching credentials:', error);
+                    this.siteUsername = 'Administrator';
+                    this.sitePassword = 'Check site document for password';
+                }
+            },
+
+            async resumeDeployment(siteName) {
+                this.deploying = true;
+                this.deploymentStatus = 'Resuming deployment...';
+
+                if (this.pollIntervalId) {
+                    clearInterval(this.pollIntervalId);
+                    this.pollIntervalId = null;
+                }
+
+                this.pollIntervalId = setInterval(async () => {
+                    try {
+                        const url = `/api/resource/Frappe Site/${siteName}`;
+                        const response = await frappe_call(url, {}, "GET");
+
+                        if (!response?.data) {
+                            throw new Error('Failed to fetch site status');
+                        }
+
+                        const status = response.data.status;
+                        console.log('Site status:', status);
+
+                        if (status === 'Building') {
+                            this.deploymentStatus = 'Building custom image...';
+                            this.deployStep = 2;
+
+                        } else if (status === 'Build Failed') {
+                            clearInterval(this.pollIntervalId);
+                            this.pollIntervalId = null;
+                            this.deploying = false;
+                            this.deploymentStatus = 'Custom image build failed';
+                            this.deployStep = 2;
+
+                            toast('Custom image build failed. Click Rebuild to try again.', { type: 'danger' });
+
+                        } else if (status === 'Ready To Deploy') {
+                            clearInterval(this.pollIntervalId);
+                            this.pollIntervalId = null;
+                            this.deploymentStatus = 'Preparing deployment...';
+                            this.deployStep = 4;
+
+                            try {
+                                await this.callPrepareForDeployment(siteName);
+
+                                toast('Deployment prepared successfully!', { type: 'success' });
+
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                                this.deploymentStatus = 'Deploying site (starting containers)...';
+                                this.deployStep = 5;
+
+                                await this.callDeploySite(siteName);
+
+                                toast('Site deployed successfully!', { type: 'success' });
+
+                                this.$store.installer.siteName = siteName;
+                                this.$store.installer.siteUrl = response.data.site_url || '';
+
+                                this.deploying = false;
+                                this.deployComplete = true;
+
+                                window.history.replaceState({}, '', `/self-host?complete=true&site=${siteName}`);
+
+                                await this.fetchSiteCredentials(siteName);
+
+                                toast('Deployment completed successfully!', { type: 'success' });
+                            } catch (error) {
+                                console.error('Deployment continuation failed:', error);
+                                this.deploying = false;
+                                this.deploymentStatus = 'Deployment failed';
+                                toast(error.message || 'Deployment failed', { type: 'danger' });
+                            }
+
+                        } else if (status === 'Deployed') {
+                            clearInterval(this.pollIntervalId);
+                            this.pollIntervalId = null;
+                            this.deploying = false;
+                            this.deployComplete = true;
+                            this.deployStep = 5;
+
+                            window.history.replaceState({}, '', `/self-host?complete=true&site=${siteName}`);
+
+                            this.$store.installer.siteName = siteName;
+                            this.$store.installer.siteUrl = response.data.site_url || '';
+
+                            await this.fetchSiteCredentials(siteName);
+
+                            toast('Deployment completed!', { type: 'success' });
+
+                        } else if (status === 'Failed') {
+                            clearInterval(this.pollIntervalId);
+                            this.pollIntervalId = null;
+                            this.deploying = false;
+                            this.deploymentStatus = 'Deployment failed';
+
+                            toast('Deployment failed. Please check logs.', { type: 'danger' });
+
+                        } else {
+                            this.deploymentStatus = `Current status: ${status}`;
+                            this.deployStep = this.getStepFromStatus(status);
+                        }
+
+                    } catch (error) {
+                        console.error('Failed to poll deployment status:', error);
+                    }
+                }, 3000);
+            },
+
+            async resumeCompletedDeployment(siteName) {
+                this.deploying = false;
+                this.deployComplete = true;
+                this.deployStep = 5;
+
+                try {
+                    const url = `/api/resource/Frappe Site/${siteName}`;
+                    const response = await frappe_call(url, {}, "GET");
+
+                    if (response?.data) {
+                        this.$store.installer.siteName = siteName;
+                        this.$store.installer.siteUrl = response.data.site_url || '';
+                    }
+
+                    await this.fetchSiteCredentials(siteName);
+
+                } catch (error) {
+                    console.error('Failed to load completed deployment:', error);
+                    toast('Could not load deployment details', { type: 'warning' });
+                }
+            },
+
+            getStepFromStatus(status) {
+                const statusMap = {
+                    'Not Deployed': 1,
+                    'Building': 2,
+                    'Build Failed': 2,
+                    'Ready To Deploy': 4,
+                    'Deploying': 4,
+                    'Deployed': 5
+                };
+                return statusMap[status] || 1;
             }
-        }
-    };
-}
+        };
+    }
 </script>

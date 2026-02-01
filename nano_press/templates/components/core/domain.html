@@ -1,153 +1,123 @@
-<div x-show="$store.installer.currentStep === 3" class="animate-fade-in" x-data="domainSetup()" x-init="init()">
-  <h2 class="text-xl font-semibold mb-6 text-gray-900">Domain</h2>
+<div x-show="$store.installer.currentStep === 3" class="animate-fade-in" x-data="domainSetup()">
+    <h2 class="text-xl font-semibold mb-3 text-gray-900">Add Domain</h2>
 
-  <div class="mb-5">
-    <label class="block text-sm font-medium mb-2 text-gray-900">Domain (Optional)</label>
-    <input
-      type="text"
-      x-model="$store.installer.domain"
-      name="domain"
-      id="domain-input"
-      placeholder="example.com"
-      autocomplete="off"
-      class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900"
-      @input="updateDomain($event.target.value)"
-    />
-    <p class="text-xs text-gray-400 mt-1.5">Leave empty to skip domain setup</p>
-    
-    <!-- Domain Status Message -->
-    <div x-show="domainStatusMessage" class="mt-2 text-sm" :class="$store.installer.domainVerified ? 'text-green-600' : 'text-red-600'">
-      <span x-text="domainStatusMessage"></span>
+    <p class="text-sm text-gray-600 mb-6">
+        To add a custom domain, you must already own it. If you don't have one, skip this step and we'll provide you
+        with a free Traefik domain.
+    </p>
+
+    <div class="mb-5">
+        <label class="block text-sm font-medium mb-2 text-gray-900">Domain (Optional)</label>
+        <input type="text" x-model="$store.installer.domain" name="domain" id="domain-input" placeholder="example.com"
+            autocomplete="off"
+            class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-md text-gray-900 outline-none transition-all duration-200 text-sm font-sans focus:border-gray-900"
+            @input="updateDomain($event.target.value)" />
+        <p class="text-xs text-gray-400 mt-1.5">Leave empty to skip domain setup</p>
+
+        <div x-show="$store.installer.domain && $store.installer.domain.trim()" class="mt-3">
+            <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <p class="text-sm text-gray-700 mb-2">Point your domain to the server by creating an <span
+                        class="font-semibold">A record</span>:</p>
+                <p class="font-mono text-sm text-gray-900 font-medium">
+                    <span x-text="$store.installer.domain"></span> → <span
+                        x-text="$store.installer.serverDetails?.ip || '0.0.0.0'"></span>
+                </p>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="flex gap-3 mt-6">
-    <button
-      @click="prevStep()"
-      class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50"
-    >
-      Back
-    </button>
+    <div class="flex gap-3 mt-6">
+        <button @click="prevStep()"
+            class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-300 cursor-pointer transition-all duration-200 text-sm bg-white text-gray-900 hover:bg-gray-50">
+            Back
+        </button>
 
-    <!-- Dynamic Button -->
-    <button
-      @click="nextStep()"
-      :disabled="isLoading"
-      class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm disabled:cursor-not-allowed inline-flex justify-center items-center gap-2 bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50"
-    >
-      <!-- Spinner -->
-      <svg x-show="isLoading" class="animate-spin h-5 w-5 text-gray-950" xmlns="http://www.w3.org/2000/svg" fill="none"
-          viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-          </path>
-      </svg>
-      <span x-text="isLoading ? 'Verifying...' : ($store.installer.domain && $store.installer.domain.trim() && !$store.installer.domainVerified ? 'Verify & Continue' : 'Continue')"></span>
-    </button>
-  </div>  
+        <button @click="nextStep()" :disabled="isLoading"
+            class="flex-1 px-4 py-2.5 rounded-md font-medium border border-gray-900 cursor-pointer transition-all duration-200 text-sm disabled:cursor-not-allowed inline-flex justify-center items-center gap-2 bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50">
+            <svg x-show="isLoading" class="animate-spin h-5 w-5 text-gray-950" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+            </svg>
+            <span
+                x-text="isLoading ? 'Verifying...' : ($store.installer.domain && $store.installer.domain.trim() && !$store.installer.domainVerified ? 'Verify & Continue' : 'Continue')"></span>
+        </button>
+    </div>
 </div>
 
 <script>
-function domainSetup() {
-    return {
-        isLoading: false,
-        domainStatusMessage: '',
-        
-        // Initialize from store
-        init() {
-            if (this.$store.installer.domainVerified && this.$store.installer.domain) {
-                this.domainStatusMessage = `✅ ${this.$store.installer.domain} is verified`;
-            }
-        },
-        
-        updateDomain(value) {
-            if (this.$store.installer.domainVerified && value !== this.$store.installer.domain) {
-                this.$store.installer.domainVerified = false;
-                this.domainStatusMessage = '';
-            }
-            this.$store.installer.domain = value;
-        },
-        
-        prevStep() {
-            this.$store.installer.currentStep = 2;
-        },
-        
-        async nextStep() {
-            const domain = this.$store.installer.domain;
-            
-            if (domain && domain.trim()) {
-                // Check if domain is already verified
-                if (this.$store.installer.domainVerified) {
-                    this.domainStatusMessage = `✅ ${domain} is verified`;
-                    this.$store.installer.currentStep = 4;
-                    return;
-                }
-                
-                // Domain verification step
-                this.isLoading = true;
-                this.domainStatusMessage = '';
+    function domainSetup() {
+        return {
+            isLoading: false,
 
-                try {
-                    const expectedIp = this.$store.installer.serverDetails?.ip;
-                    
-                    if (!expectedIp) {
-                        this.domainStatusMessage = "⚠️ Please enter a server IP address in the Server step to continue";
-                        if (typeof toast !== 'undefined') {
-                            toast("Please enter a server IP address to continue", { type: "danger" });
-                        }
-                        this.isLoading = false;
-                        return;
-                    }
-                    
-                    await verify_domain(domain, expectedIp);
-                    
-                    // Mark as verified in store
-                    this.$store.installer.domainVerified = true;
-                    this.domainStatusMessage = `✅ ${domain} resolves to ${expectedIp}`;
-                    
-                    
-                    setTimeout(() => {
-                        this.$store.installer.currentStep = 4;
-                    }, 1000);
-                } catch (err) {
-                    console.error('❌ Domain verification failed:', err);
+            updateDomain(value) {
+                if (this.$store.installer.domainVerified && value !== this.$store.installer.domain) {
                     this.$store.installer.domainVerified = false;
-                    this.domainStatusMessage = err.message || "Error verifying domain.";
-                } finally {
-                    this.isLoading = false;
                 }
-            } else {
-                // No domain, just continue
-                this.$store.installer.domain = '';
-                this.$store.installer.domainVerified = false;
-                this.$store.installer.currentStep = 4;
+                this.$store.installer.domain = value;
+            },
+
+            async verifyDomain(domain, expectedIp) {
+                const url = '/api/method/nano_press.api.check_domain_resolves_to_ip';
+                try {
+                    const payload = {
+                        domain: domain,
+                        expected_ip: expectedIp
+                    };
+
+                    const response = await frappe_call(url, payload, "POST");
+
+                    if (!response?.message?.success) {
+                        throw new Error(response?.message?.message || "Domain verification failed");
+                    }
+
+                    const message = response.message.message;
+                    toast(message, { type: "success" });
+                    return response.message;
+                } catch (err) {
+                    const message = err.message || "Failed to verify domain";
+                    toast(message, { type: "danger" });
+                    throw err;
+                }
+            },
+
+            async nextStep() {
+                const domain = this.$store.installer.domain;
+
+                if (domain && domain.trim()) {
+                    // Always verify domain - don't skip even if previously verified
+                    this.isLoading = true;
+
+                    try {
+                        const expectedIp = this.$store.installer.serverDetails?.ip;
+
+                        if (!expectedIp) {
+                            toast("Please enter a server IP address to continue", { type: "danger" });
+                            this.isLoading = false;
+                            return;
+                        }
+
+                        await this.verifyDomain(domain, expectedIp);
+
+                        this.$store.installer.domainVerified = true;
+
+                        setTimeout(() => {
+                            this.$store.installer.currentStep++;
+                        }, 1000);
+                    } catch (err) {
+                        console.error('❌ Domain verification failed:', err);
+                        this.$store.installer.domainVerified = false;
+                    } finally {
+                        this.isLoading = false;
+                    }
+                } else {
+                    this.$store.installer.domain = '';
+                    this.$store.installer.domainVerified = false;
+                    this.$store.installer.currentStep++;
+                }
             }
-        }
-    };
-}
-
-async function verify_domain(domain, expectedIp) {
-    const url = '/api/method/nano_press.api.check_domain_resolves_to_ip';
-    try {
-        const payload = {
-            domain: domain,
-            expected_ip: expectedIp
         };
-
-        const response = await frappe_call(url, payload, "POST");
-
-        if (!response?.message?.success) {
-            throw new Error(response?.message?.message || "Domain verification failed");
-        }
-
-        const message = response.message.message;
-        toast(message, { type: "success" });
-        return response.message;
-    } catch (err) {
-        const message = err.message || "Failed to verify domain";
-        toast(message, { type: "danger" });
-        throw err;
     }
-}
 </script>
